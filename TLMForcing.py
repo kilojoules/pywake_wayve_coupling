@@ -10,7 +10,7 @@ __date__ = "August 7, 2017"
 import numpy as np
 from scipy import interpolate
 from py4sp import mypy
-import WakeModel
+from tlmpy import WakeModel
 
 class CST(object):
     '''
@@ -24,7 +24,6 @@ class CST(object):
 
         function = getattr(self,input)
         function(**kwargs)
-        self.__CTr = None
 
     def default(self,**kwargs):
         #Default values, corresponding to finWF5
@@ -64,18 +63,18 @@ class CST(object):
         self.__width  = kwargs['width']
         self.__CT     = kwargs['CT']
 
-    def F0(self,abl):
-        F0u = self.CTr*abl.S1*abl.U1
-        F0v = self.CTr*abl.S1*abl.V1
+    def F0(self,abl,grid):
+        F0u = self.CT*abl.S1*abl.U1*self.footprint(grid)
+        F0v = self.CT*abl.S1*abl.V1*self.footprint(grid)
         return F0u,F0v
 
-    def F1(self,abl,u1r,v1r):
+    def F1(self,abl,grid,u1r,v1r):
 #        F1u = 2*self.CTr*abl.S1*u1r
 #        F1v = 2*self.CTr*abl.S1*v1r
-        F1u  = self.CTr*(abl.S1+abl.U1**2/abl.S1)*u1r
-        F1u += self.CTr*abl.U1*abl.V1/abl.S1*v1r
-        F1v  = self.CTr*(abl.S1+abl.V1**2/abl.S1)*v1r
-        F1v += self.CTr*abl.U1*abl.V1/abl.S1*u1r
+        F1u  = self.CT*(abl.S1+abl.U1**2/abl.S1)*u1r*self.footprint(grid)
+        F1u += self.CT*abl.U1*abl.V1/abl.S1*v1r*self.footprint(grid)
+        F1v  = self.CT*(abl.S1+abl.V1**2/abl.S1)*v1r*self.footprint(grid)
+        F1v += self.CT*abl.U1*abl.V1/abl.S1*u1r*self.footprint(grid)
         return F1u,F1v
 
     def preprocess(self,abl):
@@ -88,48 +87,24 @@ class CST(object):
     @property
     def length(self):
         return self.__length
-    @length.setter
-    def length(self,value):
-        self.__length = value
     @property
     def width(self):
         return self.__width
-    @width.setter
-    def width(self,value):
-        self.__width = value
-    @property
-    def CTr(self):
-        return self.__CTr
-    @CTr.setter
-    def CTr(self,value):
-        self.__CTr = value
 
 class Stat1Dcst(CST):
     '''
     One-dimensional static constant forcing model
     '''
-    def __init__(self,grid,input='default',fringe=None,**kwargs):
+    def __init__(self,xc,input='default',fringe=None,**kwargs):
         super().__init__(input,**kwargs)
         self.__fringe = fringe
         #Wind farm location
-        if self.fringe:
-            xc = (grid.Lx-self.fringe.Lfringe)/2.0
-        else:
-            xc = grid.Lx/2.0
-        x1 = xc-self.length/2.0
-        x2 = xc+self.length/2.0
-        i1 = np.max(np.where(grid.xs<=x1))+1
-        i2 = np.max(np.where(grid.xs<=x2))
-    
-        self.CTr = np.zeros(grid.shape)
-        self.CTr[i1:i2+1] = self.CT
-        self.CTr[i1-1]    = self.CT/2.0
-        self.CTr[i2+1]    = self.CT/2.0
-        self.__istart = i1-1
-        self.__iend = i2+1
-        self.__xstart = grid.xs[self.istart]
-        self.__xend   = grid.xs[self.iend]
-        self.length   = self.xend-self.xstart
+        self.__xstart = xc-self.length/2.0
+        self.__xend   = xc+self.length/2.0
+
+    def footprint(self,grid):
+        R = mypy.heaviside(grid.xs-self.xstart)-mypy.heaviside(grid.xs-self.xend)
+        return R
 
     def F1fringe(self,u1r,v1r,u2r,v2r):
         #Should only be called when a fringe is present
@@ -139,12 +114,6 @@ class Stat1Dcst(CST):
         F1v2 = self.fringe.Cfr*v2r
         return F1u1,F1v1,F1u2,F1v2
 
-    @property
-    def istart(self):
-        return self.__istart
-    @property
-    def iend(self):
-        return self.__iend
     @property
     def xstart(self):
         return self.__xstart
@@ -159,51 +128,20 @@ class Stat2Dcst(CST):
     '''
     Two-dimensional static constant forcing model
     '''
-    def __init__(self,grid,input='default',**kwargs):
+    def __init__(self,xc,yc,input='default',**kwargs):
         super().__init__(input,**kwargs)
         #Wind farm location
-        #x-direction
-        xc = grid.Lx/2.0
-        x1 = xc-self.length/2.0
-        x2 = xc+self.length/2.0
-        i1 = np.max(np.where(grid.xs<=x1))+1
-        i2 = np.max(np.where(grid.xs<=x2))
-        #y-direction
-        yc = grid.Ly/2.0
-        y1 = yc-self.width/2.0
-        y2 = yc+self.width/2.0
-        j1 = np.max(np.where(grid.ys<=y1))+1
-        j2 = np.max(np.where(grid.ys<=y2))
+        self.__xstart = xc-self.length/2.0
+        self.__xend   = xc+self.length/2.0
+        self.__ystart = yc-self.width/2.0
+        self.__yend   = yc+self.width/2.0
     
-        self.CTr = np.zeros(grid.shape)
-        self.CTr[i1:i2+1,j1:j2+1] = self.CT
-        self.CTr[i1-1,j1-1:j2+2]  = self.CT/2.0
-        self.CTr[i2+1,j1-1:j2+2]  = self.CT/2.0
-        self.CTr[i1:i2+1,j1-1]    = self.CT/2.0
-        self.CTr[i1:i2+1,j2+1]    = self.CT/2.0
-        self.__istart = i1-1
-        self.__iend   = i2+1
-        self.__jstart = j1-1
-        self.__jend   = j2+1
-        self.__xstart = grid.xs[self.istart]
-        self.__xend   = grid.xs[self.iend]
-        self.__ystart = grid.ys[self.jstart]
-        self.__yend   = grid.ys[self.jend]
-        self.length   = self.xend-self.xstart
-        self.width    = self.yend-self.ystart
+    def footprint(self,grid):
+        Xs, Ys = np.meshgrid(grid.xs,grid.ys,indexing='ij')
+        R = ( (mypy.heaviside(Xs-self.xstart)-mypy.heaviside(Xs-self.xend))*
+                (mypy.heaviside(Ys-self.ystart)-mypy.heaviside(Ys-self.yend)) )
+        return R
 
-    @property
-    def istart(self):
-        return self.__istart
-    @property
-    def iend(self):
-        return self.__iend
-    @property
-    def jstart(self):
-        return self.__jstart
-    @property
-    def jend(self):
-        return self.__jend
     @property
     def xstart(self):
         return self.__xstart
@@ -218,6 +156,7 @@ class Stat2Dcst(CST):
         return self.__yend
 
 class Dyn1Dcst(Stat1Dcst):
+#Depreciated
     '''
     One-dimensional constant forcing model with time-dependent Ct coefficient
     '''
@@ -270,8 +209,7 @@ class WF(object):
     Wind farm model with individual turbines and Gaussian filtering
     only for 2D grids
     '''
-    def __init__(self,grid,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake'):
-        self.__grid = grid
+    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake'):
         self.__Lfilter = Lfilter
         self.__wakemodel = wakemodel
         self.__Nturb = len(xs)
@@ -300,37 +238,33 @@ class WF(object):
         function = getattr(WakeModel,self.wakemodel+'_jac')
         self.__Ftjac = function(self.turbines,abl)
     
-    def F0(self,abl):
+    def F0(self,abl,grid):
         #Filter turbine forces onto grid
-        F0u = np.zeros(self.grid.shape)
-        F0v = np.zeros(self.grid.shape)
+        F0u = np.zeros(grid.shape)
+        F0v = np.zeros(grid.shape)
         for index,turb in enumerate(self.turbines):
-            F0u += self.Ft[index,0]*turb.footprint(self.grid,self.Lfilter)
-            F0v += self.Ft[index,1]*turb.footprint(self.grid,self.Lfilter)
+            F0u += self.Ft[index,0]*turb.footprint(grid,self.Lfilter)
+            F0v += self.Ft[index,1]*turb.footprint(grid,self.Lfilter)
         return F0u,F0v
 
-    def F1(self,abl,u1r,v1r):
+    def F1(self,abl,grid,u1r,v1r):
         #Take the input velocity 10D upstream from the first turbine
         WDvector = np.array([abl.U1/abl.S1,abl.V1/abl.S1])
         index = self.firstTurbine(WDvector)
         xloc = self.turbines[index].x-10*self.turbines[index].D*WDvector[0]
         yloc = self.turbines[index].y-10*self.turbines[index].D*WDvector[1]
-        fu = interpolate.interp2d(self.grid.xs,self.grid.ys,u1r.T)
-        fv = interpolate.interp2d(self.grid.xs,self.grid.ys,v1r.T)
+        fu = interpolate.interp2d(grid.xs,grid.ys,u1r.T)
+        fv = interpolate.interp2d(grid.xs,grid.ys,v1r.T)
         u1inf = np.asscalar(fu(xloc,yloc))
         v1inf = np.asscalar(fv(xloc,yloc))
         #Filter turbine forces onto grid
-        F1u = np.zeros(self.grid.shape)
-        F1v = np.zeros(self.grid.shape)
+        F1u = np.zeros(grid.shape)
+        F1v = np.zeros(grid.shape)
         for index,turb in enumerate(self.turbines):
-            F1u += self.Ftjac[index,0,0]*u1inf*turb.footprint(self.grid,
-                                                              self.Lfilter)
-            F1u += self.Ftjac[index,0,1]*v1inf*turb.footprint(self.grid,
-                                                               self.Lfilter)
-            F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(self.grid,
-                                                              self.Lfilter)
-            F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(self.grid,
-                                                              self.Lfilter)
+            F1u += self.Ftjac[index,0,0]*u1inf*turb.footprint(grid,self.Lfilter)
+            F1u += self.Ftjac[index,0,1]*v1inf*turb.footprint(grid,self.Lfilter)
+            F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(grid,self.Lfilter)
+            F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(grid,self.Lfilter)
         return F1u,F1v
 
     def firstTurbine(self,WDvector):
@@ -343,9 +277,6 @@ class WF(object):
         dist = np.dot(coordinates,WDvector)
         return np.argmin(dist)
 
-    @property
-    def grid(self):
-        return self.__grid
     @property
     def Lfilter(self):
         return self.__Lfilter
@@ -393,8 +324,8 @@ class WF1D(WF):
     '''
     Wind farm model on 1D grid with individual turbines and Gaussian filtering
     '''
-    def __init__(self,grid,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake'):
-        super().__init__(grid,xs,ys,diameters,Cts,Lfilter,wakemodel)
+    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake'):
+        super().__init__(xs,ys,diameters,Cts,Lfilter,wakemodel)
         self.__fringe = None
 
     def initturbines(self,xs,ys,diameters,Cts):
@@ -405,26 +336,22 @@ class WF1D(WF):
             self._WF__turbines.append(turbine1D(xs[turb],ys[turb]-yc,
                                    diameters[turb],Cts[turb]))
 
-    def F1(self,abl,u1r,v1r):
+    def F1(self,abl,grid,u1r,v1r):
         #Take the input velocity 10D upstream from the first turbine
         index = self.firstTurbine()
         xloc = self.turbines[index].x-10*self.turbines[index].D
-        fu = interpolate.interp1d(self.grid.xs,u1r)
-        fv = interpolate.interp1d(self.grid.xs,v1r)
+        fu = interpolate.interp1d(grid.xs,u1r)
+        fv = interpolate.interp1d(grid.xs,v1r)
         u1inf = np.asscalar(fu(xloc))
         v1inf = np.asscalar(fv(xloc))
         #Filter turbine forces onto grid
-        F1u = np.zeros(self.grid.shape)
-        F1v = np.zeros(self.grid.shape)
+        F1u = np.zeros(grid.shape)
+        F1v = np.zeros(grid.shape)
         for index,turb in enumerate(self.turbines):
-            F1u += self.Ftjac[index,0,0]*u1inf*turb.footprint(self.grid,
-                                                              self.Lfilter)
-            F1u += self.Ftjac[index,0,1]*v1inf*turb.footprint(self.grid,
-                                                               self.Lfilter)
-            F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(self.grid,
-                                                              self.Lfilter)
-            F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(self.grid,
-                                                              self.Lfilter)
+            F1u += self.Ftjac[index,0,0]*u1inf*turb.footprint(grid,self.Lfilter)
+            F1u += self.Ftjac[index,0,1]*v1inf*turb.footprint(grid,self.Lfilter)
+            F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(grid,self.Lfilter)
+            F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(grid,self.Lfilter)
         return F1u,F1v
 
     def firstTurbine(self):

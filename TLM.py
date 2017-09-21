@@ -47,7 +47,7 @@ class Stat1Dgrid(Grid):
     '''
     def __init__(self,Lx,Nx):
         super().__init__()
-        if np.mod(Nx,2)==1:
+        if not np.mod(Nx,2)==0:
             #Don't allow uneven grid sizes,
             #it is implicitly assumed that there are defunct modes
             print('Error, current implementation only allows even Nx')
@@ -57,6 +57,13 @@ class Stat1Dgrid(Grid):
         self.__Nx = Nx
         self.N = self.Nx
         self.shape = (self.Nx,)
+
+    def deal_grid(self):
+        if not np.mod(self.Nx,4)==0:
+            #Make sure dealising grid has even number of grid point,
+            print('Error, Nx is not a multiple of 4 so dealising grid is uneven')
+            return 1
+        return Stat1Dgrid(self.Lx,int(3*self.Nx/2))
 
     @property
     def Lx(self):
@@ -82,7 +89,7 @@ class Stat2Dgrid(Grid):
     '''
     def __init__(self,Lx,Nx,Ly,Ny):
         super().__init__()
-        if np.mod(Nx,2)==1 or np.mod(Ny,2)==1:
+        if (not np.mod(Nx,2)==0) or (not np.mod(Ny,2)==0):
             #Don't allow uneven grid sizes,
             #it is implicitly assumed that there are defunct modes
             print('Error, current implementation only allows even Nx and Ny')
@@ -94,6 +101,13 @@ class Stat2Dgrid(Grid):
         self.__Ny = Ny
         self.N = self.Nx*self.Ny
         self.shape = (self.Nx,self.Ny)
+
+    def deal_grid(self):
+        if (not np.mod(self.Nx,4)==0) or (not np.mod(self.Ny,4)==0):
+            #Make sure dealising grid has even number of grid point,
+            print('Error, Nx or Ny is not a multiple of 4 so dealising grid is uneven')
+            return 1
+        return Stat2Dgrid(self.Lx,int(3*self.Nx/2),self.Ly,int(3*self.Ny/2))
     
     @property
     def Lx(self):
@@ -171,6 +185,7 @@ class model(object):
     '''
     def __init__(self,grid,forcing,abl):
         self.__grid = grid
+        self.__grid32 = self.grid.deal_grid()
         self.__forcing = forcing
         self.__abl = abl
         self.__PHI = None
@@ -289,6 +304,9 @@ class model(object):
     def grid(self):
         return self.__grid
     @property
+    def grid32(self):
+        return self.__grid32
+    @property
     def abl(self):
         return self.__abl
     @property
@@ -341,13 +359,24 @@ class S1Dmodel(model):
     def r2c(self,rfield):
         return np.fft.fftshift(np.fft.fft(rfield))/self.grid.N
 
+    def c2r_deal(self,cfield):
+        cfield32 = np.concatenate( (
+                        np.zeros((int(self.grid.N/4)),dtype=np.complex128),
+                        cfield,
+                        np.zeros((int(self.grid.N/4)),dtype=np.complex128)) )
+        return np.real(np.fft.ifft(np.fft.ifftshift(cfield32*self.grid32.N)))
+
+    def r2c_deal(self,rfield32):
+        cfield32 = np.fft.fftshift(np.fft.fft(rfield32))/self.grid32.N
+        return cfield32[int(self.grid.N/4):int(self.grid.N*5/4)]
+
     def continuity(self,u1c,v1c,u2c,v2c):
         '''Return boundar-layer displacement based on given velocity field'''
         return -self.abl.H1/self.abl.U1*u1c-self.abl.H2/self.abl.U2*u2c
 
     def Bvector(self):
         #Compute 0th order forcing term (real)
-        F0u, F0v = self.forcing.F0(self.abl)
+        F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space and
         #divide by H1 (TLM solves height-averaged equations)
         Bu = self.r2c(F0u)/self.abl.H1
@@ -516,13 +545,13 @@ class S1Dmodel(model):
                     (self.abl.dS12*self.abl.H2) )*(u1-u2)
 
         #Wind farm forcing: 1st order term
-        u1r = self.c2r(u1)
-        v1r = self.c2r(v1)
-        F1u, F1v = self.forcing.F1(self.abl,u1r,v1r)
+        u1r = self.c2r_deal(u1)
+        v1r = self.c2r_deal(v1)
+        F1u, F1v = self.forcing.F1(self.abl,self.grid32,u1r,v1r)
         #Convert back to fourier space and
         #divide by H1 (TLM solves height-averaged equations)
-        Axu1 += -self.r2c(F1u)/self.abl.H1
-        Axv1 += -self.r2c(F1v)/self.abl.H1
+        Axu1 += -self.r2c_deal(F1u)/self.abl.H1
+        Axv1 += -self.r2c_deal(F1v)/self.abl.H1
 
         #Fringe region forcing?
         if self.forcing.fringe:
@@ -608,6 +637,7 @@ class S1Dmodel(model):
         return A
 
 class S1Dmodel_old(model):
+#Depreciated
 #Non-rigorous linearisation of stresses
     '''
     Steady one-dimensional gravity wave model
@@ -918,7 +948,7 @@ class S1DPmodel(model):
 
     def Bvector(self):
         #Compute 0th order forcing term (real)
-        F0u, F0v = self.forcing.F0(self.abl)
+        F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space and
         #divide by H1 (TLM solves height-averaged equations)
         Bu1 = self.r2c(F0u)/self.abl.H1 + 1j*self.grid.ks*self.pc
@@ -1085,7 +1115,7 @@ class S1DPmodel(model):
         #Wind farm forcing: 1st order term
         u1r = self.c2r(u1)
         v1r = self.c2r(v1)
-        F1u, F1v = self.forcing.F1(self.abl,u1r,v1r)
+        F1u, F1v = self.forcing.F1(self.abl,self.grid,u1r,v1r)
         #Convert back to fourier space and
         #divide by H1 (TLM solves height-averaged equations)
         Axu1 += -self.r2c(F1u)/self.abl.H1
@@ -1160,6 +1190,28 @@ class S2Dmodel(model):
     def r2c(self,rfield):
         return np.fft.fftshift(np.fft.fft2(rfield))/self.grid.N
 
+    def c2r_deal(self,cfield):
+        #First padd in x-direction
+        cfield32 = np.concatenate( (
+            np.zeros((int(self.grid.Nx/4),self.grid.Ny),dtype=np.complex128),
+            cfield,
+            np.zeros((int(self.grid.Nx/4),self.grid.Ny),dtype=np.complex128) ),
+                                   axis=0 )
+        #Then padd in y-direction
+        cfield32 = np.concatenate( (
+            np.zeros((self.grid32.Nx,int(self.grid.Ny/4)),dtype=np.complex128),
+            cfield32,
+            np.zeros((self.grid32.Nx,int(self.grid.Ny/4)),dtype=np.complex128) ),
+                                   axis=1)
+
+        rfield = np.fft.ifft2(np.fft.ifftshift(cfield32*self.grid32.N))
+
+        return np.real(rfield)
+
+    def r2c_deal(self,rfield32):
+        cfield32 = np.fft.fftshift(np.fft.fft(rfield32))/self.grid32.N
+        return cfield32[int(self.grid.Nx/4):int(self.grid.Nx*5/4),int(self.grid.Ny/4):int(self.grid.Ny*5/4)]
+
     def continuity(self,u1c,v1c,u2c,v2c,p1c,p2c):
         '''Return boundar-layer displacement based on given velocity field'''
         ##Using the continuity equation
@@ -1207,7 +1259,7 @@ class S2Dmodel(model):
 
     def Bvector(self):
         #Compute 0th order forcing term (2D real)
-        F0u, F0v = self.forcing.F0(self.abl)
+        F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space, cast into 1D array and
         #divide by H1 (TLM solves height-averaged equations)
         Bu = np.ravel(self.r2c(F0u))/self.abl.H1
@@ -1445,13 +1497,13 @@ class S2Dmodel(model):
         Axp2[indices_klzero] = p2[indices_klzero]
 
         #Compute 1st order forcing term
-        u1r = self.c2r(u1.reshape(self.grid.shape))
-        v1r = self.c2r(v1.reshape(self.grid.shape))
-        F1u, F1v = self.forcing.F1(self.abl,u1r,v1r)
+        u1r = self.c2r_deal(u1.reshape(self.grid.shape))
+        v1r = self.c2r_deal(v1.reshape(self.grid.shape))
+        F1u, F1v = self.forcing.F1(self.abl,self.grid32,u1r,v1r)
         #Convert back to fourier space, cast into 1D array and
         #divide by H1 (TLM solves height-averaged equations)
-        Axu1 += -np.ravel(self.r2c(F1u))/self.abl.H1
-        Axv1 += -np.ravel(self.r2c(F1v))/self.abl.H1
+        Axu1 += -np.ravel(self.r2c_deal(F1u))/self.abl.H1
+        Axv1 += -np.ravel(self.r2c_deal(F1v))/self.abl.H1
 
         #Set defunct modes to zero
         defunct_k = [i for i in range(Ny)]
@@ -1466,6 +1518,7 @@ class S2Dmodel(model):
         return np.concatenate((Axu1,Axv1,Axu2,Axv2,Axp1,Axp2))
 
 class S2Dmodel_old(model):
+#depreciated
 #Non-rigorous linearisation of stresses
     '''
     Steady two-dimensional gravity wave model
