@@ -897,14 +897,13 @@ class S1Dmodel_old(model):
         A[3*Nx,3*Nx] = 1.
         return A
 
-class S1DPmodel(model):
+class S1DPmodel(S1Dmodel):
     '''
-    Steady one-dimensional pressuer model
+    Steady one-dimensional pressure model
     (Three-layer model, but p is an input)
     '''
     def __init__(self,grid,forcing,abl,pressure):
         super().__init__(grid,forcing,abl)
-        self.PHI = self.PHIvector()
         if pressure.shape==self.grid.shape:
             self.__pc = self.r2c(pressure)
         else:
@@ -923,30 +922,6 @@ class S1DPmodel(model):
         result['pc']   = self.pc
         return result
 
-    def expandX(self,X):
-        N = self.grid.N
-        u1 = X[0:N].reshape(self.grid.shape)
-        v1 = X[1*N:2*N].reshape(self.grid.shape)
-        u2 = X[2*N:3*N].reshape(self.grid.shape)
-        v2 = X[3*N:4*N].reshape(self.grid.shape)
-        return u1, v1, u2, v2
-
-    def c2r(self,cfield,returnErr=False):
-        rfield = np.fft.ifft(np.fft.ifftshift(cfield*self.grid.N))
-        if returnErr:
-            err = np.amax(np.abs(np.imag(rfield)))
-            out = (np.real(rfield), err)
-        else:
-            out = np.real(rfield)
-        return out
-
-    def r2c(self,rfield):
-        return np.fft.fftshift(np.fft.fft(rfield))/self.grid.N
-
-    def continuity(self,u1c,v1c,u2c,v2c):
-        '''Return boundar-layer displacement based on given velocity field'''
-        return -self.abl.H1/self.abl.U1*u1c-self.abl.H2/self.abl.U2*u2c
-
     def Bvector(self):
         #Compute 0th order forcing term (real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
@@ -962,36 +937,6 @@ class S1DPmodel(model):
         Bu2[0] = 0.
         Bv2[0] = 0.
         return np.concatenate((Bu1,Bv1,Bu2,Bv2))
-
-    def PHIvector(self):
-        Nx = self.grid.Nx
-        PHIs = self.abl.gprime*np.ones((Nx),dtype=np.complex128)
-        for index, k in enumerate(self.grid.ks):
-            sigma3 = self.abl.U3*k
-            #Non-hydrostatic solution 
-            if (not sigma3==0): # and (not np.isclose(abs(k),k_lwave,atol=1.0e-4)):
-                if sigma3**2>self.abl.N**2:
-                    m = 1j*np.sqrt(k**2*np.abs(self.abl.N**2/sigma3**2-1))
-                else:
-                    m = np.sign(sigma3)*np.sqrt(k**2*(self.abl.N**2/sigma3**2-1))
-                PHIs[index] += 1j/m*(self.abl.N**2-sigma3**2)
-#            #Hydrostatic solution 
-#            if (not sigma3==0):
-#                m = np.sign(sigma3)*np.sqrt(k**2*self.abl.N**2/sigma3**2)
-#                PHIs[index] += 1j/m*self.abl.N**2
-        return PHIs
-
-    def Aoperator(self):
-        A = scipy.sparse.linalg.LinearOperator((4*self.grid.N,4*self.grid.N),
-                                               matvec=self.Ax,
-                                               dtype=np.complex128)
-        return A
-    
-    def Moperator(self):
-        M = scipy.sparse.linalg.LinearOperator((4*self.grid.N,4*self.grid.N),
-                                               matvec=self.Mx,
-                                               dtype=np.complex128)
-        return M
 
     def Mx(self,x):
         '''
@@ -1114,23 +1059,24 @@ class S1DPmodel(model):
                     (self.abl.dS12*self.abl.H2) )*(u1-u2)
 
         #Wind farm forcing: 1st order term
-        u1r = self.c2r(u1)
-        v1r = self.c2r(v1)
-        F1u, F1v = self.forcing.F1(self.abl,self.grid,u1r,v1r)
+        u1r = self.c2r_deal(u1)
+        v1r = self.c2r_deal(v1)
+        F1u, F1v = self.forcing.F1(self.abl,self.grid32,u1r,v1r)
         #Convert back to fourier space and
         #divide by H1 (TLM solves height-averaged equations)
-        Axu1 += -self.r2c(F1u)/self.abl.H1
-        Axv1 += -self.r2c(F1v)/self.abl.H1
+        Axu1 += -self.r2c_deal(F1u)/self.abl.H1
+        Axv1 += -self.r2c_deal(F1v)/self.abl.H1
 
         #Fringe region forcing?
         if self.forcing.fringe:
-            u2r = self.c2r(u2)
-            v2r = self.c2r(v2)
-            F1u1,F1v1,F1u2,F1v2 = self.forcing.F1fringe(u1r,v1r,u2r,v2r)
-            Axu1 += -self.r2c(F1u1)
-            Axv1 += -self.r2c(F1v1)
-            Axu2 += -self.r2c(F1u2)
-            Axv2 += -self.r2c(F1v2)
+            u2r = self.c2r_deal(u2)
+            v2r = self.c2r_deal(v2)
+            F1u1,F1v1,F1u2,F1v2 = self.forcing.F1fringe(self.grid32,
+                                                        u1r,v1r,u2r,v2r)
+            Axu1 += -self.r2c_deal(F1u1)
+            Axv1 += -self.r2c_deal(F1v1)
+            Axu2 += -self.r2c_deal(F1u2)
+            Axv2 += -self.r2c_deal(F1v2)
     
         #Set defunct modes to zero
         Axu1[0] = 0.
