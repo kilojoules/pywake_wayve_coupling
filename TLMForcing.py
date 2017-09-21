@@ -106,12 +106,12 @@ class Stat1Dcst(CST):
         R = mypy.heaviside(grid.xs-self.xstart)-mypy.heaviside(grid.xs-self.xend)
         return R
 
-    def F1fringe(self,u1r,v1r,u2r,v2r):
+    def F1fringe(self,grid,u1r,v1r,u2r,v2r):
         #Should only be called when a fringe is present
-        F1u1 = self.fringe.Cfr*u1r
-        F1v1 = self.fringe.Cfr*v1r
-        F1u2 = self.fringe.Cfr*u2r
-        F1v2 = self.fringe.Cfr*v2r
+        F1u1 = self.fringe.Cfringe*u1r*self.fringe.footprint(grid)
+        F1v1 = self.fringe.Cfringe*v1r*self.fringe.footprint(grid)
+        F1u2 = self.fringe.Cfringe*u2r*self.fringe.footprint(grid)
+        F1v2 = self.fringe.Cfringe*v2r*self.fringe.footprint(grid)
         return F1u1,F1v1,F1u2,F1v2
 
     @property
@@ -173,26 +173,35 @@ class Fringe1D(object):
     '''
     Fringe region for one-dimensional simulations
     '''
-    def __init__(self,grid,Lf,Cf,method,**kwargs):
+    def __init__(self,Lf,Cf,method,**kwargs):
         self.__Lfringe = Lf
         self.__Cfringe = Cf
-        #Determine spatial distribution
-        if method=='step':
-            self.__Cfr = self.Cfringe*mypy.step(grid.xs-(grid.Lx-self.Lfringe))
-        elif method=='smoothstep':
+        self.__method  = method
+        if self.method=='step':
+            #No input arguments required
+            self.__drise = None
+            self.__dfall = None
+        elif self.method=='smoothstep':
             if not all([i in kwargs for i in ['drise','dfall']]):
                 print('Error: missing input arguments for smoothstep fringe')
-                return
-
-            xstart = grid.Lx-self.Lfringe
-            xend   = grid.Lx
-            drise  = kwargs['drise']
-            dfall  = kwargs['dfall']
-            self.__Cfr = self.Cfringe * ( mypy.smoothstep((grid.xs-xstart)/drise)
-                                         -mypy.smoothstep((grid.xs-xend)/dfall+1) )
+                return 1
+            self.__drise  = kwargs['drise']
+            self.__dfall  = kwargs['dfall']
         else:
             print('Error: fringe method unknown')
-            return
+            return 1
+
+
+    def footprint(self,grid):
+        #Determine spatial distribution
+        if self.method=='step':
+            R = mypy.step(grid.xs-(grid.Lx-self.Lfringe))
+        elif self.method=='smoothstep':
+            xstart = grid.Lx-self.Lfringe
+            xend   = grid.Lx
+            R = ( mypy.smoothstep((grid.xs-xstart)/self.drise)
+                 -mypy.smoothstep((grid.xs-xend)/self.dfall+1) )
+        return R
 
     @property
     def Lfringe(self):
@@ -201,8 +210,14 @@ class Fringe1D(object):
     def Cfringe(self):
         return self.__Cfringe
     @property
-    def Cfr(self):
-        return self.__Cfr
+    def method(self):
+        return self.__method
+    @property
+    def drise(self):
+        return self.__drise
+    @property
+    def dfall(self):
+        return self.__dfall
 
 class WF(object):
     '''

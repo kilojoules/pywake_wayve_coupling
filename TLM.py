@@ -555,13 +555,14 @@ class S1Dmodel(model):
 
         #Fringe region forcing?
         if self.forcing.fringe:
-            u2r = self.c2r(u2)
-            v2r = self.c2r(v2)
-            F1u1,F1v1,F1u2,F1v2 = self.forcing.F1fringe(u1r,v1r,u2r,v2r)
-            Axu1 += -self.r2c(F1u1)
-            Axv1 += -self.r2c(F1v1)
-            Axu2 += -self.r2c(F1u2)
-            Axv2 += -self.r2c(F1v2)
+            u2r = self.c2r_deal(u2)
+            v2r = self.c2r_deal(v2)
+            F1u1,F1v1,F1u2,F1v2 = self.forcing.F1fringe(self.grid32,
+                                                        u1r,v1r,u2r,v2r)
+            Axu1 += -self.r2c_deal(F1u1)
+            Axv1 += -self.r2c_deal(F1v1)
+            Axu2 += -self.r2c_deal(F1u2)
+            Axv2 += -self.r2c_deal(F1v2)
     
         #Set defunct modes to zero
         Axu1[0] = 0.
