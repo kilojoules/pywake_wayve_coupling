@@ -127,7 +127,7 @@ class S1Dmodel(model):
 
     def Bvector(self):
         #Compute 0th order forcing term (real)
-        F0u, F0v = self.forcing.F0(self.abl)
+        F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space and
         #divide by H1 (SLM solves height-averaged equations)
         Bu = self.r2c(F0u)/self.abl.H1
@@ -246,7 +246,7 @@ class S2Dmodel(model):
 
     def Bvector(self):
         #Compute 0th order forcing term (2D real)
-        F0u, F0v = self.forcing.F0(self.abl)
+        F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space, cast into 1D array and
         #divide by H1 (TLM solves height-averaged equations)
         Bu = np.ravel(self.r2c(F0u))/self.abl.H1
