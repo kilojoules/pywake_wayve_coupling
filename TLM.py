@@ -2186,6 +2186,11 @@ class ABL(object):
         self.__U3 = U3n
         self.__V3 = V3n
 
+    def kwake(self,TI=None):
+        if not TI:
+            TI = abl.TI
+        return 0.3837*TI+0.003678
+
     def saveas(self,filename,info=''):
         with open(filename,'w') as file:
             file.write('%%%%%%%%%%%%%%\n')

@@ -16,11 +16,11 @@ def gauss(turbines,abl):
     Uinf = abl.U1
     Vinf = abl.V1
     Sinf = abl.S1
-    kwake = 0.3837*abl.TI+0.003678
     #Compute velocities
     Nt = len(turbines)                  #Number of turbines
     e_str = e_streamwise(Uinf,Vinf)     #Unit vector along the wind direction
-    A = gauss_A(turbines,Uinf,Vinf,kwake)
+    TI = gauss_TI(turbines,abl)
+    A = gauss_A(turbines,abl,TI)
     B = Sinf*np.ones((Nt))
     S = scipy.linalg.solve(A,B)
     #Compute forces
@@ -34,14 +34,14 @@ def gauss_jac(turbines,abl):
     Uinf = abl.U1
     Vinf = abl.V1
     Sinf = abl.S1
-    kwake = 0.3837*abl.TI+0.003678
     Nt = len(turbines)                  #Number of turbines
     Ftjac = np.zeros((Nt,2,2))
     #Find dSdu,dSdv
-    A = gauss_A(turbines,Uinf,Vinf,kwake)
+    TI = gauss_TI(turbines,abl)
+    A = gauss_A(turbines,abl,TI)
     B = Sinf*np.ones((Nt))
     S = scipy.linalg.solve(A,B)
-    dAdu,dAdv = gauss_Ajac(turbines,Uinf,Vinf,kwake)
+    dAdu,dAdv = gauss_Ajac(turbines,abl,TI)
     dSinfdu = Uinf/Sinf*np.ones((Nt))
     dSinfdv = Vinf/Sinf*np.ones((Nt))
     dSdu = scipy.linalg.solve(A,dSinfdu-np.dot(dAdu,S))
@@ -115,8 +115,77 @@ def gauss_alternative(turbines,Uinf,Vinf,kwake):
     inv_order = np.argsort(order)
     return S[inv_order]
 
-def gauss_A(turbines,Uinf,Vinf,kwake):
+def gauss_TI(turbines,abl):
     Nt = len(turbines)                  #Number of turbines
+    Uinf = abl.U1
+    Vinf = abl.V1
+    e_str = e_streamwise(Uinf,Vinf)     #Unit vector along the wind direction
+    e_span = e_spanwise(Uinf,Vinf)      #Unit vector in cross wind direction
+    TI = np.zeros((Nt))
+    #Sort turbines along wind direction
+    xs = np.array([turbines[i].x for i in range(Nt)])
+    ys = np.array([turbines[i].y for i in range(Nt)])
+    coordinates = np.concatenate([xs,ys]).reshape(Nt,2,order='F')
+    dist = np.dot(coordinates,e_str)
+    order = np.argsort(dist)
+    turbines_sort = [turbines[i] for i in order]
+    #Compute turbulent intensities
+    TI[0] = abl.TI
+    for i in range(1,Nt):
+        turbi = turbines_sort[i]
+        TIadded = np.zeros((i))
+        #Compute added streamwise turbulent intensity induced by turbine k
+        #at turbine i
+        for k in range(0,i):
+            kwake = abl.kwake(TI[k])
+            turbk = turbines_sort[k]
+            #Vector from turbine K to point n on turbine I
+            KI = np.array([turbi.x-turbk.x,turbi.y-turbk.y])
+            #Streamwise distance between turbine K and turbine I along e_str
+            #Positive if I is downstream of K 
+            #Negative if I is upstream of K
+            delta_str = np.dot(KI,e_str)
+            #Spanwise distance between turbine K and turbine I along e_span
+            #Has a sign but wake model is axisymmetric
+            delta_span = np.dot(KI,e_span)
+            #Turbine k lies upstream of Turbine i
+            if delta_str>0:# and delta_str<15*turbk.D:
+                beta = 0.5*(1+np.sqrt(1-turbk.Ct))/np.sqrt(1-turbk.Ct)
+                eps = 0.2*np.sqrt(beta)
+                sigma = kwake*delta_str+turbk.D*eps
+                rwake = 2*sigma
+                rdisk = turbi.D/2.0
+                #TI wake of k intersects with rotor i
+                if np.abs(delta_span)>=(rwake+rdisk):
+                    Aw = 0. #No overlap
+                elif np.abs(delta_span)>=max([rwake,rdisk]):
+                    x = (delta_span**2-rdisk**2+rwake**2)/(2*np.abs(delta_span))
+                    Aw = ( area_circle_segment(rwake,x)
+                          +area_circle_segment(rdisk,np.abs(delta_span)-x) )
+                elif np.abs(delta_span)>=np.abs(rwake-rdisk):
+                    R = max([rwake,rdisk])
+                    r = min([rwake,rdisk])
+                    x = (delta_span**2-r**2+R**2)/(2*np.abs(delta_span))
+                    Aw = ( area_circle_reflex(r,x-np.abs(delta_span))
+                          +area_circle_segment(R,x) )
+                else:
+                    Aw = np.pi*min([rwake,rdisk])**2
+
+                induction = (1-np.sqrt(1-turbk.Ct))/2.
+                Iadded = (0.73 * induction**(0.8325)
+                               * abl.TI**(0.0325)
+                               * (delta_str/turbk.D)**(-0.32) )
+                TIadded[k] = Aw/(np.pi*rdisk**2)*Iadded
+        TI[i] = np.sqrt(abl.TI**2 + (np.max(TIadded))**2)
+
+    #Unsort turbines
+    inv_order = np.argsort(order)
+    return TI[inv_order]
+
+def gauss_A(turbines,abl,TI):
+    Nt = len(turbines)                  #Number of turbines
+    Uinf = abl.U1
+    Vinf = abl.V1
     Nq = 16                             #Number of quadrature pints
     e_str = e_streamwise(Uinf,Vinf)     #Unit vector along the wind direction
     e_span = e_spanwise(Uinf,Vinf)      #Unit vector in cross wind direction
@@ -126,6 +195,7 @@ def gauss_A(turbines,Uinf,Vinf,kwake):
         #Loop over all other turbines to collect wake effects
         for k, turbk in enumerate(turbines):
             if k==i: continue           #Turbine i does not affect itself
+            kwake = abl.kwake(TI[k])
             #Loop over quadrature points
             for n in range(Nq):
                 wn  = 1.0/Nq
@@ -155,8 +225,10 @@ def gauss_A(turbines,Uinf,Vinf,kwake):
                 #Ghost turbine?
     return A
 
-def gauss_Ajac(turbines,Uinf,Vinf,kwake):
+def gauss_Ajac(turbines,abl,TI):
     Nt = len(turbines)                  #Number of turbines
+    Uinf = abl.U1
+    Vinf = abl.V1
     Nq = 16                             #Number of quadrature pints
     e_str  = e_streamwise(Uinf,Vinf)    #Unit vector along the wind direction
     e_span = e_spanwise(Uinf,Vinf)      #Unit vector in cross wind direction
@@ -170,6 +242,7 @@ def gauss_Ajac(turbines,Uinf,Vinf,kwake):
         #Loop over all other turbines to collect wake effects
         for k, turbk in enumerate(turbines):
             if k==i: continue           #Turbine i does not affect itself
+            kwake = abl.kwake(TI[k])
             #Loop over quadrature points
             for n in range(Nq):
                 wn  = 1.0/Nq
@@ -222,6 +295,12 @@ def gauss_wakedeficit_jac(x,y,z,d0,Ct,kwake):
                 kwake/(d0*sigma_d0**3)*( (z/d0)**2+(y/d0)**2) )
     defdy  = -gauss_wakedeficit(x,y,z,d0,Ct,kwake)*y/(d0**2*sigma_d0**2)
     return np.array([defdx,defdy])
+
+def area_circle_segment(R,d):
+    return R**2*np.arccos(d/R)-d*np.sqrt(R**2-d**2)
+def area_circle_reflex(R,d):
+    alpha = np.arccos(d/R)
+    return (np.pi-alpha)*R**2+d*np.sqrt(R**2-d**2)
 
 def jensen(turbines,Uinf,Vinf,kwake):
 #Depreciated
