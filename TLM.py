@@ -2072,7 +2072,7 @@ class ABL(object):
 
     def analytic_cubic(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
-        arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
+        arguments = ['dth','fc','N','G','alpha','kappa','utau','h','H1']
         if not all([i in kwargs for i in arguments]):
             print('Error: some arguments for analytic_quadratic ABL definition are missing')
             return
@@ -2082,7 +2082,7 @@ class ABL(object):
         self.__N  = kwargs['N']
         self.__U3 = kwargs['G']*np.cos(kwargs['alpha'])
         self.__V3 = kwargs['G']*np.sin(kwargs['alpha'])
-        self.__H1 = 150.0
+        self.__H1 = kwargs['H1']
         self.__H2 = kwargs['h']-self.H1
 
         h = kwargs['h']
@@ -2287,6 +2287,9 @@ class ABL(object):
     @property
     def V2(self):
         return self.__V2
+    @V2.setter
+    def V2(self,value):
+        self.__V2 = value
     @property
     def S2(self):
         return np.sqrt(self.U2**2 + self.V2**2)
@@ -2305,6 +2308,9 @@ class ABL(object):
     @property
     def V3(self):
         return self.__V3
+    @V3.setter
+    def V3(self,value):
+        self.__V3 = value
     @property
     def S3(self):
         return np.sqrt(self.U3**2 + self.V3**2)
@@ -2335,12 +2341,18 @@ class ABL(object):
     @property
     def gprime(self):
         return self.__gprime
+    @gprime.setter
+    def gprime(self,value):
+        self.__gprime = value
     @property
     def N(self):
         return self.__N
     @property
     def fc(self):
         return self.__fc
+    @fc.setter
+    def fc(self,value):
+        self.__fc = value
     @property
     def TI(self):
         '''Streamwise turbulent intensity at hub height'''
