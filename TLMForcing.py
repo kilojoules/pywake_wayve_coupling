@@ -224,16 +224,17 @@ class WF(object):
     Wind farm model with individual turbines and Gaussian filtering
     only for 2D grids
     '''
-    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake'):
+    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake',coupling='upstream'):
         self.__Lfilter = Lfilter
         self.__wakemodel = wakemodel
+        self.__coupling  = coupling
         self.__Nturb = len(xs)
         self.__xstart = np.min(xs)
         self.__xend   = np.max(xs)
-        self.__length = self.xend-self.xstart
+#        self.__length = self.xend-self.xstart
         self.__ystart = np.min(ys)
         self.__yend   = np.max(ys)
-        self.__width  = self.yend-self.ystart
+#        self.__width  = self.yend-self.ystart
         self.__Ft = None
         self.__Ftjac = None
         self.__turbines = []
@@ -263,15 +264,9 @@ class WF(object):
         return F0u,F0v
 
     def F1(self,abl,grid,u1r,v1r):
-        #Take the input velocity 10D upstream from the first turbine
-        WDvector = np.array([abl.U1/abl.S1,abl.V1/abl.S1])
-        index = self.firstTurbine(WDvector)
-        xloc = self.turbines[index].x-10*self.turbines[index].D*WDvector[0]
-        yloc = self.turbines[index].y-10*self.turbines[index].D*WDvector[1]
-        fu = interpolate.interp2d(grid.xs,grid.ys,u1r.T)
-        fv = interpolate.interp2d(grid.xs,grid.ys,v1r.T)
-        u1inf = np.asscalar(fu(xloc,yloc))
-        v1inf = np.asscalar(fv(xloc,yloc))
+        #Get velocity perturbations
+        function = getattr(self,'u_'+self.coupling)
+        u1inf,v1inf = function(abl,grid,u1r,v1r)
         #Filter turbine forces onto grid
         F1u = np.zeros(grid.shape)
         F1v = np.zeros(grid.shape)
@@ -281,6 +276,30 @@ class WF(object):
             F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(grid,self.Lfilter)
             F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(grid,self.Lfilter)
         return F1u,F1v
+
+    def u_upstream(self,abl,grid,u1r,v1r):
+        #Coupling based on velocity 10D upstream from the first turbine
+        WDvector = np.array([abl.U1/abl.S1,abl.V1/abl.S1])
+        index = self.firstTurbine(WDvector)
+        xloc = self.turbines[index].x-10*self.turbines[index].D*WDvector[0]
+        yloc = self.turbines[index].y-10*self.turbines[index].D*WDvector[1]
+        fu = interpolate.interp2d(grid.xs,grid.ys,u1r.T)
+        fv = interpolate.interp2d(grid.xs,grid.ys,v1r.T)
+        u1inf = np.asscalar(fu(xloc,yloc))
+        v1inf = np.asscalar(fv(xloc,yloc))
+        return u1inf,v1inf
+
+    def u_farm(self,abl,grid,u1r,v1r):
+        #Coupling based on farm-averaged velocity
+        fu = interpolate.interp2d(grid.xs,grid.ys,u1r.T)
+        fv = interpolate.interp2d(grid.xs,grid.ys,v1r.T)
+        xs = np.linspace(self.xstart,self.xend,int(self.length/grid.dx))
+        ys = np.linspace(self.ystart,self.yend,int(self.width/grid.dy))
+        X,Y = np.meshgrid(xs,ys,indexing='ij')
+        u1inf = np.mean(fu(np.ravel(X),np.ravel(Y)))
+        v1inf = np.mean(fv(np.ravel(X),np.ravel(Y)))
+        return u1inf,v1inf
+        
 
     def firstTurbine(self,WDvector):
         #Find first turbine in a given wind direction by projecting the
@@ -299,6 +318,9 @@ class WF(object):
     def wakemodel(self):
         return self.__wakemodel
     @property
+    def coupling(self):
+        return self.__coupling
+    @property
     def Nturb(self):
         return self.__Nturb
     @property
@@ -312,16 +334,18 @@ class WF(object):
         return self.__Ftjac
     @property
     def length(self):
-        return self.__length
-    @length.setter
-    def length(self,value):
-        self.__length = value
+        return self.xend-self.xstart
+#        return self.__length
+#    @length.setter
+#    def length(self,value):
+#        self.__length = value
     @property
     def width(self):
-        return self.__width
-    @width.setter
-    def width(self,value):
-        self.__width = value
+        return self.yend-self.ystart
+#        return self.__width
+#    @width.setter
+#    def width(self,value):
+#        self.__width = value
     @property
     def xstart(self):
         return self.__xstart
@@ -339,7 +363,7 @@ class WF1D(WF):
     '''
     Wind farm model on 1D grid with individual turbines and Gaussian filtering
     '''
-    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake'):
+    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake',coupling='upstream'):
         super().__init__(xs,ys,diameters,Cts,Lfilter,wakemodel)
         self.__fringe = None
 
@@ -351,23 +375,24 @@ class WF1D(WF):
             self._WF__turbines.append(turbine1D(xs[turb],ys[turb]-yc,
                                    diameters[turb],Cts[turb]))
 
-    def F1(self,abl,grid,u1r,v1r):
-        #Take the input velocity 10D upstream from the first turbine
+    def u_upstream(self,abl,grid,u1r,v1r):
+        #Coupling based on velocity 10D upstream from the first turbine
         index = self.firstTurbine()
         xloc = self.turbines[index].x-10*self.turbines[index].D
         fu = interpolate.interp1d(grid.xs,u1r)
         fv = interpolate.interp1d(grid.xs,v1r)
         u1inf = np.asscalar(fu(xloc))
         v1inf = np.asscalar(fv(xloc))
-        #Filter turbine forces onto grid
-        F1u = np.zeros(grid.shape)
-        F1v = np.zeros(grid.shape)
-        for index,turb in enumerate(self.turbines):
-            F1u += self.Ftjac[index,0,0]*u1inf*turb.footprint(grid,self.Lfilter)
-            F1u += self.Ftjac[index,0,1]*v1inf*turb.footprint(grid,self.Lfilter)
-            F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(grid,self.Lfilter)
-            F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(grid,self.Lfilter)
-        return F1u,F1v
+        return u1inf,v1inf
+
+    def u_farm(self,abl,grid,u1r,v1r):
+        #Coupling based on farm-averaged velocity
+        fu = interpolate.interp1d(grid.xs,u1r)
+        fv = interpolate.interp1d(grid.xs,v1r)
+        xs = np.linspace(self.xstart,self.xend,int(self.length/grid.dx))
+        u1inf = np.mean(fu(xs))
+        v1inf = np.mean(fv(xs))
+        return u1inf,v1inf
 
     def firstTurbine(self):
         #Find first turbine (along x direction)
