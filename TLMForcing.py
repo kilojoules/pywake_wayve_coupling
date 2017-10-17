@@ -364,7 +364,7 @@ class WF1D(WF):
     Wind farm model on 1D grid with individual turbines and Gaussian filtering
     '''
     def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake',coupling='upstream'):
-        super().__init__(xs,ys,diameters,Cts,Lfilter,wakemodel)
+        super().__init__(xs,ys,diameters,Cts,Lfilter,wakemodel,coupling)
         self.__fringe = None
 
     def initturbines(self,xs,ys,diameters,Cts):
