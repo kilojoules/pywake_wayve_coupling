@@ -17,10 +17,9 @@ class CST(object):
     Constant forcing model
     '''
     def __init__(self,input='default',**kwargs):
-        if not input in ['default',
+        assert input in ['default',
                          'LESbased',
-                         'userdefined']:
-            print('Error: CST forcing input mode unknown')
+                         'userdefined'], 'Error: CST forcing input mode unknown'
 
         function = getattr(self,input)
         function(**kwargs)
@@ -32,9 +31,7 @@ class CST(object):
         self.__width = 4800.0
 
     def LESbased(self,**kwargs):
-        if not all([i in kwargs for i in ['sim','abl']]):
-            print('Error: some arguments for LESbased forcing definition are missing, used default values instead')
-            self.default()
+        assert all([i in kwargs for i in ['sim','abl']]), 'Error: some arguments for LESbased forcing definition are missing'
         
         sim = kwargs['sim']
         abl = kwargs['abl']
@@ -55,9 +52,7 @@ class CST(object):
         self.__width  = np.max(sim.wf.y)-np.min(sim.wf.y)+diameter*sim.wf.sy
 
     def userdefined(self,**kwargs):
-        if not all([i in kwargs for i in ['length','width','CT']]):
-            print('Error: some arguments for userdefined forcing definition are missing, used default values instead')
-            self.default()
+        assert all([i in kwargs for i in ['length','width','CT']]), 'Error: some arguments for userdefined forcing definition are missing'
 
         self.__length = kwargs['length']
         self.__width  = kwargs['width']
@@ -182,9 +177,7 @@ class Fringe1D(object):
             self.__drise = None
             self.__dfall = None
         elif self.method=='smoothstep':
-            if not all([i in kwargs for i in ['drise','dfall']]):
-                print('Error: missing input arguments for smoothstep fringe')
-                return 1
+            assert all([i in kwargs for i in ['drise','dfall']]), 'Error: missing input arguments for smoothstep fringe'
             self.__drise  = kwargs['drise']
             self.__dfall  = kwargs['dfall']
         else:

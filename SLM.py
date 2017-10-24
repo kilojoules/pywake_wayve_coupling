@@ -329,16 +329,14 @@ class ABL(object):
     '''
     def __init__(self,input='LESbased',**kwargs):
         #input flag indicates how the data is specified
-        if not input in ['default_subcr',
+        assert input in ['default_subcr',
                          'default_supercr',
                          'LESbased',
                          'analytic_constant',
                          'analytic_quadratic',
                          'analytic_cubic',
                          'userdefined',
-                         'fromfile']:
-            print('Error: ABL input mode unknown')
-            return
+                         'fromfile'], 'Error: ABL input mode unknown'
 
         self.__us = None
         self.__vs = None
@@ -376,9 +374,7 @@ class ABL(object):
         arguments = ['sim','tstart','tend',
                      'ccfilename','stfilename',
                      'EKfilename','ENfilename']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for LESbased ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for LESbased ABL definition are missing'
 
         sim = kwargs['sim']
         #Load utau and vertical profiles from BL_tstatcc and BL_tstatst
@@ -429,9 +425,7 @@ class ABL(object):
     def analytic_constant(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Csanady 1974)
         arguments = ['dth','fc','N','G','alpha','viscosity','utau','h']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for analytic_constant ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_constant ABL definition are missing'
         
         self.__gprime = 9.81*kwargs['dth']/288.15
         self.__N  = kwargs['N']
@@ -466,9 +460,7 @@ class ABL(object):
     def analytic_quadratic(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for analytic_quadratic ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
         self.__gprime = 9.81*kwargs['dth']/288.15
         self.__N  = kwargs['N']
@@ -508,9 +500,7 @@ class ABL(object):
     def analytic_cubic(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for analytic_quadratic ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
         self.__gprime = 9.81*kwargs['dth']/288.15
         self.__N  = kwargs['N']
@@ -548,9 +538,7 @@ class ABL(object):
 
     def userdefined(self,**kwargs):
         arguments = ['H1','U1','V1','U3','V3','C0','C1','gprime','N']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for LESbased ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for LESbased ABL definition are missing'
 
         self.__H1 = kwargs['H1']
         self.__U1 = kwargs['U1']
@@ -564,9 +552,7 @@ class ABL(object):
 
     def fromfile(self,**kwargs):
         #load ABL state from file
-        if not 'filename' in kwargs:
-            print('Error: filename not specified')
-            return
+        assert 'filename' in kwargs, 'Error: filename not specified'
         
         #Read from file
         with open(kwargs['filename'],'r') as file:

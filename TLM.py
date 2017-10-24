@@ -47,11 +47,9 @@ class Stat1Dgrid(Grid):
     '''
     def __init__(self,Lx,Nx):
         super().__init__()
-        if not np.mod(Nx,2)==0:
+        assert np.mod(Nx,2)==0, 'Error, current implementation only allows even Nx'
             #Don't allow uneven grid sizes,
             #it is implicitly assumed that there are defunct modes
-            print('Error, current implementation only allows even Nx')
-            return 1
 
         self.__Lx = Lx
         self.__Nx = Nx
@@ -59,10 +57,8 @@ class Stat1Dgrid(Grid):
         self.shape = (self.Nx,)
 
     def deal_grid(self):
-        if not np.mod(self.Nx,4)==0:
+        assert np.mod(self.Nx,4)==0, 'Error, Nx is not a multiple of 4 so dealiasing grid is uneven'
             #Make sure dealising grid has even number of grid point,
-            print('Error, Nx is not a multiple of 4 so dealising grid is uneven')
-            return 1
         return Stat1Dgrid(self.Lx,int(3*self.Nx/2))
 
     @property
@@ -89,11 +85,10 @@ class Stat2Dgrid(Grid):
     '''
     def __init__(self,Lx,Nx,Ly,Ny):
         super().__init__()
-        if (not np.mod(Nx,2)==0) or (not np.mod(Ny,2)==0):
+        assert np.mod(Nx,2)==0, 'Error, current implementation only allows even Nx'
+        assert np.mod(Ny,2)==0, 'Error, current implementation only allows even Ny'
             #Don't allow uneven grid sizes,
             #it is implicitly assumed that there are defunct modes
-            print('Error, current implementation only allows even Nx and Ny')
-            return 1
 
         self.__Lx = Lx
         self.__Nx = Nx
@@ -103,10 +98,9 @@ class Stat2Dgrid(Grid):
         self.shape = (self.Nx,self.Ny)
 
     def deal_grid(self):
-        if (not np.mod(self.Nx,4)==0) or (not np.mod(self.Ny,4)==0):
+        assert np.mod(self.Nx,4)==0, 'Error, Nx is not a multiple of 4 so dealiasing grid is uneven'
+        assert np.mod(self.Ny,4)==0, 'Error, Ny is not a multiple of 4 so dealiasing grid is uneven'
             #Make sure dealising grid has even number of grid point,
-            print('Error, Nx or Ny is not a multiple of 4 so dealising grid is uneven')
-            return 1
         return Stat2Dgrid(self.Lx,int(3*self.Nx/2),self.Ly,int(3*self.Ny/2))
     
     @property
@@ -150,11 +144,9 @@ class Dyn1Dgrid(Stat1Dgrid):
     '''
     def __init__(self,Lx,Nx,Lt,Nt):
         super().__init__(Lx,Nx)
-        if np.mod(Nt,2)==1:
+        assert np.mod(Nt,2)==1, 'Error, current implementation only allows even Nt'
             #Don't allow uneven grid sizes,
             #it is implicitly assumed that there are defunct modes
-            print('Error, current implementation only allows even Nt')
-            return 1
 
         self.__Lt = Lt
         self.__Nt = Nt
@@ -1847,15 +1839,13 @@ class ABL(object):
 
     def __init__(self,input='LESbased',**kwargs):
         #input flag indicates how the data is specified
-        if not input in ['default_subcr',
+        assert input in ['default_subcr',
                          'default_supercr',
                          'LESbased',
                          'analytic_constant',
                          'analytic_quadratic',
                          'analytic_cubic',
-                         'fromfile']:
-            print('Error: ABL input mode unknown')
-            return
+                         'fromfile'],'Error: ABL input mode unknown'
         self.__nu1 = 0.
         self.__nu2 = 0.
         self.__zs = None
@@ -1905,9 +1895,7 @@ class ABL(object):
         arguments = ['sim','tstart','tend','H1',
                      'ccfilename','stfilename',
                      'EKfilename','ENfilename']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for LESbased ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]),'Error: some arguments for LESbased ABL definition are missing'
 
         sim = kwargs['sim']
         #Load utau and vertical profiles from BL_tstatcc and BL_tstatst
@@ -1972,9 +1960,7 @@ class ABL(object):
     def analytic_constant(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Csanady 1974)
         arguments = ['dth','fc','N','G','alpha','viscosity','utau','h']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for analytic_constant ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_constant ABL definition are missing'
         
         self.__gprime = 9.81*kwargs['dth']/288.15
         self.__fc = kwargs['fc']
@@ -2020,9 +2006,7 @@ class ABL(object):
     def analytic_quadratic(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for analytic_quadratic ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
         self.__gprime = 9.81*kwargs['dth']/288.15
         self.__fc = kwargs['fc']
@@ -2073,9 +2057,7 @@ class ABL(object):
     def analytic_cubic(self,**kwargs):
         #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h','H1']
-        if not all([i in kwargs for i in arguments]):
-            print('Error: some arguments for analytic_quadratic ABL definition are missing')
-            return
+        assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
         self.__gprime = 9.81*kwargs['dth']/288.15
         self.__fc = kwargs['fc']
@@ -2124,9 +2106,7 @@ class ABL(object):
     
     def fromfile(self,**kwargs):
         #load ABL state from file
-        if not 'filename' in kwargs:
-            print('Error: filename not specified')
-            return
+        assert 'filename' in kwargs, 'Error: filename not specified'
         
         #Read from file
         with open(kwargs['filename'],'r') as file:
