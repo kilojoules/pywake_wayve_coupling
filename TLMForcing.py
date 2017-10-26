@@ -228,8 +228,8 @@ class WF(object):
         self.__ystart = np.min(ys)
         self.__yend   = np.max(ys)
 #        self.__width  = self.yend-self.ystart
-        self.__Ft = None
-        self.__Ftjac = None
+        self.__St = None
+        self.__Stjac = None
         self.__turbines = []
         self.initturbines(xs,ys,diameters,Cts)
 
@@ -243,32 +243,113 @@ class WF(object):
     def preprocess(self,abl):
         #Compute FT and Ftjac matrices in preprocessing as this might take a while
         function = getattr(WakeModel,self.wakemodel)
-        self.__Ft = function(self.turbines,abl)
+        self.__St = function(self.turbines,abl)
         function = getattr(WakeModel,self.wakemodel+'_jac')
-        self.__Ftjac = function(self.turbines,abl)
+        self.__Stjac = function(self.turbines,abl)
     
     def F0(self,abl,grid):
         #Filter turbine forces onto grid
         F0u = np.zeros(grid.shape)
         F0v = np.zeros(grid.shape)
+        e_str = WakeModel.e_streamwise(abl.U1,abl.V1)
         for index,turb in enumerate(self.turbines):
-            F0u += self.Ft[index,0]*turb.footprint(grid,self.Lfilter)
-            F0v += self.Ft[index,1]*turb.footprint(grid,self.Lfilter)
+            F0u += (0.5 * turb.Ct * turb.rotorarea *
+                    self.St[index]**2 * e_str[0] *
+                    turb.footprint(grid,self.Lfilter) )
+            F0v += (0.5 * turb.Ct * turb.rotorarea *
+                    self.St[index]**2 * e_str[1] *
+                    turb.footprint(grid,self.Lfilter) )
         return F0u,F0v
 
     def F1(self,abl,grid,u1r,v1r):
         #Get velocity perturbations
         function = getattr(self,'u_'+self.coupling)
         u1inf,v1inf = function(abl,grid,u1r,v1r)
+        #Unit vectors and their derivatives
+        e_str  = WakeModel.e_streamwise(abl.U1,abl.V1)
+        E_str  = WakeModel.e_str_jac(abl.U1,abl.V1)
         #Filter turbine forces onto grid
         F1u = np.zeros(grid.shape)
         F1v = np.zeros(grid.shape)
         for index,turb in enumerate(self.turbines):
-            F1u += self.Ftjac[index,0,0]*u1inf*turb.footprint(grid,self.Lfilter)
-            F1u += self.Ftjac[index,0,1]*v1inf*turb.footprint(grid,self.Lfilter)
-            F1v += self.Ftjac[index,1,0]*u1inf*turb.footprint(grid,self.Lfilter)
-            F1v += self.Ftjac[index,1,1]*v1inf*turb.footprint(grid,self.Lfilter)
+            F1u += (0.5 * turb.Ct * turb.rotorarea *
+                        ( 2*self.St[index]*self.Stjac[index,0]*e_str[0] +
+                            self.St[index]**2*E_str[0,0] ) *
+                    u1inf*turb.footprint(grid,self.Lfilter) )
+            F1u += (0.5 * turb.Ct * turb.rotorarea *
+                        ( 2*self.St[index]*self.Stjac[index,1]*e_str[0] +
+                            self.St[index]**2*E_str[0,1] ) *
+                    v1inf*turb.footprint(grid,self.Lfilter) )
+            F1v += (0.5 * turb.Ct * turb.rotorarea *
+                        ( 2*self.St[index]*self.Stjac[index,0]*e_str[1] +
+                            self.St[index]**2*E_str[1,0] ) *
+                    u1inf*turb.footprint(grid,self.Lfilter) )
+            F1v += (0.5 * turb.Ct * turb.rotorarea *
+                        ( 2*self.St[index]*self.Stjac[index,1]*e_str[1] +
+                            self.St[index]**2*E_str[1,1] ) *
+                    v1inf*turb.footprint(grid,self.Lfilter) )
         return F1u,F1v
+
+    def P0(self,abl,grid):
+        P0 = np.zeros(grid.shape)
+        for index,turb in enumerate(self.turbines):
+            P0 += (0.5 * turb.Cp * turb.rotorarea * self.St[index]**3 *
+                   turb.footprint(grid,self.Lfilter) )
+        return P0
+
+    def P1(self,abl,grid,u1r,v1r):
+        #Get velocity perturbations
+        function = getattr(self,'u_'+self.coupling)
+        u1inf,v1inf = function(abl,grid,u1r,v1r)
+        #Filter turbine power onto grid
+        P1 = np.zeros(grid.shape)
+        for index,turb in enumerate(self.turbines):
+            P1 += (0.5 * turb.Cp * turb.rotorarea *
+                        ( 3*self.St[index]**2*self.Stjac[index,0] ) *
+                    u1inf*turb.footprint(grid,self.Lfilter) )
+            P1 += (0.5 * turb.Cp * turb.rotorarea *
+                        ( 3*self.St[index]**2*self.Stjac[index,1] ) *
+                    v1inf*turb.footprint(grid,self.Lfilter) )
+        return P1
+
+    def Ftot0(self,abl,grid):
+        '''Total Wind-farm force without linear correction'''
+        F0u,F0v = self.F0(abl,grid)
+        F = np.sqrt(F0u**2+F0v**2)
+        return np.sum(F)*grid.dx*grid.dy
+
+    def Ftot(self,abl,grid,u1r,v1r):
+        '''Total Wind-farm force with linear correction'''
+        F0u,F0v = self.F0(abl,grid)
+        F1u,F1v = self.F1(abl,grid,u1r,v1r)
+        F = np.sqrt( (F0u+F1u)**2+(F0v+F1v)**2 )
+        return np.sum(F)*grid.dx*grid.dy
+
+    def Ftheory(self,abl,grid):
+        '''Theoretical Wind-farm force without gravity waves or wake effects'''
+        F = 0.
+        for index,turb in enumerate(self.turbines):
+            F += 0.5 * turb.Ct * turb.rotorarea * abl.S1**2
+        return F
+
+    def Ptot0(self,abl,grid):
+        '''Total Wind-farm power without linear correction'''
+        P0 = self.P0(abl,grid)
+        return np.sum(P0)*grid.dx*grid.dy
+
+    def Ptot(self,abl,grid,u1r,v1r):
+        '''Total Wind-farm power with linear correction'''
+        P0 = self.P0(abl,grid)
+        P1 = self.P1(abl,grid,u1r,v1r)
+        P = P0 + P1
+        return np.sum(P)*grid.dx*grid.dy
+
+    def Ptheory(self,abl,grid):
+        '''Theoretical Wind-farm power without gravity waves or wake effects'''
+        P = 0.
+        for index,turb in enumerate(self.turbines):
+            P += 0.5 * turb.Cp * turb.rotorarea * abl.S1**3
+        return P
 
     def u_upstream(self,abl,grid,u1r,v1r):
         #Coupling based on velocity 10D upstream from the first turbine
@@ -320,11 +401,11 @@ class WF(object):
     def turbines(self):
         return self.__turbines
     @property
-    def Ft(self):
-        return self.__Ft
+    def St(self):
+        return self.__St
     @property
-    def Ftjac(self):
-        return self.__Ftjac
+    def Stjac(self):
+        return self.__Stjac
     @property
     def length(self):
         return self.xend-self.xstart
@@ -428,6 +509,12 @@ class turbine(object):
     @property
     def Ct(self):
         return self.__Ct
+    @property
+    def induction(self):
+        return 0.5-0.5*np.sqrt(1-self.Ct)
+    @property
+    def Cp(self):
+        return 4*self.induction*(1-self.induction)**2
 
 class turbine1D(turbine):
     '''

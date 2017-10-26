@@ -13,56 +13,28 @@ from py4sp.mypy import step
 from py4sp.mypy import pulse
 
 def gauss(turbines,abl):
-    Uinf = abl.U1
-    Vinf = abl.V1
-    Sinf = abl.S1
-    #Compute velocities
-    Nt = len(turbines)                  #Number of turbines
-    e_str = e_streamwise(Uinf,Vinf)     #Unit vector along the wind direction
-    TI = gauss_TI(turbines,abl)
-    A = gauss_A(turbines,abl,TI)
-    B = Sinf*np.ones((Nt))
-    S = scipy.linalg.solve(A,B)
-    #Compute forces
-    Ft = np.zeros((Nt,2),dtype=np.float64)
-    for index,turb in enumerate(turbines):
-        Ft[index,0] = 0.5* turb.Ct * turb.rotorarea * S[index]**2 * e_str[0]
-        Ft[index,1] = 0.5* turb.Ct * turb.rotorarea * S[index]**2 * e_str[1]
-    return Ft
+    TI = gauss_TI(turbines,abl)  #Compute TI at turbine locations
+    A  = gauss_A(turbines,abl,TI)#Compute matrix with wake effects
+    B  = nowake(turbines,abl)    #Vector with undisturbed turbine inflow velocities
+    S  = scipy.linalg.solve(A,B) #Vector with turbine inflow velocities
+    return S
 
 def gauss_jac(turbines,abl):
     Uinf = abl.U1
     Vinf = abl.V1
     Sinf = abl.S1
     Nt = len(turbines)                  #Number of turbines
-    Ftjac = np.zeros((Nt,2,2))
     #Find dSdu,dSdv
-    TI = gauss_TI(turbines,abl)
-    A = gauss_A(turbines,abl,TI)
-    B = Sinf*np.ones((Nt))
-    S = scipy.linalg.solve(A,B)
+    TI = gauss_TI(turbines,abl)  #Compute TI at turbine locations
+    A  = gauss_A(turbines,abl,TI)#Compute matrix with wake effects
+    B  = nowake(turbines,abl)    #Vector with undisturbed turbine inflow velocities
+    S  = scipy.linalg.solve(A,B) #Vector with turbine inflow velocities
     dAdu,dAdv = gauss_Ajac(turbines,abl,TI)
     dSinfdu = Uinf/Sinf*np.ones((Nt))
     dSinfdv = Vinf/Sinf*np.ones((Nt))
     dSdu = scipy.linalg.solve(A,dSinfdu-np.dot(dAdu,S))
     dSdv = scipy.linalg.solve(A,dSinfdv-np.dot(dAdv,S))
-    #Unit vectors and their derivatives
-    e_str  = e_streamwise(Uinf,Vinf)
-    E_str  = e_str_jac(Uinf,Vinf)
-    for index,turb in enumerate(turbines):
-        Ftjac[index,0,0] = (0.5* turb.Ct * turb.rotorarea*
-                            ( 2*S[index]*dSdu[index]*e_str[0]
-                            +S[index]**2*E_str[0,0]) ) #Fudu
-        Ftjac[index,0,1] = (0.5* turb.Ct * turb.rotorarea*
-                            ( 2*S[index]*dSdv[index]*e_str[0]
-                            +S[index]**2*E_str[0,1]) ) #Fudv
-        Ftjac[index,1,0] = (0.5* turb.Ct * turb.rotorarea*
-                            ( 2*S[index]*dSdu[index]*e_str[1]
-                            +S[index]**2*E_str[1,0]) ) #Fvdu
-        Ftjac[index,1,1] = (0.5* turb.Ct * turb.rotorarea*
-                            ( 2*S[index]*dSdv[index]*e_str[1]
-                            +S[index]**2*E_str[1,1]) ) #Fvdv
-    return Ftjac
+    return np.vstack([dSdu,dSdv]).T
 
 def gauss_alternative(turbines,Uinf,Vinf,kwake):
 #Depreciated
@@ -189,13 +161,26 @@ def gauss_A(turbines,abl,TI):
     Nq = 16                             #Number of quadrature pints
     e_str = e_streamwise(Uinf,Vinf)     #Unit vector along the wind direction
     e_span = e_spanwise(Uinf,Vinf)      #Unit vector in cross wind direction
-    A = np.zeros((Nt,Nt))
+    A = np.identity((Nt))
     for i, turbi in enumerate(turbines):
-        A[i,i] = 1.0
         #Loop over all other turbines to collect wake effects
         for k, turbk in enumerate(turbines):
-            if k==i: continue           #Turbine i does not affect itself
             kwake = abl.kwake(TI[k])
+            #minD = minimum distance between turbines to have wake interaction
+            #(if x<minD, the wake deficit is not defined)
+            beta = 0.5*(1+np.sqrt(1-turbk.Ct))/np.sqrt(1-turbk.Ct)
+            eps  = 0.2*np.sqrt(beta)
+            minD = 1./kwake*(np.sqrt(turbk.Ct/8.)-eps)*turbk.D
+            #Vector from turbine K to center of turbine I
+            KI = np.array([turbi.x-turbk.x,turbi.y-turbk.y])
+            #Streamwise distance between turbine K and turbine I along e_str
+            #Positive if I is downstream of K 
+            #Negative if I is upstream of K
+            delta_str = np.dot(KI,e_str)
+            #test distance between center of turbine I and K.
+            #If yaw angle of both turbines is equal, delta_str is identical for all
+            #quadrature points.
+            if delta_str<minD: continue
             #Loop over quadrature points
             for n in range(Nq):
                 wn  = 1.0/Nq
@@ -214,13 +199,7 @@ def gauss_A(turbines,abl,TI):
                 #Has a sign but wake model is axisymmetric
                 delta_span = np.dot(KI,e_span)
                 #Compute wakedeficit at turbine I due to turbine K
-                #minD = minimum distance between turbines to have wake interaction
-                #(if x<minD, the wake deficit is not defined)
-                beta = 0.5*(1+np.sqrt(1-turbk.Ct))/np.sqrt(1-turbk.Ct)
-                eps  = 0.2*np.sqrt(beta)
-                minD = 1./kwake*(np.sqrt(turbk.Ct/8.)-eps)*turbk.D
-                if delta_str>minD:
-                    A[i,k] += wn*gauss_wakedeficit(delta_str,delta_span,zn,
+                A[i,k] += wn*gauss_wakedeficit(delta_str,delta_span,zn,
                                                    turbk.D,turbk.Ct,kwake)
                 #Ghost turbine?
     return A
@@ -241,8 +220,22 @@ def gauss_Ajac(turbines,abl,TI):
         #dAdv[i,i] = 0.0
         #Loop over all other turbines to collect wake effects
         for k, turbk in enumerate(turbines):
-            if k==i: continue           #Turbine i does not affect itself
             kwake = abl.kwake(TI[k])
+            #minD = minimum distance between turbines to have wake interaction
+            #(if x<minD, the wake deficit is not defined)
+            beta = 0.5*(1+np.sqrt(1-turbk.Ct))/np.sqrt(1-turbk.Ct)
+            eps  = 0.2*np.sqrt(beta)
+            minD = 1./kwake*(np.sqrt(turbk.Ct/8.)-eps)*turbk.D
+            #Vector from turbine K to center of turbine I
+            KI = np.array([turbi.x-turbk.x,turbi.y-turbk.y])
+            #Streamwise distance between turbine K and turbine I along e_str
+            #Positive if I is downstream of K 
+            #Negative if I is upstream of K
+            delta_str = np.dot(KI,e_str)
+            #test distance between center of turbine I and K.
+            #If yaw angle of both turbines is equal, delta_str is identical for all
+            #quadrature points.
+            if delta_str<minD: continue
             #Loop over quadrature points
             for n in range(Nq):
                 wn  = 1.0/Nq
@@ -264,16 +257,10 @@ def gauss_Ajac(turbines,abl,TI):
                 dstr_jac = np.dot(KI.T,E_str)+r*np.cos(phi)*np.dot(E_span.T,e_str)
                 dspan_jac= np.dot(KI.T,E_span)+r*np.cos(phi)*np.dot(E_span.T,e_span)
                 #Derivative of wakedeficit at turbine I due to turbine K
-                #minD = minimum distance between turbines to have wake interaction
-                #(if x<minD, the wake deficit is not defined)
-                beta = 0.5*(1+np.sqrt(1-turbk.Ct))/np.sqrt(1-turbk.Ct)
-                eps  = 0.2*np.sqrt(beta)
-                minD = 1./kwake*(np.sqrt(turbk.Ct/8.)-eps)*turbk.D
-                if delta_str>minD:
-                    defjac = gauss_wakedeficit_jac(delta_str,delta_span,zn,
-                                                   turbk.D,turbk.Ct,kwake)
-                    dAdu[i,k] += wn*(defjac[0]*dstr_jac[0]+defjac[1]*dspan_jac[0])
-                    dAdv[i,k] += wn*(defjac[0]*dstr_jac[1]+defjac[1]*dspan_jac[1])
+                defjac = gauss_wakedeficit_jac(delta_str,delta_span,zn,
+                                               turbk.D,turbk.Ct,kwake)
+                dAdu[i,k] += wn*(defjac[0]*dstr_jac[0]+defjac[1]*dspan_jac[0])
+                dAdv[i,k] += wn*(defjac[0]*dstr_jac[1]+defjac[1]*dspan_jac[1])
                 #Ghost turbine?
     return dAdu,dAdv
 
@@ -339,26 +326,13 @@ def jensen(turbines,Uinf,Vinf,kwake):
     return Ftu,Ftv,S
 
 def nowake(turbines,abl):
-    Uinf = abl.U1
-    Vinf = abl.V1
-    Sinf = abl.S1
-    Ft = np.zeros((len(turbines),2))
-    for index,turb in enumerate(turbines):
-        Ft[index,0] = 0.5* turb.Ct * turb.rotorarea * Sinf*Uinf
-        Ft[index,1] = 0.5* turb.Ct * turb.rotorarea * Sinf*Vinf
-    return Ft
+    return abl.S1*np.ones((len(turbines)))
 
 def nowake_jac(turbines,abl):
-    Uinf = abl.U1
-    Vinf = abl.V1
-    Sinf = abl.S1
-    Ftjac = np.zeros((len(turbines),2,2))
-    for index,turb in enumerate(turbines):
-        Ftjac[index,0,0] = 0.5* turb.Ct * turb.rotorarea * (Sinf+Uinf**2/Sinf)
-        Ftjac[index,0,1] = 0.5* turb.Ct * turb.rotorarea * (Uinf*Vinf/Sinf)
-        Ftjac[index,1,0] = 0.5* turb.Ct * turb.rotorarea * (Uinf*Vinf/Sinf)
-        Ftjac[index,1,1] = 0.5* turb.Ct * turb.rotorarea * (Sinf+Vinf**2/Sinf)
-    return Ftjac
+    Nt = len(turbines)
+    dSdu = abl.U1/abl.S1*np.ones((Nt))
+    dSdv = abl.V1/abl.S1*np.ones((Nt))
+    return np.vstack([dSdu,dSdv]).T
 
 def e_streamwise(Uinf,Vinf):
     '''Unit vector along the wind direction'''
