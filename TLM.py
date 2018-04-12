@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
 '''
-Three-layer models
-'''
+Three-layer module
 
+Module defining data structures for
+- Numerical grids
+- Atmospheric state
+- Three-layer module
+'''
 __author__ = "Dries Allaerts"
 __date__ = "June 15, 2017"
 
@@ -21,7 +25,9 @@ from py4sp import CIops
 
 class Grid(object):
     '''
-    Grid object containing all information about the numerical domain
+    Generic grid object
+    
+    Data structure containing information about the numerical domain
     and the discretization
     '''
     def __init__(self):
@@ -30,12 +36,14 @@ class Grid(object):
 
     @property
     def N(self):
+        '''Total number of grid points'''
         return self.__N
     @N.setter
     def N(self,value):
         self.__N = value
     @property
     def shape(self):
+        '''Dimensions of the numerical domain'''
         return self.__shape
     @shape.setter
     def shape(self,value):
@@ -43,9 +51,17 @@ class Grid(object):
 
 class Stat1Dgrid(Grid):
     '''
-    One-dimensional numerical domain, no time dependency
+    Grid for one-dimensional, stationary simulation
     '''
     def __init__(self,Lx,Nx):
+        '''
+        Parameters
+        ----------
+        Lx: float
+            Length of the numerical domain
+        Nx: int
+            Number of grid points
+        '''
         super().__init__()
         assert np.mod(Nx,2)==0, 'Error, current implementation only allows even Nx'
             #Don't allow uneven grid sizes,
@@ -57,33 +73,54 @@ class Stat1Dgrid(Grid):
         self.shape = (self.Nx,)
 
     def deal_grid(self):
+        '''
+        Dealiasing grid
+
+        Returns
+        -------
+        _: Stat1Dgrid
+            Dealiasing grid with size = 3/2 original grid size
+        '''
         assert np.mod(self.Nx,4)==0, 'Error, Nx is not a multiple of 4 so dealiasing grid is uneven'
             #Make sure dealising grid has even number of grid point,
         return Stat1Dgrid(self.Lx,int(3*self.Nx/2))
 
     @property
     def Lx(self):
+        '''Length of the numerical domain in dimension 0'''
         return self.__Lx
     @property
     def Nx(self):
+        '''Number of grid points in dimension 0'''
         return self.__Nx
     @property
     def dx(self):
+        '''Grid size in dimension 0'''
         return self.Lx/self.Nx
     @property
     def xs(self):
+        '''Array with grid points in dimension 0 (real space)'''
         return np.linspace(0,self.Lx,self.Nx,endpoint=False)
     @property
     def ks(self):
+        '''Array with wave numbers in dimension 0 (Fourier space)'''
         #Use built-in function fftfreq, which works for both even and uneven Nx
         #Also shift wavenumbers so that k=0 is at Nx/2
         return 2.0*np.pi*np.fft.fftshift(np.fft.fftfreq(self.Nx,self.dx))
 
 class Stat2Dgrid(Grid):
     '''
-    Two-dimensional numerical domain, no time dependency
+    Grid for two-dimensional, stationary simulation
     '''
     def __init__(self,Lx,Nx,Ly,Ny):
+        '''
+        Parameters
+        ----------
+        Lx,Ly: float
+            Length of the numerical domain (dimension 0 and 1)
+        Nx,Ny: int
+            Number of grid points (dimension 0 and 1)
+        '''
         super().__init__()
         assert np.mod(Nx,2)==0, 'Error, current implementation only allows even Nx'
         assert np.mod(Ny,2)==0, 'Error, current implementation only allows even Ny'
@@ -98,6 +135,14 @@ class Stat2Dgrid(Grid):
         self.shape = (self.Nx,self.Ny)
 
     def deal_grid(self):
+        '''
+        Dealiasing grid
+
+        Returns
+        -------
+        _: Stat2Dgrid
+            Dealiasing grid with size = 3/2 original grid size
+        '''
         assert np.mod(self.Nx,4)==0, 'Error, Nx is not a multiple of 4 so dealiasing grid is uneven'
         assert np.mod(self.Ny,4)==0, 'Error, Ny is not a multiple of 4 so dealiasing grid is uneven'
             #Make sure dealising grid has even number of grid point,
@@ -105,44 +150,72 @@ class Stat2Dgrid(Grid):
     
     @property
     def Lx(self):
+        '''Length of the numerical domain in dimension 0'''
         return self.__Lx
     @property
     def Nx(self):
+        '''Number of grid points in dimension 0'''
         return self.__Nx
     @property
     def dx(self):
+        '''Grid size in dimension 0'''
         return self.Lx/self.Nx
     @property
     def Ly(self):
+        '''Length of the numerical domain in dimension 1'''
         return self.__Ly
     @property
     def Ny(self):
+        '''Number of grid points in dimension 1'''
         return self.__Ny
     @property
     def dy(self):
+        '''Grid size in dimension 1'''
         return self.Ly/self.Ny
     @property
     def xs(self):
+        '''Array with grid points in dimension 0 (real space)'''
         return np.linspace(0,self.Lx,self.Nx,endpoint=False)
     @property
     def ys(self):
+        '''Array with grid points in dimension 1 (real space)'''
         return np.linspace(0,self.Ly,self.Ny,endpoint=False)
     @property
     def ks(self):
+        '''Array with wave numbers in dimension 0 (Fourier space)'''
         #Use built-in function fftfreq, which works for both even and uneven Nx
         #Also shift wavenumbers so that k=0 is at Nx/2
         return 2.0*np.pi*np.fft.fftshift(np.fft.fftfreq(self.Nx,self.dx))
     @property
     def ls(self):
+        '''Array with wave numbers in dimension 1 (Fourier space)'''
         #Use built-in function fftfreq, which works for both even and uneven Ny
         #Also shift wavenumbers so that l=0 is at Ny/2
         return 2.0*np.pi*np.fft.fftshift(np.fft.fftfreq(self.Ny,self.dy))
+    @property
+    def Ks(self):
+        '''2D mesh with wave numbers in dimension 0 (Fourier space)'''
+        Ks, Ls = np.meshgrid(self.ks,self.ls,indexing='ij')
+        return Ks
+    @property
+    def Ls(self):
+        '''2D mesh with wave numbers in dimension 1 (Fourier space)'''
+        Ks, Ls = np.meshgrid(self.ks,self.ls,indexing='ij')
+        return Ls
 
 class Dyn1Dgrid(Stat1Dgrid):
     '''
-    One-dimensional numerical domain with time dependency
+    Grid for one-dimensional, transient simulation
     '''
     def __init__(self,Lx,Nx,Lt,Nt):
+        '''
+        Parameters
+        ----------
+        Lx,Lt: float
+            Length of the numerical domain (dimension 0 and time)
+        Nx,Nt: int
+            Number of grid points (dimension 0 and time)
+        '''
         super().__init__(Lx,Nx)
         assert np.mod(Nt,2)==1, 'Error, current implementation only allows even Nt'
             #Don't allow uneven grid sizes,
@@ -155,18 +228,23 @@ class Dyn1Dgrid(Stat1Dgrid):
     
     @property
     def Lt(self):
+        '''Time horizon'''
         return self.__Lt
     @property
     def Nt(self):
+        '''Number of grid points in time'''
         return self.__Nt
     @property
     def dt(self):
+        '''Grid size in time'''
         return self.Lt/self.Nt
     @property
     def ts(self):
+        '''Array with grid points in time (real space)'''
         return np.linspace(0,self.Lt,self.Nt,endpoint=False)
     @property
     def omegas(self):
+        '''Array with angular frequencies (Fourier space)'''
         #Use built-in function fftfreq, which works for both even and uneven Nt
         #Also shift wavenumbers so that omega=0 is at Nt/2
         return 2.0*np.pi*np.fft.fftshift(np.fft.fftfreq(self.Nt,self.dt))
@@ -182,9 +260,46 @@ class model(object):
         self.__abl = abl
         self.__PHI = None
     
-    def solve(self,method='lgmres',verbose=False):
+    def solve(self,method='lgmres',verbose=False,WFfeedback=True):
         N = self.grid.N
-        if method=='direct':
+        err = 1
+        if not WFfeedback:
+            #######################
+            #Build A and B matrices
+            #######################
+            if verbose:
+                print('Start preprocessing WF model')
+                start = time.time()
+
+            self.forcing.preprocess(self.abl,WFfeedback)
+
+            if verbose:
+                end = time.time()
+                print('WF preprocessing time was',end-start,'s')
+                print('Start building matrices')
+                start = time.time()
+
+            B = self.Bvector()
+            M = self.Moperator()
+
+            if verbose:
+                end = time.time()
+                print('Time to create matrices was',end-start,'s')
+            ##########################
+            #Solve system of equations
+            ##########################
+            if verbose:
+                print('Start model calculation')
+                start = time.time()
+
+            X = M.matvec(B)
+
+            if verbose:
+                end = time.time()
+                print('Time to calculate model was',end-start,'s')
+            ##########################
+
+        elif method=='direct':
             print('Error, direct methode not supported anymore')
             return 1
             #######################
@@ -207,7 +322,7 @@ class model(object):
             X = scipy.linalg.solve(A,B)
             end = time.time()
             if verbose:
-                print('Time to calculate 1D model was',end-start,'s')
+                print('Time to calculate model was',end-start,'s')
             ##########################
         else:
             #######################
@@ -215,25 +330,29 @@ class model(object):
             #######################
             if verbose:
                 print('Start preprocessing WF model')
-            start = time.time()
+                start = time.time()
+
             self.forcing.preprocess(self.abl)
-            end = time.time()
+
             if verbose:
+                end = time.time()
                 print('WF preprocessing time was',end-start,'s')
                 print('Start building matrices')
-            start = time.time()
+                start = time.time()
+
             B = self.Bvector()
             A = self.Aoperator()
             M = self.Moperator()
-            end = time.time()
+
             if verbose:
+                end = time.time()
                 print('Time to create matrices was',end-start,'s')
             ##########################
             #Solve system of equations
             ##########################
             if verbose:
                 print('Start model calculation')
-            start = time.time()
+                start = time.time()
             if method=='gmres':
                 counter = gmres_counter(disp=verbose)
                 X,err = scipy.sparse.linalg.gmres(A,B,
@@ -251,6 +370,7 @@ class model(object):
                             callback=counter)
                 if verbose:
                     print('lgmres finished with output flag ',err)
+                    print('lmgres needed ',counter.niter,' iterations')
 #                plt.figure()
 #                indices = np.nonzero(counter.residu)[0]
 #                plt.semilogy(indices,counter.residu[indices],'-b')
@@ -261,9 +381,9 @@ class model(object):
             else:
                 print('Method unknown')
                 X = np.zeros((B.shape))
-            end = time.time()
             if verbose:
-                print('Time to calculate 1D model was',end-start,'s')
+                end = time.time()
+                print('Time to calculate model was',end-start,'s')
                 rk = A.matvec(X)-B
                 print('Euclidean norm of the complex residual is',np.linalg.norm(rk))
             ##########################
@@ -272,17 +392,18 @@ class model(object):
         #Store solution and do inverse fft
         ##################################i
         result = self.format_solution(X)
+        result['err'] = err
         if verbose:
             print('Start inverse FFT')
-        start = time.time()
+            start = time.time()
         result['u1r'], err_u1r   = self.c2r(result['u1c'],True)
         result['v1r'], err_v1r   = self.c2r(result['v1c'],True)
         result['u2r'], err_u2r   = self.c2r(result['u2c'],True)
         result['v2r'], err_v2r   = self.c2r(result['v2c'],True)
         result['etar'], err_etar = self.c2r(result['etac'],True)
         result['pr'], err_pr     = self.c2r(result['pc'],True)
-        end = time.time()
         if verbose:
+            end = time.time()
             print('Time to compute inverse FFT was',end-start,'s')
             print('Imaginary part of u1r is smaller than',err_u1r)
             print('Imaginary part of v1r is smaller than',err_v1r)
@@ -315,9 +436,12 @@ class S1Dmodel(model):
     '''
     Steady one-dimensional gravity wave model
     '''
-    def __init__(self,grid,forcing,abl):
+    def __init__(self,grid,forcing,abl,purefriction=False):
         super().__init__(grid,forcing,abl)
-        self.PHI = self.PHIvector()
+        if purefriction:
+            self.PHI = np.zeros(self.grid.shape,dtype=np.complex128)
+        else:
+            self.PHI = self.PHIvector()
 
     def format_solution(self,X):
         u1c,v1c,u2c,v2c = self.expandX(X)
@@ -1148,7 +1272,7 @@ class S2Dmodel(model):
         return np.real(rfield)
 
     def r2c_deal(self,rfield32):
-        cfield32 = np.fft.fftshift(np.fft.fft(rfield32))/self.grid32.N
+        cfield32 = np.fft.fftshift(np.fft.fft2(rfield32))/self.grid32.N
         return cfield32[int(self.grid.Nx/4):int(self.grid.Nx*5/4),int(self.grid.Ny/4):int(self.grid.Ny*5/4)]
 
     def continuity(self,u1c,v1c,u2c,v2c,p1c,p2c):
@@ -1834,10 +1958,17 @@ class U1Dmodel(model):
 
 class ABL(object):
     '''
-    Atmospheric boundary-layer model
-    '''
+    Atmospheric state
 
+    Data structure containing all information about the atmospheric state
+    '''
     def __init__(self,input='LESbased',**kwargs):
+        '''
+        Parameters
+        ----------
+        input: str
+            Name of the method used to specify the atmospheric state
+        '''
         #input flag indicates how the data is specified
         assert input in ['default_subcr',
                          'default_supercr',
@@ -1845,6 +1976,7 @@ class ABL(object):
                          'analytic_constant',
                          'analytic_quadratic',
                          'analytic_cubic',
+                         'ERA5',
                          'fromfile'],'Error: ABL input mode unknown'
         self.__nu1 = 0.
         self.__nu2 = 0.
@@ -1852,6 +1984,9 @@ class ABL(object):
         self.__us = None
         self.__vs = None
         self.__zst = None
+        self.__ths = None
+        self.__taus = None
+        self.__TIs = None
         self.__TI = 0.12
         
         function = getattr(self,input)
@@ -2103,7 +2238,133 @@ class ABL(object):
         tau12 = tau[i1+1]
         self.__C1 = tau12/self.dS12**2
         self.__C2 = 0.
+
+    def ERA5(self,**kwargs):
+        arguments = ['H1','T2','blh','ust','wth','phi',
+                     'zs','us','vs','ths','Gmode']
+        assert all([i in kwargs for i in arguments]),'Error: some arguments for ERA5 based ABL definition are missing'
+
+        gravity = 9.80665    # [m s-2]
+        P0 = 1.e5 # Reference pressure [Pa]
+        R_air = 287.058 # Specific gas constant for dry air [J kg-1 K-1]
+        Cp_air = 1005   # Specific heat of air [J kg-1 K-1]
+        kappa  = 0.41   # Von Karman constant
+        eps = 0.609133  # Rv/Rd-1
+        omega = 7.2921159e-5    # angular speed of the Earth [rad/s]
+
+        #Surface parameters
+        ust = kwargs['ust']
+        wth = kwargs['wth']
+        T2  = kwargs['T2']
+        blh = kwargs['blh']
+        zeta = -2.0*kappa*gravity*wth/(T2*ust**3)
+
+        #Vertical profiles (arrays are in reversed order)
+        self.__zs  = kwargs['zs'][::-1]
+        self.__us  = kwargs['us'][::-1]
+        self.__vs  = kwargs['vs'][::-1]
+        self.__ths = kwargs['ths'][::-1]
+
+        #Estimate inversion parameters
+        zCI = self.zs[self.zs<5000]
+        thCI = self.ths[self.zs<5000]
+        if 'dh_max' in kwargs:
+            dh_max = kwargs['dh_max']
+        else:
+            dh_max=None
+
+        if zeta>0.02:
+            #Ignore temperature decrease inside SBL
+            #(we are trying to indentify the mixing layer that preceded this SBL)
+            thCI[zCI<blh] = interpolate.interp1d(zCI,thCI)(blh)
+            CIestimate = CIops.RZfit(zCI,thCI,p0=[0.9,0.1,T2,1000.,100.0],
+                                            dh_max=dh_max)
+        else:
+            #Ignore temperature increase in CBL surface layer
+            thCI[0:np.argmin(thCI)] = np.min(thCI)
+            CIestimate = CIops.RZfit(zCI,thCI,p0=[0.9,0.1,T2,blh,100.0],
+                                            dh_max=dh_max)
+
+        #No inversion strength in the following cases:
+        #a<=0.2: encroachment
+        #a<=2*b: inversion lapse rate is equal to or smaller than free lapse rate
+        if (CIestimate['a']<=0.2 or CIestimate['a']<=2*CIestimate['b']):
+            H = np.max([CIestimate['h1'],kwargs['H1']+10])
+            self.__gprime = 0.
+        else:
+            H = np.max([CIestimate['h1'],kwargs['H1']+10])
+            self.__gprime = gravity*CIestimate['dth']/T2
+
+        #Flux profile
+        tau    = np.zeros(self.zs.shape)
+        nu     = np.zeros(self.zs.shape)
+        if zeta>0.0:
+            tau[self.zs<=blh] = ust**2*(1-self.zs[self.zs<=blh]/blh)**(1.5)
+            nu[self.zs<=blh]  = kappa*ust*self.zs[self.zs<=blh]*(1-self.zs[self.zs<=blh]/blh)**2
+        else:
+            tau[self.zs<=H] = ust**2*(1-self.zs[self.zs<=H]/H)
+            nu[self.zs<=H]  = kappa*ust*self.zs[self.zs<=H]*(1-self.zs[self.zs<=H]/H)**2
+        self.__taus = tau
+
+        fu = interpolate.interp1d(self.zs,self.us,fill_value='extrapolate')
+        fv = interpolate.interp1d(self.zs,self.vs,fill_value='extrapolate')
+        ft = interpolate.interp1d(self.zs,self.taus,fill_value='extrapolate')
+        fn = interpolate.interp1d(self.zs,nu,fill_value='extrapolate')
+        #Compute height averaged quantities
+        #Layer 1
+        self.__H1 = kwargs['H1']
+        z = np.linspace(0,self.H1,100)
+        self.__U1 = np.trapz(fu(z),z)/self.H1
+        self.__V1 = np.trapz(fv(z),z)/self.H1
+#        self.__nu1 = np.trapz(fn(z),z)/self.H1
+        #Layer 2
+        self.__H2 = H-self.H1
+        z = np.linspace(self.H1,self.H,100)
+        self.__U2 = np.trapz(fu(z),z)/self.H2
+        self.__V2 = np.trapz(fv(z),z)/self.H2
+#        self.__nu2 = np.trapz(fn(z),z)/self.H2
+        #Layer 3
+        if kwargs['Gmode'] == 'h1':
+            self.__U3 = np.asscalar(fu(CIestimate['h1']))
+            self.__V3 = np.asscalar(fv(CIestimate['h1']))
+        elif kwargs['Gmode'] == 'h2':
+            self.__U3 = np.asscalar(fu(CIestimate['h2']))
+            self.__V3 = np.asscalar(fv(CIestimate['h2']))
+        elif kwargs['Gmode'] == 'top':
+            self.__U3 = np.asscalar(fu(5000.))
+            self.__V3 = np.asscalar(fv(5000.))
+        elif kwargs['Gmode'] == 'avg':
+            z = np.linspace(self.H,5000.,1000)
+            self.__U3 = np.trapz(fu(z),z)/(z[-1]-z[0])
+            self.__V3 = np.trapz(fu(z),z)/(z[-1]-z[0])
+        else:
+            print('Gmode unknown, abort')
+            return 1
+
+        #Stress levels
+        tau01 = ust**2
+        tau12 = ft(self.H1)
+        tau23 = ft(self.H)
+        self.__C0 = tau01/self.S1**2
+        self.__C1 = tau12/self.dS12**2
+        self.__C2 = tau23/self.dS23**2
+
+        #Turbulent intensity at hub height
+        if zeta>0.0:
+            #From Nieuwstadt (1984): q/sqrt(tau) = 3
+            tke = 4.5*tau
+            f = interpolate.interp1d(self.zs,np.sqrt(2./3.*tke/self.Ms))
+        else:
+            #From Stull (1988): q^2/tau = 8.5+2.5
+            tke = 5.5*tau
+            f = interpolate.interp1d(self.zs,np.sqrt(2./3.*tke/self.Ms))
+        self.__TI = np.asscalar(f(self.H1/2.0))
+        self.__TIs = f(self.zs)
     
+        #Other ABL parameters
+        self.__N  = np.sqrt(gravity*CIestimate['gamma']/T2)
+        self.__fc = 2*omega*np.sin(kwargs['phi'])
+
     def fromfile(self,**kwargs):
         #load ABL state from file
         assert 'filename' in kwargs, 'Error: filename not specified'
@@ -2168,7 +2429,7 @@ class ABL(object):
 
     def kwake(self,TI=None):
         if not TI:
-            TI = abl.TI
+            TI = self.TI
         return 0.3837*TI+0.003678
 
     def saveas(self,filename,info=''):
@@ -2218,48 +2479,84 @@ class ABL(object):
 
     @property
     def us(self):
+        '''Velocity profile in dimension 0 used to derive
+        height-averaged velocities'''
         return self.__us
     @property
     def vs(self):
+        '''Velocity profile in dimension 1 used to derive
+        height-averaged velocities'''
         return self.__vs
     @property
     def Ms(self):
+        '''Velocity magnitude profile (for post-processing purposes)'''
         return np.sqrt(self.us**2+self.vs**2)
     @property
+    def ths(self):
+        '''Potential temperature profile used to estimate
+        temperature structure'''
+        return self.__ths
+    @property
+    def taus(self):
+        '''Shear stress profile used to estimate
+        momentum transport coefficients'''
+        return self.__taus
+    @property
+    def TIs(self):
+        '''Turbulent intensity profile used to estimate
+        TI at hub height'''
+        return self.__TIs
+    @property
     def zs(self):
+        '''Height corresponding to the vertical profiles (at cell centers)'''
         return self.__zs
     @property
     def zst(self):
+        '''Height corresponding to the vertical profiles (at cell faces)'''
         return self.__zst
     @property
     def H1(self):
+        '''Height of the wind-farm layer'''
         return self.__H1
     @property
     def U1(self):
+        '''Height-averaged velocity in the wind-farm layer in dimension 0'''
         return self.__U1
     @U1.setter
     def U1(self,value):
         self.__U1 = value
     @property
     def V1(self):
+        '''Height averaged velocity in the wind-farm layer in dimension 1'''
         return self.__V1
     @V1.setter
     def V1(self,value):
         self.__V1 = value
     @property
     def S1(self):
+        '''Height-averaged velocity magnitude in the wind-farm layer'''
         return np.sqrt(self.U1**2 + self.V1**2)
     @property
     def WD1(self):
+        '''
+        Height-averaged wind direction in the wind-farm layer (degrees)
+
+        Bug: np.arctan only recognises angles between -90 and +90
+        Better would be to return np.arctan2(self.V1,self.U1)*180/np.pi
+        Even better is to return the actual wind direction:
+            return 180. + np.arctan2(self.U1,self.V1)*180/np.pi
+        '''
         return np.arctan(self.V1/self.U1)*180/np.pi
     @property
     def nu1(self):
+        '''Height-averaged turbulent viscosity in the wind-farm layer'''
         return self.__nu1
     @nu1.setter
     def nu1(self,value):
         self.__nu1 = value
     @property
     def H2(self):
+        '''Height of the upper layer'''
         return self.__H2
     @property
     def U2(self):
@@ -2275,6 +2572,11 @@ class ABL(object):
         return np.sqrt(self.U2**2 + self.V2**2)
     @property
     def WD2(self):
+        '''
+        Height-averaged wind direction in the upper layer (degrees)
+
+        Bug: see WD1
+        '''
         return np.arctan(self.V2/self.U2)*180/np.pi
     @property
     def nu2(self):
@@ -2296,6 +2598,11 @@ class ABL(object):
         return np.sqrt(self.U3**2 + self.V3**2)
     @property
     def WD3(self):
+        '''
+        Wind direction in the free atmosphere (degrees)
+
+        Bug: see WD1
+        '''
         return np.arctan(self.V3/self.U3)*180/np.pi
     @property
     def dU12(self):
@@ -2345,17 +2652,22 @@ class ABL(object):
         return self.H1+self.H2
     @property
     def Ub(self):
-        return (self.H1/self.H*self.U1**(-2)+self.H2/self.H*self.U2**(-2))**(-1/2)
+        #Projection of (U2,V2) onto (U1,V1)
+        U2p = (self.U1*self.U2+self.V1*self.V2)/self.S1
+        return (self.H1/self.H*self.S1**(-2)+self.H2/self.H*U2p**(-2))**(-1/2)
+    @property
+    def PN(self):
+        return self.Ub**2/(self.N*self.S3*self.H)
     @property
     def Fr(self):
-        #return np.sqrt(self.S1*self.S2)/np.sqrt(self.gprime*(self.H1+self.H2))
-        return self.Ub/np.sqrt(self.gprime*self.H)
+        with np.errstate(divide='ignore',invalid='ignore'):
+            return self.Ub/np.sqrt(self.gprime*self.H)
     @property
     def Fr1(self):
-        return self.U1/np.sqrt(self.gprime*self.H1)
+        return self.S1/np.sqrt(self.gprime*self.H1)
     @property
     def Fr2(self):
-        return self.U2/np.sqrt(self.gprime*self.H2)
+        return self.S2/np.sqrt(self.gprime*self.H2)
 
 def cconv_1D(b,method='Fast'):
     '''
@@ -2460,3 +2772,4 @@ class lgmres_counter(object):
         #Reached the end
         if self._disp and self.niter==self.N:
             print('\n')
+

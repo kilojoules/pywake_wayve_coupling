@@ -240,12 +240,15 @@ class WF(object):
                                    diameters[turb],Cts[turb]))
 
 
-    def preprocess(self,abl):
+    def preprocess(self,abl,WFfeedback=True):
         #Compute FT and Ftjac matrices in preprocessing as this might take a while
         function = getattr(WakeModel,self.wakemodel)
         self.__St = function(self.turbines,abl)
-        function = getattr(WakeModel,self.wakemodel+'_jac')
-        self.__Stjac = function(self.turbines,abl)
+        if WFfeedback:
+            function = getattr(WakeModel,self.wakemodel+'_jac')
+            self.__Stjac = function(self.turbines,abl)
+        else:
+            self.__Stjac = np.zeros((self.Nturb,2))
     
     def F0(self,abl,grid):
         #Filter turbine forces onto grid
@@ -373,7 +376,6 @@ class WF(object):
         u1inf = np.mean(fu(np.ravel(X),np.ravel(Y)))
         v1inf = np.mean(fv(np.ravel(X),np.ravel(Y)))
         return u1inf,v1inf
-        
 
     def firstTurbine(self,WDvector):
         #Find first turbine in a given wind direction by projecting the
@@ -432,6 +434,12 @@ class WF(object):
     @property
     def yend(self):
         return self.__yend
+    @property
+    def xcentre(self):
+        return (self.xstart+self.xend)/2.0
+    @property
+    def ycentre(self):
+        return (self.ystart+self.yend)/2.0
 
 class WF1D(WF):
     '''
@@ -492,7 +500,7 @@ class turbine(object):
         Xs, Ys = np.meshgrid(grid.xs,grid.ys,indexing='ij')
         dist = (Xs-self.x)**2+(Ys-self.y)**2
         R = 1./(np.pi*L**2)*np.exp(-dist/L**2)
-        return R
+        return R/(np.sum(R)*grid.dx*grid.dy)
 
     @property
     def x(self):
