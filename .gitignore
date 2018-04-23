@@ -1,5 +1,6 @@
 # First, ignore everything
 *
-# And all the file types you're interested in.
+# File types you're interested in.
 !*.py
 !.gitignore
+!README.md
