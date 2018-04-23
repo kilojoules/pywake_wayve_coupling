@@ -1,0 +1,55 @@
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel}{}\section{tlmpy.\+T\+L\+M.\+S1\+D\+Pmodel Class Reference}
+\label{classtlmpy_1_1TLM_1_1S1DPmodel}\index{tlmpy.\+T\+L\+M.\+S1\+D\+Pmodel@{tlmpy.\+T\+L\+M.\+S1\+D\+Pmodel}}
+Inheritance diagram for tlmpy.\+T\+L\+M.\+S1\+D\+Pmodel\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=4.000000cm]{classtlmpy_1_1TLM_1_1S1DPmodel}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel_ae9058c7ab1da73f1eac783c178c90faf}{}def {\bfseries \+\_\+\+\_\+init\+\_\+\+\_\+} (self, grid, forcing, abl, pressure)\label{classtlmpy_1_1TLM_1_1S1DPmodel_ae9058c7ab1da73f1eac783c178c90faf}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel_a9eb5e3fb4fb9d681afbda2afad7e59a2}{}def {\bfseries format\+\_\+solution} (self, X)\label{classtlmpy_1_1TLM_1_1S1DPmodel_a9eb5e3fb4fb9d681afbda2afad7e59a2}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel_a0db8cf61ee2de4df9958a298911e2272}{}def {\bfseries Bvector} (self)\label{classtlmpy_1_1TLM_1_1S1DPmodel_a0db8cf61ee2de4df9958a298911e2272}
+
+\item 
+def \hyperlink{classtlmpy_1_1TLM_1_1S1DPmodel_a7cc15abda9833d886c46aceb32303af9}{Mx} (self, x)
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel_ab6f1030029e1727b7b428866f0af50d3}{}def {\bfseries Ax} (self, x)\label{classtlmpy_1_1TLM_1_1S1DPmodel_ab6f1030029e1727b7b428866f0af50d3}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel_ac1d2f4d642f79ff2f4f8a2791e55360a}{}def {\bfseries pc} (self)\label{classtlmpy_1_1TLM_1_1S1DPmodel_ac1d2f4d642f79ff2f4f8a2791e55360a}
+
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Steady one-dimensional pressure model
+(Three-layer model, but p is an input)
+\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\hypertarget{classtlmpy_1_1TLM_1_1S1DPmodel_a7cc15abda9833d886c46aceb32303af9}{}\index{tlmpy\+::\+T\+L\+M\+::\+S1\+D\+Pmodel@{tlmpy\+::\+T\+L\+M\+::\+S1\+D\+Pmodel}!Mx@{Mx}}
+\index{Mx@{Mx}!tlmpy\+::\+T\+L\+M\+::\+S1\+D\+Pmodel@{tlmpy\+::\+T\+L\+M\+::\+S1\+D\+Pmodel}}
+\subsubsection[{Mx}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.\+T\+L\+M.\+S1\+D\+Pmodel.\+Mx (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{x}
+\end{DoxyParamCaption}
+)}\label{classtlmpy_1_1TLM_1_1S1DPmodel_a7cc15abda9833d886c46aceb32303af9}
+\begin{DoxyVerb}Find preconditioner M = inv(P) that approximates inv(A)
+(excluding the convolution products)
+The matrix vector product Mx is found by solving Py=x
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/vsc-\/hard-\/mounts/leuven-\/user/306/vsc30637/tlmpy/T\+L\+M.\+py\end{DoxyCompactItemize}

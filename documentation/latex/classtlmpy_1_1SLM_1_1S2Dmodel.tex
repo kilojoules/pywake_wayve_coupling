@@ -1,0 +1,78 @@
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel}{}\section{tlmpy.\+S\+L\+M.\+S2\+Dmodel Class Reference}
+\label{classtlmpy_1_1SLM_1_1S2Dmodel}\index{tlmpy.\+S\+L\+M.\+S2\+Dmodel@{tlmpy.\+S\+L\+M.\+S2\+Dmodel}}
+Inheritance diagram for tlmpy.\+S\+L\+M.\+S2\+Dmodel\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classtlmpy_1_1SLM_1_1S2Dmodel}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_a42f07083299259b089d08b38d4c71591}{}def {\bfseries \+\_\+\+\_\+init\+\_\+\+\_\+} (self, grid, forcing, abl)\label{classtlmpy_1_1SLM_1_1S2Dmodel_a42f07083299259b089d08b38d4c71591}
+
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_acfbbfc2d1106258602d13e1fefe26c26}{}def {\bfseries format\+\_\+solution} (self, X)\label{classtlmpy_1_1SLM_1_1S2Dmodel_acfbbfc2d1106258602d13e1fefe26c26}
+
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_a960d6d7bc7fd859a806424f3e0b77347}{}def {\bfseries expand\+X} (self, X)\label{classtlmpy_1_1SLM_1_1S2Dmodel_a960d6d7bc7fd859a806424f3e0b77347}
+
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_af842ab31b38381cffff6c68e69dbbe7f}{}def {\bfseries c2r}\label{classtlmpy_1_1SLM_1_1S2Dmodel_af842ab31b38381cffff6c68e69dbbe7f}
+
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_ae286c39510512f46c2677d811f6b1b4a}{}def {\bfseries r2c} (self, rfield)\label{classtlmpy_1_1SLM_1_1S2Dmodel_ae286c39510512f46c2677d811f6b1b4a}
+
+\item 
+def \hyperlink{classtlmpy_1_1SLM_1_1S2Dmodel_a530eb0da3a49c0779375e190e50a46e1}{continuity} (self, u1c, v1c, pc)
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_a32b6b330aa3ed6740014df2aed3524f1}{}def {\bfseries Bvector} (self)\label{classtlmpy_1_1SLM_1_1S2Dmodel_a32b6b330aa3ed6740014df2aed3524f1}
+
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_a81ad4340c14c002678365a023b8fac82}{}def {\bfseries P\+H\+Ivector} (self)\label{classtlmpy_1_1SLM_1_1S2Dmodel_a81ad4340c14c002678365a023b8fac82}
+
+\item 
+def \hyperlink{classtlmpy_1_1SLM_1_1S2Dmodel_a0512d41a6c56a392a1a930a231400c98}{Mx} (self, x)
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_ae8cdf2e8e4192a440db296b3eedb23f4}{}{\bfseries P\+H\+I}\label{classtlmpy_1_1SLM_1_1S2Dmodel_ae8cdf2e8e4192a440db296b3eedb23f4}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Steady two-dimensional gravity wave model
+\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_a530eb0da3a49c0779375e190e50a46e1}{}\index{tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel}!continuity@{continuity}}
+\index{continuity@{continuity}!tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{continuity}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.\+S\+L\+M.\+S2\+Dmodel.\+continuity (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{u1c, }
+\item[{}]{v1c, }
+\item[{}]{pc}
+\end{DoxyParamCaption}
+)}\label{classtlmpy_1_1SLM_1_1S2Dmodel_a530eb0da3a49c0779375e190e50a46e1}
+\begin{DoxyVerb}Return boundar-layer displacement based on given velocity field\end{DoxyVerb}
+ \hypertarget{classtlmpy_1_1SLM_1_1S2Dmodel_a0512d41a6c56a392a1a930a231400c98}{}\index{tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel}!Mx@{Mx}}
+\index{Mx@{Mx}!tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{Mx}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.\+S\+L\+M.\+S2\+Dmodel.\+Mx (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{x}
+\end{DoxyParamCaption}
+)}\label{classtlmpy_1_1SLM_1_1S2Dmodel_a0512d41a6c56a392a1a930a231400c98}
+\begin{DoxyVerb}Find preconditioner M = inv(P) that approximates inv(A)
+(in Smith model, the approximation is exact)
+The matrix vector product Mx is found by solving Py=x
+\end{DoxyVerb}
+ 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/vsc-\/hard-\/mounts/leuven-\/user/306/vsc30637/tlmpy/S\+L\+M.\+py\end{DoxyCompactItemize}

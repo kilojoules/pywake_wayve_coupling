@@ -1,0 +1,105 @@
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel}{}\section{tlmpy.\+T\+L\+M.\+S2\+Dmodel Class Reference}
+\label{classtlmpy_1_1TLM_1_1S2Dmodel}\index{tlmpy.\+T\+L\+M.\+S2\+Dmodel@{tlmpy.\+T\+L\+M.\+S2\+Dmodel}}
+Inheritance diagram for tlmpy.\+T\+L\+M.\+S2\+Dmodel\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classtlmpy_1_1TLM_1_1S2Dmodel}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_ae8360d0d3e090e6209e4f85463b2e2be}{}def {\bfseries \+\_\+\+\_\+init\+\_\+\+\_\+}\label{classtlmpy_1_1TLM_1_1S2Dmodel_ae8360d0d3e090e6209e4f85463b2e2be}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_ad7b9871eba49649b7e42f1863cb65a78}{}def {\bfseries format\+\_\+solution} (self, X)\label{classtlmpy_1_1TLM_1_1S2Dmodel_ad7b9871eba49649b7e42f1863cb65a78}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a73f1af1fb1567125273e006f6ac249b8}{}def {\bfseries expand\+X} (self, X)\label{classtlmpy_1_1TLM_1_1S2Dmodel_a73f1af1fb1567125273e006f6ac249b8}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a9c0cce5902ee122410fb05c90e573f61}{}def {\bfseries c2r}\label{classtlmpy_1_1TLM_1_1S2Dmodel_a9c0cce5902ee122410fb05c90e573f61}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a8ef85d990b51dcb147275c4c76c6831a}{}def {\bfseries r2c} (self, rfield)\label{classtlmpy_1_1TLM_1_1S2Dmodel_a8ef85d990b51dcb147275c4c76c6831a}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_ab207d80f9a736f71c575e9f1d86b2fd7}{}def {\bfseries c2r\+\_\+deal} (self, cfield)\label{classtlmpy_1_1TLM_1_1S2Dmodel_ab207d80f9a736f71c575e9f1d86b2fd7}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a154df6b86c1130343c2741f2c40f09d2}{}def {\bfseries r2c\+\_\+deal} (self, rfield32)\label{classtlmpy_1_1TLM_1_1S2Dmodel_a154df6b86c1130343c2741f2c40f09d2}
+
+\item 
+def \hyperlink{classtlmpy_1_1TLM_1_1S2Dmodel_a930461687a5208ef5b33c9531c835991}{continuity} (self, u1c, v1c, u2c, v2c, p1c, p2c)
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a092fd624a0918a1f21824818d03ac62e}{}def {\bfseries Bvector} (self)\label{classtlmpy_1_1TLM_1_1S2Dmodel_a092fd624a0918a1f21824818d03ac62e}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_ae973465e78ffefbb187184c0b1fbd766}{}def {\bfseries P\+H\+Ivector} (self)\label{classtlmpy_1_1TLM_1_1S2Dmodel_ae973465e78ffefbb187184c0b1fbd766}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a18b56e502bc309508c484679bf61bc81}{}def {\bfseries Aoperator} (self)\label{classtlmpy_1_1TLM_1_1S2Dmodel_a18b56e502bc309508c484679bf61bc81}
+
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_abdeb0b7bac2a056bccddeb6387d57941}{}def {\bfseries Moperator} (self)\label{classtlmpy_1_1TLM_1_1S2Dmodel_abdeb0b7bac2a056bccddeb6387d57941}
+
+\item 
+def \hyperlink{classtlmpy_1_1TLM_1_1S2Dmodel_a8132b9c4cb83a72f0268aba1eb0363d5}{Mx} (self, x)
+\item 
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_abb83579a79edadb04190769a00793cfb}{}def {\bfseries Ax} (self, x)\label{classtlmpy_1_1TLM_1_1S2Dmodel_abb83579a79edadb04190769a00793cfb}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classtlmpy_1_1TLM_1_1S2Dmodel_a4dc22b5eac0e0e7ec9f7f4df057b2d5f}{P\+H\+I}
+\begin{DoxyCompactList}\small\item\em Using the continuity equation Ks, Ls = np.\+meshgrid(self.\+grid.\+ks,self.\+grid.\+ls,indexing=\textquotesingle{}ij\textquotesingle{}) sigma1 = self.\+abl.\+U1$\ast$\+Ks+self.abl.\+V1$\ast$\+Ls sigma2 = self.\+abl.\+U2$\ast$\+Ks+self.abl.\+V2$\ast$\+Ls with np.\+errstate(divide=\textquotesingle{}ignore\textquotesingle{},invalid=\textquotesingle{}ignore\textquotesingle{})\+: eta1 = -\/self.\+abl.\+H1/sigma1$\ast$(Ks$\ast$u1c+\+Ls$\ast$v1c) eta2 = -\/self.\+abl.\+H2/sigma2$\ast$(Ks$\ast$u2c+\+Ls$\ast$v2c) When sigma1,2 is exactly zero (this includes the mean mode), eta1,2 is undefined (division by zero). \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Steady two-dimensional gravity wave model
+\end{DoxyVerb}
+ 
+
+\subsection{Member Function Documentation}
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a930461687a5208ef5b33c9531c835991}{}\index{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel}!continuity@{continuity}}
+\index{continuity@{continuity}!tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{continuity}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.\+T\+L\+M.\+S2\+Dmodel.\+continuity (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{u1c, }
+\item[{}]{v1c, }
+\item[{}]{u2c, }
+\item[{}]{v2c, }
+\item[{}]{p1c, }
+\item[{}]{p2c}
+\end{DoxyParamCaption}
+)}\label{classtlmpy_1_1TLM_1_1S2Dmodel_a930461687a5208ef5b33c9531c835991}
+\begin{DoxyVerb}Return boundar-layer displacement based on given velocity field\end{DoxyVerb}
+ \hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a8132b9c4cb83a72f0268aba1eb0363d5}{}\index{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel}!Mx@{Mx}}
+\index{Mx@{Mx}!tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{Mx}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.\+T\+L\+M.\+S2\+Dmodel.\+Mx (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{x}
+\end{DoxyParamCaption}
+)}\label{classtlmpy_1_1TLM_1_1S2Dmodel_a8132b9c4cb83a72f0268aba1eb0363d5}
+\begin{DoxyVerb}Find preconditioner M = inv(P) that approximates inv(A)
+(excluding the convolution products)
+The matrix vector product Mx is found by solving Py=x
+\end{DoxyVerb}
+ 
+
+\subsection{Member Data Documentation}
+\hypertarget{classtlmpy_1_1TLM_1_1S2Dmodel_a4dc22b5eac0e0e7ec9f7f4df057b2d5f}{}\index{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel}!P\+H\+I@{P\+H\+I}}
+\index{P\+H\+I@{P\+H\+I}!tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel@{tlmpy\+::\+T\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{P\+H\+I}]{\setlength{\rightskip}{0pt plus 5cm}tlmpy.\+T\+L\+M.\+S2\+Dmodel.\+P\+H\+I}\label{classtlmpy_1_1TLM_1_1S2Dmodel_a4dc22b5eac0e0e7ec9f7f4df057b2d5f}
+
+
+Using the continuity equation Ks, Ls = np.\+meshgrid(self.\+grid.\+ks,self.\+grid.\+ls,indexing=\textquotesingle{}ij\textquotesingle{}) sigma1 = self.\+abl.\+U1$\ast$\+Ks+self.abl.\+V1$\ast$\+Ls sigma2 = self.\+abl.\+U2$\ast$\+Ks+self.abl.\+V2$\ast$\+Ls with np.\+errstate(divide=\textquotesingle{}ignore\textquotesingle{},invalid=\textquotesingle{}ignore\textquotesingle{})\+: eta1 = -\/self.\+abl.\+H1/sigma1$\ast$(Ks$\ast$u1c+\+Ls$\ast$v1c) eta2 = -\/self.\+abl.\+H2/sigma2$\ast$(Ks$\ast$u2c+\+Ls$\ast$v2c) When sigma1,2 is exactly zero (this includes the mean mode), eta1,2 is undefined (division by zero). 
+
+The exact value doesn\textquotesingle{}t matter because it does not appear in the system of equations (the continuity equation changes to an incompressiblity condition in the limiting case) The value of eta1,2 is replaced with the limit value p1,2/\+P\+H\+I to make the eta field continuous. Note that setting eta1,2 to zero would cause broad stripes in the solution field when one of U1,V1,U2,V2 is zero. There is no issue for values of sigma1,2 close but not equal to zero eta1\mbox{[}sigma1==0.\mbox{]}=p1c\mbox{[}sigma1==0.\mbox{]}/self.P\+H\+I\mbox{[}sigma1==0.\mbox{]} eta2\mbox{[}sigma2==0.\mbox{]}=p2c\mbox{[}sigma2==0.\mbox{]}/self.P\+H\+I\mbox{[}sigma2==0.\mbox{]} eta = eta1+eta2 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/vsc-\/hard-\/mounts/leuven-\/user/306/vsc30637/tlmpy/T\+L\+M.\+py\end{DoxyCompactItemize}
