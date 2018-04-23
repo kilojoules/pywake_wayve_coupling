@@ -5,7 +5,7 @@
 %%For: 
 %Magnification: 1.00
 %%Orientation: Portrait
-%%BoundingBox: 0 0 500 279.720280
+%%BoundingBox: 0 0 500 209.79
 %%Pages: 0
 %%BeginSetup
 %%EndSetup
@@ -19,12 +19,12 @@
 /marginwidth 10 def
 /distx 20 def
 /disty 40 def
-/boundaspect 1.787500 def  % aspect ratio of the BoundingBox (width/height)
+/boundaspect 2.38333 def  % aspect ratio of the BoundingBox (width/height)
 /boundx 500 def
 /boundy boundx boundaspect div def
 /xspacing 0 def
 /yspacing 0 def
-/rows 4 def
+/rows 3 def
 /cols 2 def
 /scalefactor 0 def
 /boxfont /Times-Roman findfont fontheight scalefont def
@@ -174,7 +174,6 @@
 boxfont setfont
 1 boundaspect scale
 (tlmpy.TLM.Grid) cw
-(object) cw
 (tlmpy.TLM.Stat1Dgrid) cw
 (tlmpy.TLM.Stat2Dgrid) cw
 (tlmpy.TLM.Dyn1Dgrid) cw
@@ -189,27 +188,22 @@ boundx scalefactor div boundy scalefactor div scale
 
 % ----- classes -----
 
- (tlmpy.TLM.Grid) 0.500000 2.000000 box
- (object) 0.500000 3.000000 box
- (tlmpy.TLM.Stat1Dgrid) 0.000000 1.000000 box
- (tlmpy.TLM.Stat2Dgrid) 1.000000 1.000000 box
- (tlmpy.TLM.Dyn1Dgrid) 0.000000 0.000000 box
+ (tlmpy.TLM.Grid) 0.5 2 box
+ (tlmpy.TLM.Stat1Dgrid) 0 1 box
+ (tlmpy.TLM.Stat2Dgrid) 1 1 box
+ (tlmpy.TLM.Dyn1Dgrid) 0 0 box
 
 % ----- relations -----
 
 solid
-0 0.500000 2.000000 out
+1 0.5 1.25 out
 solid
-1 0.500000 3.000000 in
+0 1 2 conn
 solid
-1 0.500000 1.250000 out
+0 0 1.75 in
 solid
-0.000000 1.000000 2.000000 conn
+1 0 0.25 out
 solid
-0 0.000000 1.750000 in
+0 1 1.75 in
 solid
-1 0.000000 0.250000 out
-solid
-0 1.000000 1.750000 in
-solid
-0 0.000000 0.750000 in
+0 0 0.75 in

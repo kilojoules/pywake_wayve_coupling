@@ -1,0 +1,219 @@
+\hypertarget{namespacetlmpy_1_1TLM}{
+\section{Package tlmpy.TLM}
+\label{namespacetlmpy_1_1TLM}\index{tlmpy.TLM@{tlmpy.TLM}}
+}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1Grid}{Grid}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1Stat1Dgrid}{Stat1Dgrid}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1Stat2Dgrid}{Stat2Dgrid}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1Dyn1Dgrid}{Dyn1Dgrid}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1model}{model}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1S1Dmodel}{S1Dmodel}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1S1Dmodel__old}{S1Dmodel\_\-old}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1S1DPmodel}{S1DPmodel}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1S2Dmodel}{S2Dmodel}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1S2Dmodel__old}{S2Dmodel\_\-old}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1U1Dmodel}{U1Dmodel}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1ABL}{ABL}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1gmres__counter}{gmres\_\-counter}
+\item 
+class \hyperlink{classtlmpy_1_1TLM_1_1lgmres__counter}{lgmres\_\-counter}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_ae75e2d198f207d795ffd60db3d926f0e}{\_\-\_\-init\_\-\_\-}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_abdd135d6b78ddffa8145289a1a4f34d7}{format\_\-solution}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a37c4928c27b9fa2b93ef82e3a821d0d2}{expandX}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_ae884a3fe664a15ec2887eb5774de5644}{c2r}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_ad481b8522594a40d275088b12e94a4af}{r2c}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a49c209ea1c1d71e77068211c166097e4}{continuity}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_ac14e3266c64ab5a1cca8c853aba8ec4a}{Bvector}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a557ba52a14aa64f4fae85e9bb8c707bd}{PHIvector}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a9fe851d277eca6ca4d22867b6c51b9a3}{Aoperator}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a40148bfa7778993b9c53585a057069a2}{Moperator}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a1c9a95ddc740eb1cfe8cd40789406031}{Mx}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a4cc641ba8986e09dd75d4a3ce6426438}{Ax}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a3a822c47ba30dc38ed9fafea4350292e}{Amatrix}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a49c209ea1c1d71e77068211c166097e4}{continuity}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a99b585016099ac73bccd67a53007b4e5}{buildABmatrix}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_af212f19a8c1e7390e05d92f0ecfe4261}{cconv\_\-1D}
+\item 
+def \hyperlink{namespacetlmpy_1_1TLM_a9fcc8c8a811ceb37ec01274b0e207e1f}{cconv\_\-2D}
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+string \hyperlink{namespacetlmpy_1_1TLM_ab23e017eca5e365335146c0a949c96b4}{\_\-\_\-author\_\-\_\-} = \char`\"{}Dries Allaerts\char`\"{}
+\item 
+string \hyperlink{namespacetlmpy_1_1TLM_a8d29aed8107082d94640e02031d67613}{\_\-\_\-date\_\-\_\-} = \char`\"{}June 15, 2017\char`\"{}
+\item 
+\hyperlink{namespacetlmpy_1_1TLM_afc92ced32a0ad7707d14d146ec8eea02}{PHI}
+\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\hypertarget{namespacetlmpy_1_1TLM_ae75e2d198f207d795ffd60db3d926f0e}{
+\index{tlmpy::TLM@{tlmpy::TLM}!\_\-\_\-init\_\-\_\-@{\_\-\_\-init\_\-\_\-}}
+\index{\_\-\_\-init\_\-\_\-@{\_\-\_\-init\_\-\_\-}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{\_\-\_\-init\_\-\_\-}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::\_\-\_\-init\_\-\_\- ( {\em self}, \/   {\em grid}, \/   {\em forcing}, \/   {\em abl})}}
+\label{namespacetlmpy_1_1TLM_ae75e2d198f207d795ffd60db3d926f0e}
+\begin{DoxyVerb}
+Steady one-dimensional gravity wave model
+\end{DoxyVerb}
+
+
+\begin{DoxyVerb}
+Steady two-dimensional gravity wave model
+\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_a3a822c47ba30dc38ed9fafea4350292e}{
+\index{tlmpy::TLM@{tlmpy::TLM}!Amatrix@{Amatrix}}
+\index{Amatrix@{Amatrix}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{Amatrix}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.Amatrix ( {\em self})}}
+\label{namespacetlmpy_1_1TLM_a3a822c47ba30dc38ed9fafea4350292e}
+\hypertarget{namespacetlmpy_1_1TLM_a9fe851d277eca6ca4d22867b6c51b9a3}{
+\index{tlmpy::TLM@{tlmpy::TLM}!Aoperator@{Aoperator}}
+\index{Aoperator@{Aoperator}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{Aoperator}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::Aoperator ( {\em self})}}
+\label{namespacetlmpy_1_1TLM_a9fe851d277eca6ca4d22867b6c51b9a3}
+\hypertarget{namespacetlmpy_1_1TLM_a4cc641ba8986e09dd75d4a3ce6426438}{
+\index{tlmpy::TLM@{tlmpy::TLM}!Ax@{Ax}}
+\index{Ax@{Ax}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{Ax}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::Ax ( {\em self}, \/   {\em x})}}
+\label{namespacetlmpy_1_1TLM_a4cc641ba8986e09dd75d4a3ce6426438}
+\hypertarget{namespacetlmpy_1_1TLM_a99b585016099ac73bccd67a53007b4e5}{
+\index{tlmpy::TLM@{tlmpy::TLM}!buildABmatrix@{buildABmatrix}}
+\index{buildABmatrix@{buildABmatrix}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{buildABmatrix}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.buildABmatrix ( {\em self})}}
+\label{namespacetlmpy_1_1TLM_a99b585016099ac73bccd67a53007b4e5}
+\hypertarget{namespacetlmpy_1_1TLM_ac14e3266c64ab5a1cca8c853aba8ec4a}{
+\index{tlmpy::TLM@{tlmpy::TLM}!Bvector@{Bvector}}
+\index{Bvector@{Bvector}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{Bvector}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::Bvector ( {\em self})}}
+\label{namespacetlmpy_1_1TLM_ac14e3266c64ab5a1cca8c853aba8ec4a}
+\hypertarget{namespacetlmpy_1_1TLM_ae884a3fe664a15ec2887eb5774de5644}{
+\index{tlmpy::TLM@{tlmpy::TLM}!c2r@{c2r}}
+\index{c2r@{c2r}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{c2r}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.c2r ()}}
+\label{namespacetlmpy_1_1TLM_ae884a3fe664a15ec2887eb5774de5644}
+\begin{DoxyVerb}
+Unsteady one-dimensional gravity wave model
+\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_af212f19a8c1e7390e05d92f0ecfe4261}{
+\index{tlmpy::TLM@{tlmpy::TLM}!cconv\_\-1D@{cconv\_\-1D}}
+\index{cconv\_\-1D@{cconv\_\-1D}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{cconv\_\-1D}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.cconv\_\-1D ( {\em b}, \/   {\em method} = {\ttfamily 'Fast'})}}
+\label{namespacetlmpy_1_1TLM_af212f19a8c1e7390e05d92f0ecfe4261}
+\begin{DoxyVerb}
+Compose a matrix that expresses the 1D circular convolution
+as a matrix vector multiplication (conv(a,b) = Ba)
+
+b is assumed to be a vector with wave numbers centered around 0
+(the 0 mode corresponds to b[int(b.shape[0]/2)] )
+\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_a9fcc8c8a811ceb37ec01274b0e207e1f}{
+\index{tlmpy::TLM@{tlmpy::TLM}!cconv\_\-2D@{cconv\_\-2D}}
+\index{cconv\_\-2D@{cconv\_\-2D}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{cconv\_\-2D}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.cconv\_\-2D ( {\em b}, \/   {\em method} = {\ttfamily 'Fast'})}}
+\label{namespacetlmpy_1_1TLM_a9fcc8c8a811ceb37ec01274b0e207e1f}
+\begin{DoxyVerb}
+Compose a matrix that expresses the 2D circular convolution
+as a matrix vector multiplication (conv(a,b) = Ba)
+
+b is assumed to be a matrix with wave numbers centered around 0
+(the 0 mode corresponds to b[int(b.shape[0]/2),int(b.shape[1]/2] )
+\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_a49c209ea1c1d71e77068211c166097e4}{
+\index{tlmpy::TLM@{tlmpy::TLM}!continuity@{continuity}}
+\index{continuity@{continuity}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{continuity}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.continuity ( {\em self}, \/   {\em u1c}, \/   {\em v1c}, \/   {\em u2c}, \/   {\em v2c}, \/   {\em p1c}, \/   {\em p2c})}}
+\label{namespacetlmpy_1_1TLM_a49c209ea1c1d71e77068211c166097e4}
+\begin{DoxyVerb}Return boundar-layer displacement based on given velocity field\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_a49c209ea1c1d71e77068211c166097e4}{
+\index{tlmpy::TLM@{tlmpy::TLM}!continuity@{continuity}}
+\index{continuity@{continuity}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{continuity}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy.TLM.continuity ( {\em self}, \/   {\em u1c}, \/   {\em v1c}, \/   {\em u2c}, \/   {\em v2c})}}
+\label{namespacetlmpy_1_1TLM_a49c209ea1c1d71e77068211c166097e4}
+\begin{DoxyVerb}Return boundar-layer displacement based on given velocity field\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_a37c4928c27b9fa2b93ef82e3a821d0d2}{
+\index{tlmpy::TLM@{tlmpy::TLM}!expandX@{expandX}}
+\index{expandX@{expandX}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{expandX}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::expandX ( {\em self}, \/   {\em X})}}
+\label{namespacetlmpy_1_1TLM_a37c4928c27b9fa2b93ef82e3a821d0d2}
+\hypertarget{namespacetlmpy_1_1TLM_abdd135d6b78ddffa8145289a1a4f34d7}{
+\index{tlmpy::TLM@{tlmpy::TLM}!format\_\-solution@{format\_\-solution}}
+\index{format\_\-solution@{format\_\-solution}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{format\_\-solution}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::format\_\-solution ( {\em self}, \/   {\em X})}}
+\label{namespacetlmpy_1_1TLM_abdd135d6b78ddffa8145289a1a4f34d7}
+\hypertarget{namespacetlmpy_1_1TLM_a40148bfa7778993b9c53585a057069a2}{
+\index{tlmpy::TLM@{tlmpy::TLM}!Moperator@{Moperator}}
+\index{Moperator@{Moperator}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{Moperator}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::Moperator ( {\em self})}}
+\label{namespacetlmpy_1_1TLM_a40148bfa7778993b9c53585a057069a2}
+\hypertarget{namespacetlmpy_1_1TLM_a1c9a95ddc740eb1cfe8cd40789406031}{
+\index{tlmpy::TLM@{tlmpy::TLM}!Mx@{Mx}}
+\index{Mx@{Mx}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{Mx}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::Mx ( {\em self}, \/   {\em x})}}
+\label{namespacetlmpy_1_1TLM_a1c9a95ddc740eb1cfe8cd40789406031}
+\begin{DoxyVerb}
+Find preconditioner M = inv(P) that approximates inv(A)
+(excluding the convolution products)
+The matrix vector product Mx is found by solving Py=x
+\end{DoxyVerb}
+ \hypertarget{namespacetlmpy_1_1TLM_a557ba52a14aa64f4fae85e9bb8c707bd}{
+\index{tlmpy::TLM@{tlmpy::TLM}!PHIvector@{PHIvector}}
+\index{PHIvector@{PHIvector}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{PHIvector}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::PHIvector ( {\em self})}}
+\label{namespacetlmpy_1_1TLM_a557ba52a14aa64f4fae85e9bb8c707bd}
+\hypertarget{namespacetlmpy_1_1TLM_ad481b8522594a40d275088b12e94a4af}{
+\index{tlmpy::TLM@{tlmpy::TLM}!r2c@{r2c}}
+\index{r2c@{r2c}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{r2c}]{\setlength{\rightskip}{0pt plus 5cm}def tlmpy::TLM::r2c ( {\em self}, \/   {\em rfield})}}
+\label{namespacetlmpy_1_1TLM_ad481b8522594a40d275088b12e94a4af}
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespacetlmpy_1_1TLM_ab23e017eca5e365335146c0a949c96b4}{
+\index{tlmpy::TLM@{tlmpy::TLM}!\_\-\_\-author\_\-\_\-@{\_\-\_\-author\_\-\_\-}}
+\index{\_\-\_\-author\_\-\_\-@{\_\-\_\-author\_\-\_\-}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{\_\-\_\-author\_\-\_\-}]{\setlength{\rightskip}{0pt plus 5cm}string {\bf tlmpy::TLM.\_\-\_\-author\_\-\_\-} = \char`\"{}Dries Allaerts\char`\"{}}}
+\label{namespacetlmpy_1_1TLM_ab23e017eca5e365335146c0a949c96b4}
+\hypertarget{namespacetlmpy_1_1TLM_a8d29aed8107082d94640e02031d67613}{
+\index{tlmpy::TLM@{tlmpy::TLM}!\_\-\_\-date\_\-\_\-@{\_\-\_\-date\_\-\_\-}}
+\index{\_\-\_\-date\_\-\_\-@{\_\-\_\-date\_\-\_\-}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{\_\-\_\-date\_\-\_\-}]{\setlength{\rightskip}{0pt plus 5cm}string {\bf tlmpy::TLM.\_\-\_\-date\_\-\_\-} = \char`\"{}June 15, 2017\char`\"{}}}
+\label{namespacetlmpy_1_1TLM_a8d29aed8107082d94640e02031d67613}
+\hypertarget{namespacetlmpy_1_1TLM_afc92ced32a0ad7707d14d146ec8eea02}{
+\index{tlmpy::TLM@{tlmpy::TLM}!PHI@{PHI}}
+\index{PHI@{PHI}!tlmpy::TLM@{tlmpy::TLM}}
+\subsubsection[{PHI}]{\setlength{\rightskip}{0pt plus 5cm}{\bf tlmpy::TLM.PHI}}}
+\label{namespacetlmpy_1_1TLM_afc92ced32a0ad7707d14d146ec8eea02}

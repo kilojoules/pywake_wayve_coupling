@@ -5,7 +5,7 @@
 %%For: 
 %Magnification: 1.00
 %%Orientation: Portrait
-%%BoundingBox: 0 0 500 98.159509
+%%BoundingBox: 0 0 500 73.6196
 %%Pages: 0
 %%BeginSetup
 %%EndSetup
@@ -19,12 +19,12 @@
 /marginwidth 10 def
 /distx 20 def
 /disty 40 def
-/boundaspect 5.093750 def  % aspect ratio of the BoundingBox (width/height)
+/boundaspect 6.79167 def  % aspect ratio of the BoundingBox (width/height)
 /boundx 500 def
 /boundy boundx boundaspect div def
 /xspacing 0 def
 /yspacing 0 def
-/rows 4 def
+/rows 3 def
 /cols 5 def
 /scalefactor 0 def
 /boxfont /Times-Roman findfont fontheight scalefont def
@@ -174,7 +174,6 @@
 boxfont setfont
 1 boundaspect scale
 (tlmpy.TLM.model) cw
-(object) cw
 (tlmpy.TLM.S1Dmodel) cw
 (tlmpy.TLM.S1Dmodel_old) cw
 (tlmpy.TLM.S2Dmodel) cw
@@ -192,36 +191,31 @@ boundx scalefactor div boundy scalefactor div scale
 
 % ----- classes -----
 
- (tlmpy.TLM.model) 2.000000 2.000000 box
- (object) 2.000000 3.000000 box
- (tlmpy.TLM.S1Dmodel) 0.000000 1.000000 box
- (tlmpy.TLM.S1Dmodel_old) 1.000000 1.000000 box
- (tlmpy.TLM.S2Dmodel) 2.000000 1.000000 box
- (tlmpy.TLM.S2Dmodel_old) 3.000000 1.000000 box
- (tlmpy.TLM.U1Dmodel) 4.000000 1.000000 box
- (tlmpy.TLM.S1DPmodel) 0.000000 0.000000 box
+ (tlmpy.TLM.model) 2 2 box
+ (tlmpy.TLM.S1Dmodel) 0 1 box
+ (tlmpy.TLM.S1Dmodel_old) 1 1 box
+ (tlmpy.TLM.S2Dmodel) 2 1 box
+ (tlmpy.TLM.S2Dmodel_old) 3 1 box
+ (tlmpy.TLM.U1Dmodel) 4 1 box
+ (tlmpy.TLM.S1DPmodel) 0 0 box
 
 % ----- relations -----
 
 solid
-0 2.000000 2.000000 out
+1 2 1.25 out
 solid
-1 2.000000 3.000000 in
+0 4 2 conn
 solid
-1 2.000000 1.250000 out
+0 0 1.75 in
 solid
-0.000000 4.000000 2.000000 conn
+1 0 0.25 out
 solid
-0 0.000000 1.750000 in
+0 1 1.75 in
 solid
-1 0.000000 0.250000 out
+0 2 1.75 in
 solid
-0 1.000000 1.750000 in
+0 3 1.75 in
 solid
-0 2.000000 1.750000 in
+0 4 1.75 in
 solid
-0 3.000000 1.750000 in
-solid
-0 4.000000 1.750000 in
-solid
-0 0.000000 0.750000 in
+0 0 0.75 in
