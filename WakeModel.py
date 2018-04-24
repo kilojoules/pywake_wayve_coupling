@@ -180,7 +180,7 @@ def gauss_A(turbines,abl,TI):
             #test distance between center of turbine I and K.
             #If yaw angle of both turbines is equal, delta_str is identical for all
             #quadrature points.
-            if delta_str<minD: continue
+            if delta_str<=np.max([0.,minD]): continue
             #Loop over quadrature points
             for n in range(Nq):
                 wn  = 1.0/Nq
@@ -235,7 +235,7 @@ def gauss_Ajac(turbines,abl,TI):
             #test distance between center of turbine I and K.
             #If yaw angle of both turbines is equal, delta_str is identical for all
             #quadrature points.
-            if delta_str<minD: continue
+            if delta_str<=np.max([0.,minD]): continue
             #Loop over quadrature points
             for n in range(Nq):
                 wn  = 1.0/Nq
