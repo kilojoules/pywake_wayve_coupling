@@ -10,7 +10,9 @@
 !*.js
 !*.png
 !*.eps
+!*.gif
 !*.css
 !*.tex
 !*.sty
 !Doxyfile
+!Makefile

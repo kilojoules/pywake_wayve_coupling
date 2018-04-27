@@ -254,6 +254,16 @@ class model(object):
     Common interface for three-layer models
     '''
     def __init__(self,grid,forcing,abl):
+        '''
+        Parameters
+        ----------
+        grid: Grid object
+            numerical grid
+        forcing: CST/WF object (from TLMForcing)
+            perturbing force
+        abl: ABL object
+            atmospheric state
+        '''
         self.__grid = grid
         self.__grid32 = self.grid.deal_grid()
         self.__forcing = forcing
@@ -261,6 +271,21 @@ class model(object):
         self.__PHI = None
     
     def solve(self,method='lgmres',verbose=False,WFfeedback=True):
+        '''
+        Solve the three-layer model
+
+        Parameters
+        ----------
+        method (optional): str
+            method used to solve the linear matrix equation
+            default: lgmres
+        verbose (optional): bool
+            flag for printing solver results
+            default: False
+        WFfeedback (optional): bool
+            flag for including first-order term of wind-farm drag
+            default: True
+        '''
         N = self.grid.N
         err = 1
         if not WFfeedback:
@@ -415,18 +440,23 @@ class model(object):
 
     @property
     def grid(self):
+        '''Numerical grid'''
         return self.__grid
     @property
     def grid32(self):
+        '''Dealiasing grid'''
         return self.__grid32
     @property
     def abl(self):
+        '''Atmospheric state'''
         return self.__abl
     @property
     def forcing(self):
+        '''Perturbing force'''
         return self.__forcing
     @property
     def PHI(self):
+        '''Complex stratification coefficient'''
         return self.__PHI
     @PHI.setter
     def PHI(self,value):
@@ -437,6 +467,19 @@ class S1Dmodel(model):
     Steady one-dimensional gravity wave model
     '''
     def __init__(self,grid,forcing,abl,purefriction=False):
+        '''
+        Parameters
+        ----------
+        grid: Grid object
+            numerical grid
+        forcing: CST/WF object (defined in TLMForcing.py)
+            perturbing force
+        abl: ABL object
+            atmospheric state
+        purefriction (optional): bool
+            flag to consider the pure friction case, i.e., without gravity waves
+            default: False
+        '''
         super().__init__(grid,forcing,abl)
         if purefriction:
             self.PHI = np.zeros(self.grid.shape,dtype=np.complex128)
@@ -444,6 +487,23 @@ class S1Dmodel(model):
             self.PHI = self.PHIvector()
 
     def format_solution(self,X):
+        '''
+        Calculate perturbation quantities from the general solution vector
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        result: dict
+            dictionary with 1d numpy arrays
+            keys > u1c,v1c: perturbation velocity in the wind-farm layer
+                   u2c,v2c: perturbation velocity in the upper layer
+                   etac: inversion displacement
+                   pc: pressure perturbation
+        '''
         u1c,v1c,u2c,v2c = self.expandX(X)
         etac = self.continuity(u1c,v1c,u2c,v2c)
         result = {}
@@ -456,6 +516,20 @@ class S1Dmodel(model):
         return result
 
     def expandX(self,X):
+        '''
+        Expand the general solution vector into
+        dependent variables of the problem
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        u1,v1,u2,v2: 1d numpy array
+            perturbation velocities in wind-farm and upper layer
+        '''
         N = self.grid.N
         u1 = X[0:N].reshape(self.grid.shape)
         v1 = X[1*N:2*N].reshape(self.grid.shape)
@@ -464,6 +538,26 @@ class S1Dmodel(model):
         return u1, v1, u2, v2
 
     def c2r(self,cfield,returnErr=False):
+        '''
+        Perform an inverse Fourier transform
+
+        Parameters
+        ----------
+        cfield: 1d numpy array
+            complex field, assuming
+                - Hermitian symmetry
+                - zero-wavenumber component at the center of the spectrum
+        returnErr (optional): bool
+            flag to return the maximum imaginary part of the real field
+            default: False
+
+        Returns
+        -------
+        rfield: 1d numpy array
+            inverse Fourier transform of cfield (real part)
+        err (optional): float
+            maximum imaginary part of rfield (zero if input is Hermitian-symmetric)
+        '''
         rfield = np.fft.ifft(np.fft.ifftshift(cfield*self.grid.N))
         if returnErr:
             err = np.amax(np.abs(np.imag(rfield)))
@@ -473,9 +567,39 @@ class S1Dmodel(model):
         return out
 
     def r2c(self,rfield):
+        '''
+        Perform a Fourier transform
+
+        Parameters
+        ----------
+        rfield: 1d numpy array
+            real field
+
+        Returns
+        -------
+        cfield: 1d numpy array
+            Fourier transform of rfield
+            (zero-wavenumber at the center of the spectrum)
+        '''
         return np.fft.fftshift(np.fft.fft(rfield))/self.grid.N
 
     def c2r_deal(self,cfield):
+        '''
+        Perform an inverse Fourier transform from complex to dealiasing space
+        (complex field of size 3/2Nx is obtained by zero-padding)
+
+        Parameters
+        ----------
+        cfield: 1d numpy array
+            complex field, assuming
+                - Hermitian symmetry
+                - zero-wavenumber component at the center of the spectrum
+
+        Returns
+        -------
+        rfield32: 1d numpy array
+            inverse Fourier transform of cfield32 in dealiasing space (real part)
+        '''
         cfield32 = np.concatenate( (
                         np.zeros((int(self.grid.N/4)),dtype=np.complex128),
                         cfield,
@@ -483,6 +607,21 @@ class S1Dmodel(model):
         return np.real(np.fft.ifft(np.fft.ifftshift(cfield32*self.grid32.N)))
 
     def r2c_deal(self,rfield32):
+        '''
+        Perform a Fourier transform from dealiasing to complex space
+        (complex field of size Nx is obtained by disregarding high wavenumbers)
+
+        Parameters
+        ----------
+        rfield32: 1d numpy array
+            real field in dealiasing space
+
+        Returns
+        -------
+        cfield: 1d numpy array
+            Fourier transform of rfield32, disregarding high wavenumbers
+            (zero-wavenumber component at the center of the spectrum)
+        '''
         cfield32 = np.fft.fftshift(np.fft.fft(rfield32))/self.grid32.N
         return cfield32[int(self.grid.N/4):int(self.grid.N*5/4)]
 
