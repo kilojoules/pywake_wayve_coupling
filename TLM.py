@@ -626,10 +626,30 @@ class S1Dmodel(model):
         return cfield32[int(self.grid.N/4):int(self.grid.N*5/4)]
 
     def continuity(self,u1c,v1c,u2c,v2c):
-        '''Return boundar-layer displacement based on given velocity field'''
+        '''
+        Compute boundar-layer displacement based on given velocity field
+        
+        Parameters
+        ----------
+        u1c,v1c,u2c,v2c: 1d numpy array
+            perturbation velocities in wind-farm and upper layer (Fourier space)
+
+        Returns
+        -------
+        _: 1d numpy array
+            total boundary-layer displacement
+        '''
         return -self.abl.H1/self.abl.U1*u1c-self.abl.H2/self.abl.U2*u2c
 
     def Bvector(self):
+        '''
+        Compute right-hand side of model equations (B vector)
+
+        Returns
+        -------
+        _: 1d numpy array
+            right-hand side of model equations (Fourier space)
+        '''
         #Compute 0th order forcing term (real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space and
@@ -642,6 +662,14 @@ class S1Dmodel(model):
         return np.concatenate((Bu,Bv,np.zeros((2*self.grid.Nx,),dtype=np.complex128)))
 
     def PHIvector(self):
+        '''
+        Compute complex stratification coefficient Phi
+
+        Returns
+        -------
+        PHIs: 1d numpy array
+            complex stratification coefficient
+        '''
         Nx = self.grid.Nx
         PHIs = self.abl.gprime*np.ones((Nx),dtype=np.complex128)
 #        k_lwave = np.sqrt(self.abl.N**2/self.abl.U3**2
@@ -662,12 +690,31 @@ class S1Dmodel(model):
         return PHIs
 
     def Aoperator(self):
+        '''
+        Linear operator interface for performing matrix vector products with
+        the system matrix A
+
+        Returns
+        -------
+        A: LinearOperator
+            interface for the system matrix A
+        '''
         A = scipy.sparse.linalg.LinearOperator((4*self.grid.N,4*self.grid.N),
                                                matvec=self.Ax,
                                                dtype=np.complex128)
         return A
     
     def Moperator(self):
+        '''
+        Linear operator interface for performing matrix vector products with
+        the preconditioner M = inv(P) that approximates inv(A)
+        (excluding the convolution products)
+
+        Returns
+        -------
+        M: LinearOperator
+            interface for the preconditioner M
+        '''
         M = scipy.sparse.linalg.LinearOperator((4*self.grid.N,4*self.grid.N),
                                                matvec=self.Mx,
                                                dtype=np.complex128)
@@ -675,9 +722,19 @@ class S1Dmodel(model):
 
     def Mx(self,x):
         '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (excluding the convolution products)
+        Compute the matrix vector product M*x where preconditioner M = inv(P)
+        approximates inv(A) (excluding the convolution products)
         The matrix vector product Mx is found by solving Py=x
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vector
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product M*x
         '''
         N = self.grid.N
         M = np.zeros((4,N),dtype=np.complex128)
@@ -748,6 +805,19 @@ class S1Dmodel(model):
         return M.reshape(4*N)
 
     def Ax(self,x):
+        '''
+        Compute the matrix vector product A*x 
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vector
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product A*x
+        '''
         N = self.grid.N
         Axu1 = np.zeros((N),dtype=np.complex128)
         Axv1 = np.zeros((N),dtype=np.complex128)
@@ -826,338 +896,24 @@ class S1Dmodel(model):
         Axv2[0] = 0.
         return np.concatenate((Axu1,Axv1,Axu2,Axv2))
 
-    #Outdated routine
-    def Amatrix(self):
-        Nx = self.grid.Nx
-        A = np.zeros((4*Nx,4*Nx),dtype=np.complex128)
-        PHIs = self.PHI
-        for index, k in enumerate(self.grid.ks):
-            sigma1 = self.abl.U1*k
-            sigma2 = self.abl.U2*k
-            sigma3 = self.abl.U3*k
-            PHI = PHIs[index]
-    
-            #A matrix regular entries
-            #u1 equation
-            A[index,index] += -1j*sigma1
-            A[index,index] +=  1j*k*PHI*self.abl.H1/self.abl.U1
-            A[index,index] += -2*self.abl.C1*self.abl.dS12/self.abl.H1
-            A[index,index] += -2*self.abl.C0*self.abl.S1/self.abl.H1
-            A[index,index+1*Nx] += self.abl.fc
-            A[index,index+2*Nx] += 1j*k*PHI*self.abl.H2/self.abl.U2
-            A[index,index+2*Nx] += 2*self.abl.C1*self.abl.dS12/self.abl.H1
-    
-            #v1 equation
-            A[index+Nx,index] += -self.abl.fc
-            A[index+Nx,index+1*Nx] += -1j*sigma1
-            A[index+Nx,index+1*Nx] += -2*self.abl.C1*self.abl.dS12/self.abl.H1
-            A[index+Nx,index+1*Nx] += -2*self.abl.C0*self.abl.S1/self.abl.H1
-            A[index+Nx,index+3*Nx] += 2*self.abl.C1*self.abl.dS12/self.abl.H1
-    
-            #u2 equation
-            A[index+2*Nx,index] += 1j*k*PHI*self.abl.H1/self.abl.U1
-            A[index+2*Nx,index] += 2*self.abl.C1*self.abl.dS12/self.abl.H2
-            A[index+2*Nx,index+2*Nx] += -1j*sigma2
-            A[index+2*Nx,index+2*Nx] +=  1j*k*PHI*self.abl.H2/self.abl.U2
-            A[index+2*Nx,index+2*Nx] += -2*self.abl.C1*self.abl.dS12/self.abl.H2
-            A[index+2*Nx,index+3*Nx] += self.abl.fc
-    
-            #v2 equation
-            A[index+3*Nx,index+1*Nx] += 2*self.abl.C1*self.abl.dS12/self.abl.H2
-            A[index+3*Nx,index+2*Nx] += -self.abl.fc
-            A[index+3*Nx,index+3*Nx] += -1j*sigma2
-            A[index+3*Nx,index+3*Nx] += -2*self.abl.C1*self.abl.dS12/self.abl.H2
-        
-        #A matrix convolution - Part 1: Linearisation Wind farm drag
-        #It is implicitly assumed that a constant forcing model
-        #with a CTr field is used. 
-        A[:Nx,:Nx] += -2*self.abl.S1/self.abl.H1*cconv_1D(self.r2c(self.forcing.CTr))
-        A[Nx:2*Nx,Nx:2*Nx] += -2*self.abl.S1/self.abl.H1*cconv_1D(self.r2c(self.forcing.CTr))
-
-        #A matrix convolution - Part 2: Fringe region forcing
-        if self.forcing.Lfringe:
-            A[:Nx,:Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-            A[1*Nx:2*Nx,1*Nx:2*Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-            A[2*Nx:3*Nx,2*Nx:3*Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-            A[3*Nx:4*Nx,3*Nx:4*Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-    
-        #Set defunct modes to zero
-        A[0,:]    = 0.
-        A[Nx,:]   = 0.
-        A[2*Nx,:] = 0.
-        A[3*Nx,:] = 0.
-        A[0,0]       = 1.
-        A[Nx,Nx]     = 1.
-        A[2*Nx,2*Nx] = 1.
-        A[3*Nx,3*Nx] = 1.
-        return A
-
-class S1Dmodel_old(model):
-#Depreciated
-#Non-rigorous linearisation of stresses
-    '''
-    Steady one-dimensional gravity wave model
-    '''
-    def __init__(self,grid,forcing,abl):
-        super().__init__(grid,forcing,abl)
-        self.PHI = self.PHIvector()
-
-    def format_solution(self,X):
-        u1c,v1c,u2c,v2c = self.expandX(X)
-        etac = self.continuity(u1c,v1c,u2c,v2c)
-        result = {}
-        result['u1c']  = u1c
-        result['v1c']  = v1c
-        result['u2c']  = u2c
-        result['v2c']  = v2c
-        result['etac'] = etac
-        result['pc']   = self.PHI*etac
-        return result
-
-    def expandX(self,X):
-        N = self.grid.N
-        u1 = X[0:N].reshape(self.grid.shape)
-        v1 = X[1*N:2*N].reshape(self.grid.shape)
-        u2 = X[2*N:3*N].reshape(self.grid.shape)
-        v2 = X[3*N:4*N].reshape(self.grid.shape)
-        return u1, v1, u2, v2
-
-    def c2r(self,cfield,returnErr=False):
-        rfield = np.fft.ifft(np.fft.ifftshift(cfield*self.grid.N))
-        if returnErr:
-            err = np.amax(np.abs(np.imag(rfield)))
-            out = (np.real(rfield), err)
-        else:
-            out = np.real(rfield)
-        return out
-
-    def r2c(self,rfield):
-        return np.fft.fftshift(np.fft.fft(rfield))/self.grid.N
-
-    def continuity(self,u1c,v1c,u2c,v2c):
-        '''Return boundar-layer displacement based on given velocity field'''
-        return -self.abl.H1/self.abl.U1*u1c-self.abl.H2/self.abl.U2*u2c
-
-    def Bvector(self):
-        #Compute 0th order forcing term (real)
-        F0u, F0v = self.forcing.F0(self.abl)
-        #Convert to fourier space and
-        #divide by H1 (TLM solves height-averaged equations)
-        Bu = self.r2c(F0u)/self.abl.H1
-        Bv = self.r2c(F0v)/self.abl.H1
-        #Defunct modes
-        Bu[0] = 0.
-        Bv[0] = 0.
-        return np.concatenate((Bu,Bv,np.zeros((2*self.grid.Nx,),dtype=np.complex128)))
-
-    def PHIvector(self):
-        Nx = self.grid.Nx
-        PHIs = self.abl.gprime*np.ones((Nx),dtype=np.complex128)
-        for index, k in enumerate(self.grid.ks):
-            sigma3 = self.abl.U3*k
-            #Non-hydrostatic solution 
-            if not sigma3==0:
-                if sigma3**2>self.abl.N**2:
-                    m = 1j*np.sqrt(k**2*np.abs(self.abl.N**2/sigma3**2-1))
-                else:
-                    m = np.sign(sigma3)*np.sqrt(k**2*(self.abl.N**2/sigma3**2-1))
-                PHIs[index] += 1j/m*(self.abl.N**2-sigma3**2)
-        return PHIs
-
-    def Aoperator(self):
-        A = scipy.sparse.linalg.LinearOperator((4*self.grid.N,4*self.grid.N),
-                                               matvec=self.Ax,
-                                               dtype=np.complex128)
-        return A
-    
-    def Moperator(self):
-        M = scipy.sparse.linalg.LinearOperator((4*self.grid.N,4*self.grid.N),
-                                               matvec=self.Mx,
-                                               dtype=np.complex128)
-        return M
-
-    def Mx(self,x):
-        '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (excluding the convolution products)
-        The matrix vector product Mx is found by solving Py=x
-        '''
-        N = self.grid.N
-        M = np.zeros((4,N),dtype=np.complex128)
-        X = x.reshape(4,N)
-        for index, k in enumerate(self.grid.ks):    
-            P = np.zeros((4,4),dtype=np.complex128)
-            sigma1 = self.abl.U1*k
-            sigma2 = self.abl.U2*k
-            #u1 equation
-            P[0,0] = (-1j*sigma1
-                    +1j*k*self.PHI[index]*self.abl.H1/self.abl.U1
-                    -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                    -2*self.abl.C0*self.abl.S1/self.abl.H1)
-            P[0,1] = self.abl.fc
-            P[0,2] = (+1j*k*self.PHI[index]*self.abl.H2/self.abl.U2
-                    +2*self.abl.C1*self.abl.dS12/self.abl.H1)
-            #v1 equation
-            P[1,0] = -self.abl.fc
-            P[1,1] = (-1j*sigma1
-                    -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                    -2*self.abl.C0*self.abl.S1/self.abl.H1)
-            P[1,3] = 2*self.abl.C1*self.abl.dS12/self.abl.H1
-            #u2 equation
-            P[2,0] = (+1j*k*self.PHI[index]*self.abl.H1/self.abl.U1
-                     +2*self.abl.C1*self.abl.dS12/self.abl.H2)
-            P[2,2] = (-1j*sigma2
-                    +1j*k*self.PHI[index]*self.abl.H2/self.abl.U2
-                    -2*self.abl.C1*self.abl.dS12/self.abl.H2)
-            P[2,3] = self.abl.fc
-            #v2 equation
-            P[3,1] = 2*self.abl.C1*self.abl.dS12/self.abl.H2
-            P[3,2] = -self.abl.fc
-            P[3,3] = (-1j*sigma2
-                    -2*self.abl.C1*self.abl.dS12/self.abl.H2)
-            M[:,index] = scipy.linalg.solve(P,X[:,index])
-        #Defunct mode
-        M[:,0] = 0.
-        return M.reshape(4*N)
-
-    def Ax(self,x):
-        N = self.grid.N
-        Axu1 = np.zeros((N),dtype=np.complex128)
-        Axv1 = np.zeros((N),dtype=np.complex128)
-        Axu2 = np.zeros((N),dtype=np.complex128)
-        Axv2 = np.zeros((N),dtype=np.complex128)
-        u1 = x[0:N]
-        v1 = x[N:2*N]
-        u2 = x[2*N:3*N]
-        v2 = x[3*N:4*N]
-        sigma1 = self.abl.U1*self.grid.ks
-        sigma2 = self.abl.U2*self.grid.ks
-        #Regular entries
-        #u1 equation
-        Axu1 += (-1j*sigma1
-                +1j*self.grid.ks*self.PHI*self.abl.H1/self.abl.U1
-                -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                -2*self.abl.C0*self.abl.S1/self.abl.H1)*u1
-        Axu1 += self.abl.fc*v1
-        Axu1 += (+1j*self.grid.ks*self.PHI*self.abl.H2/self.abl.U2
-                +2*self.abl.C1*self.abl.dS12/self.abl.H1)*u2
-        #v1 equation
-        Axv1 += -self.abl.fc*u1
-        Axv1 += (-1j*sigma1
-                -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                -2*self.abl.C0*self.abl.S1/self.abl.H1)*v1
-        Axv1 += 2*self.abl.C1*self.abl.dS12/self.abl.H1*v2
-        #u2 equation
-        Axu2 += (+1j*self.grid.ks*self.PHI*self.abl.H1/self.abl.U1
-                 +2*self.abl.C1*self.abl.dS12/self.abl.H2)*u1
-        Axu2 += (-1j*sigma2
-                +1j*self.grid.ks*self.PHI*self.abl.H2/self.abl.U2
-                -2*self.abl.C1*self.abl.dS12/self.abl.H2)*u2
-        Axu2 += self.abl.fc*v2
-        #v2 equation
-        Axv2 += 2*self.abl.C1*self.abl.dS12/self.abl.H2*v1
-        Axv2 += -self.abl.fc*u2
-        Axv2 += (-1j*sigma2
-                -2*self.abl.C1*self.abl.dS12/self.abl.H2)*v2
-
-        #Wind farm forcing: 1st order term
-        u1r = self.c2r(u1)
-        v1r = self.c2r(v1)
-        F1u, F1v = self.forcing.F1(self.abl,u1r,v1r)
-        #Convert back to fourier space and
-        #divide by H1 (TLM solves height-averaged equations)
-        Axu1 += -self.r2c(F1u)/self.abl.H1
-        Axv1 += -self.r2c(F1v)/self.abl.H1
-
-        #Fringe region forcing?
-        if self.forcing.fringe:
-            u2r = self.c2r(u2)
-            v2r = self.c2r(v2)
-            F1u1,F1v1,F1u2,F1v2 = self.forcing.F1fringe(u1r,v1r,u2r,v2r)
-            Axu1 += -self.r2c(F1u1)
-            Axv1 += -self.r2c(F1v1)
-            Axu2 += -self.r2c(F1u2)
-            Axv2 += -self.r2c(F1v2)
-    
-        #Set defunct modes to zero
-        Axu1[0] = 0.
-        Axv1[0] = 0.
-        Axu2[0] = 0.
-        Axv2[0] = 0.
-        return np.concatenate((Axu1,Axv1,Axu2,Axv2))
-
-    #Outdated routine
-    def Amatrix(self):
-        Nx = self.grid.Nx
-        A = np.zeros((4*Nx,4*Nx),dtype=np.complex128)
-        PHIs = self.PHI
-        for index, k in enumerate(self.grid.ks):
-            sigma1 = self.abl.U1*k
-            sigma2 = self.abl.U2*k
-            sigma3 = self.abl.U3*k
-            PHI = PHIs[index]
-    
-            #A matrix regular entries
-            #u1 equation
-            A[index,index] += -1j*sigma1
-            A[index,index] +=  1j*k*PHI*self.abl.H1/self.abl.U1
-            A[index,index] += -2*self.abl.C1*self.abl.dS12/self.abl.H1
-            A[index,index] += -2*self.abl.C0*self.abl.S1/self.abl.H1
-            A[index,index+1*Nx] += self.abl.fc
-            A[index,index+2*Nx] += 1j*k*PHI*self.abl.H2/self.abl.U2
-            A[index,index+2*Nx] += 2*self.abl.C1*self.abl.dS12/self.abl.H1
-    
-            #v1 equation
-            A[index+Nx,index] += -self.abl.fc
-            A[index+Nx,index+1*Nx] += -1j*sigma1
-            A[index+Nx,index+1*Nx] += -2*self.abl.C1*self.abl.dS12/self.abl.H1
-            A[index+Nx,index+1*Nx] += -2*self.abl.C0*self.abl.S1/self.abl.H1
-            A[index+Nx,index+3*Nx] += 2*self.abl.C1*self.abl.dS12/self.abl.H1
-    
-            #u2 equation
-            A[index+2*Nx,index] += 1j*k*PHI*self.abl.H1/self.abl.U1
-            A[index+2*Nx,index] += 2*self.abl.C1*self.abl.dS12/self.abl.H2
-            A[index+2*Nx,index+2*Nx] += -1j*sigma2
-            A[index+2*Nx,index+2*Nx] +=  1j*k*PHI*self.abl.H2/self.abl.U2
-            A[index+2*Nx,index+2*Nx] += -2*self.abl.C1*self.abl.dS12/self.abl.H2
-            A[index+2*Nx,index+3*Nx] += self.abl.fc
-    
-            #v2 equation
-            A[index+3*Nx,index+1*Nx] += 2*self.abl.C1*self.abl.dS12/self.abl.H2
-            A[index+3*Nx,index+2*Nx] += -self.abl.fc
-            A[index+3*Nx,index+3*Nx] += -1j*sigma2
-            A[index+3*Nx,index+3*Nx] += -2*self.abl.C1*self.abl.dS12/self.abl.H2
-        
-        #A matrix convolution - Part 1: Linearisation Wind farm drag
-        #It is implicitly assumed that a constant forcing model
-        #with a CTr field is used. 
-        A[:Nx,:Nx] += -2*self.abl.S1/self.abl.H1*cconv_1D(self.r2c(self.forcing.CTr))
-        A[Nx:2*Nx,Nx:2*Nx] += -2*self.abl.S1/self.abl.H1*cconv_1D(self.r2c(self.forcing.CTr))
-
-        #A matrix convolution - Part 2: Fringe region forcing
-        if self.forcing.Lfringe:
-            A[:Nx,:Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-            A[1*Nx:2*Nx,1*Nx:2*Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-            A[2*Nx:3*Nx,2*Nx:3*Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-            A[3*Nx:4*Nx,3*Nx:4*Nx] += -cconv_1D(self.r2c(self.forcing.Cfr))
-    
-        #Set defunct modes to zero
-        A[0,:]    = 0.
-        A[Nx,:]   = 0.
-        A[2*Nx,:] = 0.
-        A[3*Nx,:] = 0.
-        A[0,0]       = 1.
-        A[Nx,Nx]     = 1.
-        A[2*Nx,2*Nx] = 1.
-        A[3*Nx,3*Nx] = 1.
-        return A
-
 class S1DPmodel(S1Dmodel):
     '''
     Steady one-dimensional pressure model
     (Three-layer model, but p is an input)
     '''
     def __init__(self,grid,forcing,abl,pressure):
+        '''
+        Parameters
+        ----------
+        grid: Grid object
+            numerical grid
+        forcing: CST/WF object (defined in TLMForcing.py)
+            perturbing force
+        abl: ABL object
+            atmospheric state
+        pressure: 1d numpy array
+            applied pressure field
+        '''
         super().__init__(grid,forcing,abl)
         if pressure.shape==self.grid.shape:
             self.__pc = self.r2c(pressure)
@@ -1166,6 +922,23 @@ class S1DPmodel(S1Dmodel):
             return
 
     def format_solution(self,X):
+        '''
+        Calculate perturbation quantities from the general solution vector
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        result: dict
+            dictionary with 1d numpy arrays
+            keys > u1c,v1c: perturbation velocity in the wind-farm layer
+                   u2c,v2c: perturbation velocity in the upper layer
+                   etac: inversion displacement
+                   pc: pressure perturbation
+        '''
         u1c,v1c,u2c,v2c = self.expandX(X)
         etac = self.continuity(u1c,v1c,u2c,v2c)
         result = {}
@@ -1178,6 +951,15 @@ class S1DPmodel(S1Dmodel):
         return result
 
     def Bvector(self):
+        '''
+        Compute right-hand side of model equations (B vector)
+        the input pressure field is applied here
+
+        Returns
+        -------
+        _: 1d numpy array
+            right-hand side of model equations (Fourier space)
+        '''
         #Compute 0th order forcing term (real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space and
@@ -1195,9 +977,19 @@ class S1DPmodel(S1Dmodel):
 
     def Mx(self,x):
         '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (excluding the convolution products)
+        Compute the matrix vector product M*x where preconditioner M = inv(P)
+        approximates inv(A) (excluding the convolution products)
         The matrix vector product Mx is found by solving Py=x
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vector
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product M*x
         '''
         N = self.grid.N
         M = np.zeros((4,N),dtype=np.complex128)
@@ -1264,6 +1056,19 @@ class S1DPmodel(S1Dmodel):
         return M.reshape(4*N)
 
     def Ax(self,x):
+        '''
+        Compute the matrix vector product A*x 
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vector
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product A*x
+        '''
         N = self.grid.N
         Axu1 = np.zeros((N),dtype=np.complex128)
         Axv1 = np.zeros((N),dtype=np.complex128)
@@ -1342,6 +1147,7 @@ class S1DPmodel(S1Dmodel):
 
     @property
     def pc(self):
+        '''Applied pressure field'''
         return self.__pc
 
 class S2Dmodel(model):
@@ -1349,6 +1155,19 @@ class S2Dmodel(model):
     Steady two-dimensional gravity wave model
     '''
     def __init__(self,grid,forcing,abl,purefriction=False):
+        '''
+        Parameters
+        ----------
+        grid: Grid object
+            numerical grid
+        forcing: CST/WF object (defined in TLMForcing.py)
+            perturbing force
+        abl: ABL object
+            atmospheric state
+        purefriction (optional): bool
+            flag to consider the pure friction case, i.e., without gravity waves
+            default: False
+        '''
         super().__init__(grid,forcing,abl)
         if purefriction:
             self.PHI = np.zeros(self.grid.shape,dtype=np.complex128)
@@ -1356,6 +1175,25 @@ class S2Dmodel(model):
             self.PHI = self.PHIvector()
 
     def format_solution(self,X):
+        '''
+        Calculate perturbation quantities from the general solution vector
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        result: dict
+            dictionary with 2d numpy arrays
+            keys > u1c,v1c: perturbation velocity in the wind-farm layer
+                   u2c,v2c: perturbation velocity in the upper layer
+                   p1c: pressure due to the displacement in the wind-farm layer
+                   p2c: pressure due to the displacement in the upper layer
+                   etac: inversion displacement
+                   pc: pressure perturbation
+        '''
         u1c,v1c,u2c,v2c,p1c,p2c = self.expandX(X)
         pc = p1c+p2c
         etac = self.continuity(u1c,v1c,u2c,v2c,p1c,p2c)
@@ -1371,6 +1209,20 @@ class S2Dmodel(model):
         return result
 
     def expandX(self,X):
+        '''
+        Expand the general solution vector into
+        dependent variables of the problem
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        u1,v1,u2,v2,p1,p2: 2d numpy array
+            perturbation velocities and pressures in wind-farm and upper layer
+        '''
         N = self.grid.N
         u1 = X[0:N].reshape(self.grid.shape)
         v1 = X[1*N:2*N].reshape(self.grid.shape)
@@ -1381,6 +1233,26 @@ class S2Dmodel(model):
         return u1, v1, u2, v2, p1, p2
 
     def c2r(self,cfield,returnErr=False):
+        '''
+        Perform an inverse Fourier transform
+
+        Parameters
+        ----------
+        cfield: 2d numpy array
+            complex field, assuming
+                - Hermitian symmetry
+                - zero-wavenumber component at the center of the spectrum
+        returnErr (optional): bool
+            flag to return the maximum imaginary part of the real field
+            default: False
+
+        Returns
+        -------
+        rfield: 2d numpy array
+            inverse Fourier transform of cfield (real part)
+        err (optional): float
+            maximum imaginary part of rfield (zero if input is Hermitian-symmetric)
+        '''
         rfield = np.fft.ifft2(np.fft.ifftshift(cfield*self.grid.N))
         if returnErr:
             err = np.amax(np.abs(np.imag(rfield)))
@@ -1390,9 +1262,39 @@ class S2Dmodel(model):
         return out
 
     def r2c(self,rfield):
+        '''
+        Perform a Fourier transform
+
+        Parameters
+        ----------
+        rfield: 2d numpy array
+            real field
+
+        Returns
+        -------
+        cfield: 2d numpy array
+            Fourier transform of rfield
+            (zero-wavenumber at the center of the spectrum)
+        '''
         return np.fft.fftshift(np.fft.fft2(rfield))/self.grid.N
 
     def c2r_deal(self,cfield):
+        '''
+        Perform an inverse Fourier transform from complex to dealiasing space
+        (complex field of size 3/2Nx*3/2Ny is obtained by zero-padding)
+
+        Parameters
+        ----------
+        cfield: 2d numpy array
+            complex field, assuming
+                - Hermitian symmetry
+                - zero-wavenumber component at the center of the spectrum
+
+        Returns
+        -------
+        rfield32: 2d numpy array
+            inverse Fourier transform of cfield32 in dealiasing space (real part)
+        '''
         #First padd in x-direction
         cfield32 = np.concatenate( (
             np.zeros((int(self.grid.Nx/4),self.grid.Ny),dtype=np.complex128),
@@ -1411,11 +1313,39 @@ class S2Dmodel(model):
         return np.real(rfield)
 
     def r2c_deal(self,rfield32):
+        '''
+        Perform a Fourier transform from dealiasing to complex space
+        (complex field of size Nx*Ny is obtained by disregarding high wavenumbers)
+
+        Parameters
+        ----------
+        rfield32: 2d numpy array
+            real field in dealiasing space
+
+        Returns
+        -------
+        cfield: 2d numpy array
+            Fourier transform of rfield32, disregarding high wavenumbers
+            (zero-wavenumber component at the center of the spectrum)
+        '''
         cfield32 = np.fft.fftshift(np.fft.fft2(rfield32))/self.grid32.N
         return cfield32[int(self.grid.Nx/4):int(self.grid.Nx*5/4),int(self.grid.Ny/4):int(self.grid.Ny*5/4)]
 
     def continuity(self,u1c,v1c,u2c,v2c,p1c,p2c):
-        '''Return boundar-layer displacement based on given velocity field'''
+        '''
+        Compute boundar-layer displacement based on given velocity field
+        
+        Parameters
+        ----------
+        u1c,v1c,u2c,v2c,p1c,p2c: 2d numpy array
+            perturbation velocities and pressure in wind-farm and upper layer
+            (Fourier space)
+
+        Returns
+        -------
+        eta: 2d numpy array
+            total boundary-layer displacement
+        '''
         ##Using the continuity equation
         #Ks, Ls = np.meshgrid(self.grid.ks,self.grid.ls,indexing='ij')
         #sigma1 = self.abl.U1*Ks+self.abl.V1*Ls
@@ -1460,6 +1390,14 @@ class S2Dmodel(model):
         return eta
 
     def Bvector(self):
+        '''
+        Compute right-hand side of model equations (B vector)
+
+        Returns
+        -------
+        _: 1d numpy array
+            right-hand side of model equations (Fourier space)
+        '''
         #Compute 0th order forcing term (2D real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space, cast into 1D array and
@@ -1477,6 +1415,14 @@ class S2Dmodel(model):
         return np.concatenate((Bu,Bv,np.zeros((4*Nx*Ny,),dtype=np.complex128)))
 
     def PHIvector(self):
+        '''
+        Compute complex stratification coefficient Phi
+
+        Returns
+        -------
+        PHI: 2d numpy array
+            complex stratification coefficient
+        '''
         PHI = self.abl.gprime*np.ones(self.grid.shape,dtype=np.complex128)
         for indexk, k in enumerate(self.grid.ks):
             for indexl, l in enumerate(self.grid.ls):
@@ -1495,12 +1441,31 @@ class S2Dmodel(model):
         return PHI
 
     def Aoperator(self):
+        '''
+        Linear operator interface for performing matrix vector products with
+        the system matrix A
+
+        Returns
+        -------
+        A: LinearOperator
+            interface for the system matrix A
+        '''
         A = scipy.sparse.linalg.LinearOperator((6*self.grid.N,6*self.grid.N),
                                                matvec=self.Ax,
                                                dtype=np.complex128)
         return A
     
     def Moperator(self):
+        '''
+        Linear operator interface for performing matrix vector products with
+        the preconditioner M = inv(P) that approximates inv(A)
+        (excluding the convolution products)
+
+        Returns
+        -------
+        M: LinearOperator
+            interface for the preconditioner M
+        '''
         M = scipy.sparse.linalg.LinearOperator((6*self.grid.N,6*self.grid.N),
                                                matvec=self.Mx,
                                                dtype=np.complex128)
@@ -1508,9 +1473,19 @@ class S2Dmodel(model):
 
     def Mx(self,x):
         '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (excluding the convolution products)
+        Compute the matrix vector product M*x where preconditioner M = inv(P)
+        approximates inv(A) (excluding the convolution products)
         The matrix vector product Mx is found by solving Py=x
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vector
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product M*x
         '''
         N = self.grid.N
         Nx = self.grid.Nx
@@ -1615,6 +1590,26 @@ class S2Dmodel(model):
         return M.reshape(6*N)
 
     def Ax(self,x):
+        '''
+        Compute the matrix vector product A*x
+
+        The pressure is split in two variables p1,2=Phi*eta_1,2 which are treated
+        as independent variables instead of using a direct substituion in terms of
+        eta_1,2 in the momentum equations. The reason is that for cases where
+        sigma_1,2 is zero but l or k is not, the pressure is not zero but follows
+        indirectly from the continuity equation. When k=l=0 the continuity
+        equations become trivial and should be replaced by p1,2=0
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vector
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product A*x
+        '''
         N = self.grid.N
         Nx = self.grid.Nx
         Ny = self.grid.Ny
@@ -1719,288 +1714,6 @@ class S2Dmodel(model):
         Axp2[defunctindices] = 0.
         return np.concatenate((Axu1,Axv1,Axu2,Axv2,Axp1,Axp2))
 
-class S2Dmodel_old(model):
-#depreciated
-#Non-rigorous linearisation of stresses
-    '''
-    Steady two-dimensional gravity wave model
-    '''
-    def __init__(self,grid,forcing,abl):
-        super().__init__(grid,forcing,abl)
-        self.PHI = self.PHIvector()
-
-    def format_solution(self,X):
-        u1c,v1c,u2c,v2c,p1c,p2c = self.expandX(X)
-        pc = p1c+p2c
-        etac = self.continuity(u1c,v1c,u2c,v2c,p1c,p2c)
-        result = {}
-        result['u1c']  = u1c
-        result['v1c']  = v1c
-        result['u2c']  = u2c
-        result['v2c']  = v2c
-        result['etac'] = etac
-        result['pc']   = pc
-        result['p1c']  = p1c
-        result['p2c']  = p2c
-        return result
-
-    def expandX(self,X):
-        N = self.grid.N
-        u1 = X[0:N].reshape(self.grid.shape)
-        v1 = X[1*N:2*N].reshape(self.grid.shape)
-        u2 = X[2*N:3*N].reshape(self.grid.shape)
-        v2 = X[3*N:4*N].reshape(self.grid.shape)
-        p1 = X[4*N:5*N].reshape(self.grid.shape)
-        p2 = X[5*N:6*N].reshape(self.grid.shape)
-        return u1, v1, u2, v2, p1, p2
-
-    def c2r(self,cfield,returnErr=False):
-        rfield = np.fft.ifft2(np.fft.ifftshift(cfield*self.grid.N))
-        if returnErr:
-            err = np.amax(np.abs(np.imag(rfield)))
-            out = (np.real(rfield), err)
-        else:
-            out = np.real(rfield)
-        return out
-
-    def r2c(self,rfield):
-        return np.fft.fftshift(np.fft.fft2(rfield))/self.grid.N
-
-    def continuity(self,u1c,v1c,u2c,v2c,p1c,p2c):
-        '''Return boundar-layer displacement based on given velocity field'''
-        ##Using the continuity equation
-        #Ks, Ls = np.meshgrid(self.grid.ks,self.grid.ls,indexing='ij')
-        #sigma1 = self.abl.U1*Ks+self.abl.V1*Ls
-        #sigma2 = self.abl.U2*Ks+self.abl.V2*Ls
-        #with np.errstate(divide='ignore',invalid='ignore'):
-        #    eta1 = -self.abl.H1/sigma1*(Ks*u1c+Ls*v1c)
-        #    eta2 = -self.abl.H2/sigma2*(Ks*u2c+Ls*v2c)
-        ##When sigma1,2 is exactly zero (this includes the mean mode),
-        ##eta1,2 is undefined (division by zero). The exact value doesn't matter
-        ##because it does not appear in the system of equations (the continuity
-        ##equation changes to an incompressiblity condition in the limiting case)
-        ##The value of eta1,2 is replaced with the limit value p1,2/PHI to make
-        ##the eta field continuous. Note that setting eta1,2 to zero would cause
-        ##broad stripes in the solution field when one of U1,V1,U2,V2 is zero.
-        ##There is no issue for values of sigma1,2 close but not equal to zero
-        #eta1[sigma1==0.]=p1c[sigma1==0.]/self.PHI[sigma1==0.]
-        #eta2[sigma2==0.]=p2c[sigma2==0.]/self.PHI[sigma2==0.]
-        #eta = eta1+eta2
-
-        #Using the pressure field:
-        #Eta can also be found by the relation p1,2=PHI*eta1,2
-        #The result is identical to the displacement found with the continuity
-        #equation when the limiting values for sigma1,2->0 are chosen correctly
-        #However, this method is numerically more stable as it only involves a
-        #product, whereas the continuity approach can result in the division of
-        #two very small numbers (order of 1.0e-21) which is inaccurate
-        #The only issue here is when PHI=0., which can occur for gprime=0.
-        eta1 = p1c/self.PHI
-        eta2 = p2c/self.PHI
-        eta = eta1 + eta2
-        return eta
-
-    def Bvector(self):
-        #Compute 0th order forcing term (2D real)
-        F0u, F0v = self.forcing.F0(self.abl)
-        #Convert to fourier space, cast into 1D array and
-        #divide by H1 (TLM solves height-averaged equations)
-        Bu = np.ravel(self.r2c(F0u))/self.abl.H1
-        Bv = np.ravel(self.r2c(F0v))/self.abl.H1
-        #Set defunct modes to zero
-        Nx = self.grid.Nx
-        Ny = self.grid.Ny
-        defunct_k = [i for i in range(Ny)]
-        defunct_l = [i*Ny for i in range(1,Nx)]
-        defunctindices = np.array(defunct_k + defunct_l)
-        Bu[defunctindices] = 0.
-        Bv[defunctindices] = 0.
-        return np.concatenate((Bu,Bv,np.zeros((4*Nx*Ny,),dtype=np.complex128)))
-
-    def PHIvector(self):
-        Nx = self.grid.Nx
-        Ny = self.grid.Ny
-        PHI = self.abl.gprime*np.ones((Nx,Ny),dtype=np.complex128)
-        for indexk, k in enumerate(self.grid.ks):
-            for indexl, l in enumerate(self.grid.ls):
-                sigma3 = self.abl.U3*k+self.abl.V3*l
-                #Non-hydrostatic solution 
-                if not sigma3==0:
-                    if sigma3**2>self.abl.N**2:
-                        m = 1j*np.sqrt((k**2+l**2)*np.abs(self.abl.N**2/sigma3**2-1))
-                    else:
-                        m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2-1))
-                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2-sigma3**2)
-        return PHI
-
-    def Aoperator(self):
-        A = scipy.sparse.linalg.LinearOperator((6*self.grid.N,6*self.grid.N),
-                                               matvec=self.Ax,
-                                               dtype=np.complex128)
-        return A
-    
-    def Moperator(self):
-        M = scipy.sparse.linalg.LinearOperator((6*self.grid.N,6*self.grid.N),
-                                               matvec=self.Mx,
-                                               dtype=np.complex128)
-        return M
-
-    def Mx(self,x):
-        '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (excluding the convolution products)
-        The matrix vector product Mx is found by solving Py=x
-        '''
-        N = self.grid.N
-        Nx = self.grid.Nx
-        Ny = self.grid.Ny
-        M = np.zeros((6,N),dtype=np.complex128)
-        X = x.reshape(6,N)
-        for indexk, k in enumerate(self.grid.ks):
-            for indexl, l in enumerate(self.grid.ls):
-                index = indexl + Ny*indexk
-                P = np.zeros((6,6),dtype=np.complex128)
-                sigma1 = self.abl.U1*k+self.abl.V1*l
-                sigma2 = self.abl.U2*k+self.abl.V2*l
-                #u1 equation
-                P[0,0] = (-1j*sigma1
-                        -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                        -2*self.abl.C0*self.abl.S1/self.abl.H1)
-                P[0,1] = self.abl.fc
-                P[0,2] = 2*self.abl.C1*self.abl.dS12/self.abl.H1
-                P[0,4] = -1j*k
-                P[0,5] = -1j*k
-                #v1 equation
-                P[1,0] = -self.abl.fc
-                P[1,1] = (-1j*sigma1
-                        -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                        -2*self.abl.C0*self.abl.S1/self.abl.H1)
-                P[1,3] = 2*self.abl.C1*self.abl.dS12/self.abl.H1
-                P[1,4] = -1j*l
-                P[1,5] = -1j*l
-                #u2 equation
-                P[2,0] = 2*self.abl.C1*self.abl.dS12/self.abl.H2
-                P[2,2] = (-1j*sigma2
-                        -2*self.abl.C1*self.abl.dS12/self.abl.H2)
-                P[2,3] = self.abl.fc
-                P[2,4] = -1j*k
-                P[2,5] = -1j*k
-                #v2 equation
-                P[3,1] = 2*self.abl.C1*self.abl.dS12/self.abl.H2
-                P[3,2] = -self.abl.fc
-                P[3,3] = (-1j*sigma2
-                        -2*self.abl.C1*self.abl.dS12/self.abl.H2)
-                P[3,4] = -1j*l
-                P[3,5] = -1j*l
-                #p1 equation
-                #General case
-                P[4,0] = self.PHI[indexk,indexl]*self.abl.H1*k
-                P[4,1] = self.PHI[indexk,indexl]*self.abl.H1*l
-                P[4,4] = sigma1
-                #p2 equation
-                #General case
-                P[5,2] = self.PHI[indexk,indexl]*self.abl.H2*k
-                P[5,3] = self.PHI[indexk,indexl]*self.abl.H2*l
-                P[5,5] = sigma2
-                #k=l=0
-                if k==0 and l == 0:
-                    P[4,4] = 1.+0.j
-                    P[5,5] = 1.+0.j
-
-                M[:,index] = scipy.linalg.solve(P,X[:,index])
-        #Defunct mode
-        defunct_k = [i for i in range(Ny)]
-        defunct_l = [i*Ny for i in range(1,Nx)]
-        defunctindices = np.array(defunct_k + defunct_l)
-        M[:,defunctindices] = 0.+0.j
-        return M.reshape(6*N)
-
-    def Ax(self,x):
-        N = self.grid.N
-        Nx = self.grid.Nx
-        Ny = self.grid.Ny
-        #Initialise components of the matrix vector product
-        Axu1 = np.zeros((N),dtype=np.complex128)
-        Axv1 = np.zeros((N),dtype=np.complex128)
-        Axu2 = np.zeros((N),dtype=np.complex128)
-        Axv2 = np.zeros((N),dtype=np.complex128)
-        Axp1 = np.zeros((N),dtype=np.complex128)
-        Axp2 = np.zeros((N),dtype=np.complex128)
-        #Extract dependent variables (u1,v1,u2,v2,p1,p2) from the vector
-        u1 = x[0:N]
-        v1 = x[N:2*N]
-        u2 = x[2*N:3*N]
-        v2 = x[3*N:4*N]
-        p1 = x[4*N:5*N]
-        p2 = x[5*N:6*N]
-        #Create some additional vectors
-        Ks, Ls = np.meshgrid(self.grid.ks,self.grid.ls,indexing='ij')
-        ks = np.ravel(Ks)
-        ls = np.ravel(Ls)
-        sigma1 = self.abl.U1*ks+self.abl.V1*ls
-        sigma2 = self.abl.U2*ks+self.abl.V2*ls
-        #Regular entries
-        #u1 equation
-        Axu1 += (-1j*sigma1
-                -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                -2*self.abl.C0*self.abl.S1/self.abl.H1)*u1
-        Axu1 += self.abl.fc*v1
-        Axu1 += 2*self.abl.C1*self.abl.dS12/self.abl.H1*u2
-        Axu1 += -1j*ks*(p1+p2)
-        #v1 equation
-        Axv1 += -self.abl.fc*u1
-        Axv1 += (-1j*sigma1
-                -2*self.abl.C1*self.abl.dS12/self.abl.H1
-                -2*self.abl.C0*self.abl.S1/self.abl.H1)*v1
-        Axv1 += 2*self.abl.C1*self.abl.dS12/self.abl.H1*v2
-        Axv1 += -1j*ls*(p1+p2)
-        #u2 equation
-        Axu2 += 2*self.abl.C1*self.abl.dS12/self.abl.H2*u1
-        Axu2 += (-1j*sigma2
-                -2*self.abl.C1*self.abl.dS12/self.abl.H2)*u2
-        Axu2 += self.abl.fc*v2
-        Axu2 += -1j*ks*(p1+p2)
-        #v2 equation
-        Axv2 += 2*self.abl.C1*self.abl.dS12/self.abl.H2*v1
-        Axv2 += -self.abl.fc*u2
-        Axv2 += (-1j*sigma2
-                -2*self.abl.C1*self.abl.dS12/self.abl.H2)*v2
-        Axv2 += -1j*ls*(p1+p2)
-        #p1 equation
-        #General case
-        Axp1 += np.ravel(self.PHI)*self.abl.H1*ks*u1
-        Axp1 += np.ravel(self.PHI)*self.abl.H1*ls*v1
-        Axp1 += sigma1*p1
-        #p2 equation
-        #General case
-        Axp2 += np.ravel(self.PHI)*self.abl.H2*ks*u2
-        Axp2 += np.ravel(self.PHI)*self.abl.H2*ls*v2
-        Axp2 += sigma2*p2
-        #p1,2 equation: k=l=0
-        indices_klzero = int(Nx/2)*Ny+int(Ny/2)
-        Axp1[indices_klzero] = p1[indices_klzero]
-        Axp2[indices_klzero] = p2[indices_klzero]
-
-        #Compute 1st order forcing term
-        u1r = self.c2r(u1.reshape(self.grid.shape))
-        v1r = self.c2r(v1.reshape(self.grid.shape))
-        F1u, F1v = self.forcing.F1(self.abl,u1r,v1r)
-        #Convert back to fourier space, cast into 1D array and
-        #divide by H1 (TLM solves height-averaged equations)
-        Axu1 += -np.ravel(self.r2c(F1u))/self.abl.H1
-        Axv1 += -np.ravel(self.r2c(F1v))/self.abl.H1
-
-        #Set defunct modes to zero
-        defunct_k = [i for i in range(Ny)]
-        defunct_l = [i*Ny for i in range(1,Nx)]
-        defunctindices = np.array(defunct_k + defunct_l)
-        Axu1[defunctindices] = 0.
-        Axv1[defunctindices] = 0.
-        Axu2[defunctindices] = 0.
-        Axv2[defunctindices] = 0.
-        Axp1[defunctindices] = 0.
-        Axp2[defunctindices] = 0.
-        return np.concatenate((Axu1,Axv1,Axu2,Axv2,Axp1,Axp2))
 
 class U1Dmodel(model):
 #No longer up to date
