@@ -1714,11 +1714,11 @@ class S2Dmodel(model):
         Axp2[defunctindices] = 0.
         return np.concatenate((Axu1,Axv1,Axu2,Axv2,Axp1,Axp2))
 
-
 class U1Dmodel(model):
-#No longer up to date
     '''
     Unsteady one-dimensional gravity wave model
+
+    Out-dated
     '''
 #    #Real in space but spectral in time
 #    result['u1f']  = np.fft.ifft(np.fft.ifftshift(result['u1c']*Nx,axes=0),axis=0)
@@ -1816,12 +1816,21 @@ class ABL(object):
     '''
     def __init__(self,input='LESbased',**kwargs):
         '''
+        Initialise atmospheric state with one of the following valid methods:
+        - default subcritical state
+        - default supercritical state
+        - based on LES data
+        - based on analytic profile with constant eddy viscosity (out-dated)
+        - based on analytic profile with quadratic eddy viscosity (out-dated)
+        - based on analytic profile with cubic eddy viscosity
+        - based on ERA5 data
+        - load from file (written with the ABL.saveas() routine)
+
         Parameters
         ----------
         input: str
             Name of the method used to specify the atmospheric state
         '''
-        #input flag indicates how the data is specified
         assert input in ['default_subcr',
                          'default_supercr',
                          'LESbased',
@@ -1845,7 +1854,11 @@ class ABL(object):
         function(**kwargs)
 
     def default_supercr(self,**kwargs):
-        #Default supercritical abl state, corresponding to finWF5
+        '''
+        Method to specify the atmospheric state as the default implemented
+        supercritical state, which corresponds to the atmospheric conditions
+        of case S1 of Allaerts and Meyers, J. Fluid Mech. 814, 2017
+        '''
         self.__H1 = 150.0
         self.__U1 = 10.27
         self.__V1 = 0.0588
@@ -1862,7 +1875,11 @@ class ABL(object):
         self.__N      = 0.58354e-2
 
     def default_subcr(self,**kwargs):
-        #Default subcritical abl state, corresponding to finSBL_q00
+        '''
+        Method to specify the atmospheric state as the default implemented
+        subcritical state, which corresponds to the atmospheric conditions
+        of case Q00 of Allaerts and Meyers, Bound. Layer Meteorol. 166(2), 2018
+        '''
         self.__H1 = 150.0
         self.__U1 = 8.5518
         self.__V1 = 0.00299
@@ -1879,6 +1896,30 @@ class ABL(object):
         self.__N      = 0.58132e-2
 
     def LESbased(self,**kwargs):
+        '''
+        Method to specify the atmospheric state based on LES data
+
+        This routine assumes that the LES data is obtained with SP-Wind, and
+        the input parameters are filenames and specific data structures rather
+        than general vertical profiles
+
+        Parameters
+        ----------
+        sim: Simulation object (defined in simulation.py of py4sp package)
+            LES simulation meta data structure
+        tstart,tend: float
+            LES start and end time between which time averages are collected
+        H1: float
+            Height of the wind-farm layer
+        ccfilename: str
+            Path and filename of BL_tstatcc.dat (or BL_instcc.dat) file
+        stfilename: str
+            Path and filename of BL_tstatst.dat (or BL_instst.dat) file
+        EKfilename: str
+            Path and filename of ek_post.dat file
+        ENfilename: str
+            Path and filename of en_tstatcc.dat file
+        '''
         arguments = ['sim','tstart','tend','H1',
                      'ccfilename','stfilename',
                      'EKfilename','ENfilename']
@@ -1945,7 +1986,32 @@ class ABL(object):
         self.__fc = sim.abl.fc
 
     def analytic_constant(self,**kwargs):
-        #ABL state based on analytical formulas for u and v (Csanady 1974)
+        '''
+        Method to specify the atmospheric state based on analytic profiles with
+        a constant eddy viscosity profile. The analytic profiles have been derived
+        by Csanady 1974
+
+        This method might be outdated
+
+        Parameters
+        ----------
+        dth: float
+            Inversion strength
+        fc: float
+            Coriolis parameter
+        N: float
+            Brunt Vaisala frequency
+        G: float
+            Geostrophic wind speed
+        alpha: float
+            Geostrophic wind direction
+        viscosity: float
+            Eddy viscosity
+        utau: float
+            Friction velocity
+        h: float
+            Boundary-layer height
+        '''
         arguments = ['dth','fc','N','G','alpha','viscosity','utau','h']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_constant ABL definition are missing'
         
@@ -1991,7 +2057,32 @@ class ABL(object):
         self.__C2 = 0.
 
     def analytic_quadratic(self,**kwargs):
-        #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
+        '''
+        Method to specify the atmospheric state based on analytic profiles with
+        a quadratic eddy viscosity profile. The analytic profiles have been derived
+        by Nieuwstadt 1983
+
+        This method might be outdated
+
+        Parameters
+        ----------
+        dth: float
+            Inversion strength
+        fc: float
+            Coriolis parameter
+        N: float
+            Brunt Vaisala frequency
+        G: float
+            Geostrophic wind speed
+        alpha: float
+            Geostrophic wind direction
+        kappa: float
+            Von Karman constant
+        utau: float
+            Friction velocity
+        h: float
+            Boundary-layer height
+        '''
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
@@ -2042,7 +2133,32 @@ class ABL(object):
         self.__C2 = 0.
 
     def analytic_cubic(self,**kwargs):
-        #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
+        '''
+        Method to specify the atmospheric state based on analytic profiles with
+        a cubic eddy viscosity profile. The analytic profiles have been derived by
+        Nieuwstadt 1983
+
+        Parameters
+        ----------
+        dth: float
+            Inversion strength
+        fc: float
+            Coriolis parameter
+        N: float
+            Brunt Vaisala frequency
+        G: float
+            Geostrophic wind speed
+        alpha: float
+            Geostrophic wind direction
+        kappa: float
+            Von Karman constant
+        utau: float
+            Friction velocity
+        h: float
+            Boundary-layer height
+        H1: float
+            Height of the wind-farm layer
+        '''
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h','H1']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
@@ -2092,6 +2208,40 @@ class ABL(object):
         self.__C2 = 0.
 
     def ERA5(self,**kwargs):
+        '''
+        Method to specify the atmospheric state based on ERA5 data
+
+        Parameters
+        ----------
+        H1: float
+            Height of the wind-farm layer
+        T2: float
+            Temperature at 2 m
+        blh: float
+            Height of turbulent boundary layer
+        ust: float
+            Friction velocity
+        wth: float
+            Surface heat flux
+        phi: float
+            Site latitude (radians)
+        zs: 1d numpy array
+            Height above the surface
+        us,vs: 1d numpy array
+            Velocity profile in x and y direction (West to East and South to North)
+        ths: 1d numpy array
+            Potential temperature profile
+        Gmode: str
+            Method to define free atmosphere velocity
+            "h1": take velocity at h1 (inversion center)
+            "h2": take velocity at h2 (inversion top)
+            "top": take velocity at 5000 m
+            "avg": average velocity profile between h1 and 5000 m
+        dh_max (optional): float
+            Maximum depth of the inversion layer used in the inversion curve
+            fitting procedure
+            Default: None
+        '''
         arguments = ['H1','T2','blh','ust','wth','phi',
                      'zs','us','vs','ths','Gmode']
         assert all([i in kwargs for i in arguments]),'Error: some arguments for ERA5 based ABL definition are missing'
@@ -2218,7 +2368,14 @@ class ABL(object):
         self.__fc = 2*omega*np.sin(kwargs['phi'])
 
     def fromfile(self,**kwargs):
-        #load ABL state from file
+        '''
+        Load ABL object from file
+
+        Parameters
+        ----------
+        filename: str
+            File containing the ABL object
+        '''
         assert 'filename' in kwargs, 'Error: filename not specified'
         
         #Read from file
@@ -2266,6 +2423,14 @@ class ABL(object):
                 self.__zst = None
 
     def rotate(self,alpha):
+        '''
+        Rotate coordinate axis over a certain angle
+
+        Parameters
+        ----------
+        alpha: float
+            Angle over which the coordinate axis is to be rotated (in radians)
+        '''
         U1n = self.U1*np.cos(alpha)+self.V1*np.sin(alpha)
         V1n = self.V1*np.cos(alpha)-self.U1*np.sin(alpha)
         self.__U1 = U1n
@@ -2280,11 +2445,35 @@ class ABL(object):
         self.__V3 = V3n
 
     def kwake(self,TI=None):
+        '''
+        Wake expansion coefficient as a function of turbulent intensity
+
+        Empirical expression proposed by Niayifar and Porte-Agel 2016 to relate
+        the wake expansion coefficient to the local turbulent intensity.
+        The expression is technically only valid for 0.065 < TI < 0.15
+
+        Parameters
+        ----------
+        TI (optional): float
+            Local turbulent intensity
+            Default: Turbulent intensity of undisturbed ABL state
+        '''
         if not TI:
             TI = self.TI
         return 0.3837*TI+0.003678
 
     def saveas(self,filename,info=''):
+        '''
+        Save ABL object to file
+
+        Parameters
+        ----------
+        filename: str
+            Name of destination file
+        info (optional): str
+            String with information about the ABL object
+            Default: Empty string
+        '''
         with open(filename,'w') as file:
             file.write('%%%%%%%%%%%%%%\n')
             file.write('TLM ABL object\n')
@@ -2412,15 +2601,18 @@ class ABL(object):
         return self.__H2
     @property
     def U2(self):
+        '''Height-averaged velocity in the upper layer in dimension 0'''
         return self.__U2
     @property
     def V2(self):
+        '''Height-averaged velocity in the upper layer in dimension 1'''
         return self.__V2
     @V2.setter
     def V2(self,value):
         self.__V2 = value
     @property
     def S2(self):
+        '''Height-averaged velocity magnitude in the upper layer'''
         return np.sqrt(self.U2**2 + self.V2**2)
     @property
     def WD2(self):
@@ -2432,21 +2624,25 @@ class ABL(object):
         return np.arctan(self.V2/self.U2)*180/np.pi
     @property
     def nu2(self):
+        '''Height-averaged turbulent viscosity in the upper layer'''
         return self.__nu2
     @nu2.setter
     def nu2(self,value):
         self.__nu2 = value
     @property
     def U3(self):
+        '''Velocity in the free atmosphere in dimension 0'''
         return self.__U3
     @property
     def V3(self):
+        '''Velocity in the free atmosphere in dimension 1'''
         return self.__V3
     @V3.setter
     def V3(self,value):
         self.__V3 = value
     @property
     def S3(self):
+        '''Velocity magnitude in the free atmosphere'''
         return np.sqrt(self.U3**2 + self.V3**2)
     @property
     def WD3(self):
@@ -2458,36 +2654,61 @@ class ABL(object):
         return np.arctan(self.V3/self.U3)*180/np.pi
     @property
     def dU12(self):
+        '''
+        Velocity difference between the wind-farm and upper layer in dimension 0
+        '''
         return self.U1-self.U2
     @property
     def dV12(self):
+        '''
+        Velocity difference between the wind-farm and upper layer in dimension 1
+        '''
         return self.V1-self.V2
     @property
     def dS12(self):
+        '''
+        Magnitude of velocity difference vector between the wind-farm and
+        upper layer
+        '''
         return np.sqrt(self.dU12**2 + self.dV12**2)
     @property
     def dS23(self):
+        '''
+        Magnitude of velocity difference vector between the upper layer and
+        the free atmosphere
+        '''
         return np.sqrt((self.U3-self.U2)**2 + (self.V3-self.V2)**2)
     @property
     def C0(self):
+        '''Friction coefficient at the surface'''
         return self.__C0
     @property
     def C1(self):
+        '''
+        Friction coefficient at the interface between wind-farm and upper layer
+        '''
         return self.__C1
     @property
     def C2(self):
+        '''
+        Friction coefficient at the interface between upper layer and free
+        atmosphere
+        '''
         return self.__C2
     @property
     def gprime(self):
+        '''Reduced gravity'''
         return self.__gprime
     @gprime.setter
     def gprime(self,value):
         self.__gprime = value
     @property
     def N(self):
+        '''Brunt Vaisala frequency of the free atmosphere'''
         return self.__N
     @property
     def fc(self):
+        '''Coriolis parameter'''
         return self.__fc
     @fc.setter
     def fc(self,value):
@@ -2501,28 +2722,38 @@ class ABL(object):
         self.__TI = value
     @property
     def H(self):
+        '''Boundary-layer height (= height of wind-farm plus upper layer)'''
         return self.H1+self.H2
     @property
     def Ub(self):
+        '''Boundary-layer velocity scale'''
         #Projection of (U2,V2) onto (U1,V1)
         U2p = (self.U1*self.U2+self.V1*self.V2)/self.S1
         return (self.H1/self.H*self.S1**(-2)+self.H2/self.H*U2p**(-2))**(-1/2)
     @property
     def PN(self):
+        '''
+        Non-dimensional number characterising internal gravity wave amplitude
+        '''
         return self.Ub**2/(self.N*self.S3*self.H)
     @property
     def Fr(self):
+        '''Froude number'''
         with np.errstate(divide='ignore',invalid='ignore'):
             return self.Ub/np.sqrt(self.gprime*self.H)
     @property
     def Fr1(self):
+        '''Partial Froude number of the wind-farm layer'''
         return self.S1/np.sqrt(self.gprime*self.H1)
     @property
     def Fr2(self):
+        '''Partial Froude number of the upper layer'''
         return self.S2/np.sqrt(self.gprime*self.H2)
 
 def cconv_1D(b,method='Fast'):
     '''
+    Not used anymore
+
     Compose a matrix that expresses the 1D circular convolution
     as a matrix vector multiplication (conv(a,b) = Ba)
     
@@ -2549,6 +2780,8 @@ def cconv_1D(b,method='Fast'):
 
 def cconv_2D(b,method='Fast'):
     '''
+    Not used anymore
+
     Compose a matrix that expresses the 2D circular convolution
     as a matrix vector multiplication (conv(a,b) = Ba)
     
@@ -2592,6 +2825,7 @@ def cconv_2D(b,method='Fast'):
     return B
 
 class gmres_counter(object):
+    '''Counter object for monitoring GMRES iterations'''
     def __init__(self, disp=True):
         self._disp = disp
         self.niter = 0
@@ -2601,6 +2835,7 @@ class gmres_counter(object):
             print('iter %3i\trk = %s' % (self.niter, str(rk)))
 
 class lgmres_counter(object):
+    '''Counter object for monitoring LGMRES iterations'''
     def __init__(self,A,B,N,disp=True):
         self._disp = disp
         self.niter = 0
