@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-Single-layer model
+Single-layer model developed by Smith 2010
 '''
 
 __author__ = "Dries Allaerts"
@@ -21,15 +21,37 @@ from py4sp import CIops
 
 class model(object):
     '''
-    Common interface for three-layer models
+    Common interface for single-layer models
     '''
     def __init__(self,grid,forcing,abl):
+        '''
+        Parameters
+        ----------
+        grid: Grid object (from TLM)
+            numerical grid
+        forcing: CST/WF object (from TLMForcing)
+            perturbing force
+        abl: ABL object
+            atmospheric state (single-layer)
+        '''
         self.__grid = grid
         self.__forcing = forcing
         self.__abl = abl
         self.__PHI = None
     
     def solve(self,method='direct',verbose=False):
+        '''
+        Solve the single-layer model
+
+        Parameters
+        ----------
+        method (optional): str
+            method used to solve the linear matrix equation
+            default: direct solve
+        verbose (optional): bool
+            flag for printing solver results
+            default: False
+        '''
         N = self.grid.N
         if method=='direct':
             B = self.Bvector()
@@ -71,15 +93,19 @@ class model(object):
 
     @property
     def grid(self):
+        '''Numerical grid'''
         return self.__grid
     @property
     def abl(self):
+        '''Atmospheric state'''
         return self.__abl
     @property
     def forcing(self):
+        '''Perturbing force'''
         return self.__forcing
     @property
     def PHI(self):
+        '''Complex stratification coefficient'''
         return self.__PHI
     @PHI.setter
     def PHI(self,value):
@@ -90,10 +116,36 @@ class S1Dmodel(model):
     Steady one-dimensional gravity wave model
     '''
     def __init__(self,grid,forcing,abl):
+        '''
+        Parameters
+        ----------
+        grid: Grid object (from TLM)
+            numerical grid
+        forcing: CST/WF object (from TLMForcing)
+            perturbing force
+        abl: ABL object
+            atmospheric state (single-layer)
+        '''
         super().__init__(grid,forcing,abl)
         self.PHI = self.PHIvector()
 
     def format_solution(self,X):
+        '''
+        Calculate perturbation quantities from the general solution vector
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        result: dict
+            dictionary with 1d numpy arrays
+            keys > u1c,v1c: perturbation velocity
+                   etac: inversion displacement
+                   pc: pressure perturbation
+        '''
         u1c,v1c = self.expandX(X)
         etac = self.continuity(u1c,v1c)
         result = {}
@@ -104,12 +156,46 @@ class S1Dmodel(model):
         return result
 
     def expandX(self,X):
+        '''
+        Expand the general solution vector into
+        dependent variables of the problem
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        u1, v1: 1d numpy array
+            perturbation velocities
+        '''
         N = self.grid.N
         u1 = X[0:N].reshape(self.grid.shape)
         v1 = X[1*N:2*N].reshape(self.grid.shape)
         return u1, v1
 
     def c2r(self,cfield,returnErr=False):
+        '''
+        Perform an inverse Fourier transform
+
+        Parameters
+        ----------
+        cfield: 1d numpy array
+            complex field, assuming
+                - Hermitian symmetry
+                - zero-wavenumber component at the center of the spectrum
+        returnErr (optional): bool
+            flag to return the maximum imaginary part of the real field
+            default: False
+
+        Returns
+        -------
+        rfield: 1d numpy array
+            inverse Fourier transform of cfield (real part)
+        err (optional): float
+            maximum imaginary part of rfield (zero if input is Hermitian-symmetric)
+        '''
         rfield = np.fft.ifft(np.fft.ifftshift(cfield*self.grid.N))
         if returnErr:
             err = np.amax(np.abs(np.imag(rfield)))
@@ -119,13 +205,47 @@ class S1Dmodel(model):
         return out
 
     def r2c(self,rfield):
+        '''
+        Perform a Fourier transform
+
+        Parameters
+        ----------
+        rfield: 1d numpy array
+            real field
+
+        Returns
+        -------
+        cfield: 1d numpy array
+            Fourier transform of rfield
+            (zero-wavenumber at the center of the spectrum)
+        '''
         return np.fft.fftshift(np.fft.fft(rfield))/self.grid.N
 
     def continuity(self,u1c,v1c):
-        '''Return boundar-layer displacement based on given velocity field'''
+        '''
+        Compute boundar-layer displacement based on given velocity field
+        
+        Parameters
+        ----------
+        u1c,v1c: 1d numpy array
+            perturbation velocities (Fourier space)
+
+        Returns
+        -------
+        _: 1d numpy array
+            boundary-layer displacement
+        '''
         return -self.abl.H1/self.abl.U1*u1c
 
     def Bvector(self):
+        '''
+        Compute right-hand side of model equations (B vector)
+
+        Returns
+        -------
+        _: 1d numpy array
+            right-hand side of model equations (Fourier space)
+        '''
         #Compute 0th order forcing term (real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space and
@@ -138,6 +258,14 @@ class S1Dmodel(model):
         return np.concatenate((Bu,Bv))
 
     def PHIvector(self):
+        '''
+        Compute complex stratification coefficient Phi
+
+        Returns
+        -------
+        PHIs: 1d numpy array
+            complex stratification coefficient
+        '''
         Nx = self.grid.Nx
         PHIs = self.abl.gprime*np.ones((Nx),dtype=np.complex128)
         for index, k in enumerate(self.grid.ks):
@@ -157,9 +285,19 @@ class S1Dmodel(model):
 
     def Mx(self,x):
         '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (in Smith model, the approximation is exact)
+        Compute the matrix vector product M*x where preconditioner M = inv(P)
+        approximates inv(A) (in Smith model, the approximation is exact)
         The matrix vector product Mx is found by solving Py=x
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vectori
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product M*x
         '''
         N = self.grid.N
         M = np.zeros((2,N),dtype=np.complex128)
@@ -184,10 +322,36 @@ class S2Dmodel(model):
     Steady two-dimensional gravity wave model
     '''
     def __init__(self,grid,forcing,abl):
+        '''
+        Parameters
+        ----------
+        grid: Grid object (from TLM)
+            numerical grid
+        forcing: CST/WF object (from TLMForcing)
+            perturbing force
+        abl: ABL object
+            atmospheric state (single-layer)
+        '''
         super().__init__(grid,forcing,abl)
         self.PHI = self.PHIvector()
 
     def format_solution(self,X):
+        '''
+        Calculate perturbation quantities from the general solution vector
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        result: dict
+            dictionary with 2d numpy arrays
+            keys > u1c,v1c: perturbation velocity
+                   etac: inversion displacement
+                   pc: pressure perturbation
+        '''
         u1c,v1c,pc = self.expandX(X)
         etac = self.continuity(u1c,v1c,pc)
         result = {}
@@ -198,6 +362,20 @@ class S2Dmodel(model):
         return result
 
     def expandX(self,X):
+        '''
+        Expand the general solution vector into
+        dependent variables of the problem
+
+        Parameters
+        ----------
+        X: 1d numpy array
+            general solution vector
+
+        Returns
+        -------
+        u1,v1,p: 2d numpy array
+            perturbation velocities and pressure
+        '''
         N = self.grid.N
         u1 = X[0:N].reshape(self.grid.shape)
         v1 = X[1*N:2*N].reshape(self.grid.shape)
@@ -205,6 +383,26 @@ class S2Dmodel(model):
         return u1, v1, p
 
     def c2r(self,cfield,returnErr=False):
+        '''
+        Perform an inverse Fourier transform
+
+        Parameters
+        ----------
+        cfield: 2d numpy array
+            complex field, assuming
+                - Hermitian symmetry
+                - zero-wavenumber component at the center of the spectrum
+        returnErr (optional): bool
+            flag to return the maximum imaginary part of the real field
+            default: False
+
+        Returns
+        -------
+        rfield: 2d numpy array
+            inverse Fourier transform of cfield (real part)
+        err (optional): float
+            maximum imaginary part of rfield (zero if input is Hermitian-symmetric)
+        '''
         rfield = np.fft.ifft2(np.fft.ifftshift(cfield*self.grid.N))
         if returnErr:
             err = np.amax(np.abs(np.imag(rfield)))
@@ -214,10 +412,36 @@ class S2Dmodel(model):
         return out
 
     def r2c(self,rfield):
+        '''
+        Perform a Fourier transform
+
+        Parameters
+        ----------
+        rfield: 2d numpy array
+            real field
+
+        Returns
+        -------
+        cfield: 2d numpy array
+            Fourier transform of rfield
+            (zero-wavenumber at the center of the spectrum)
+        '''
         return np.fft.fftshift(np.fft.fft2(rfield))/self.grid.N
 
     def continuity(self,u1c,v1c,pc):
-        '''Return boundar-layer displacement based on given velocity field'''
+        '''
+        Compute boundar-layer displacement based on given velocity field
+        
+        Parameters
+        ----------
+        u1c,v1c,pc: 2d numpy array
+            perturbation velocities and pressure (Fourier space)
+
+        Returns
+        -------
+        eta: 2d numpy array
+            boundary-layer displacement
+        '''
         ##Using the continuity equation
         #Ks, Ls = np.meshgrid(self.grid.ks,self.grid.ls,indexing='ij')
         #sigma1 = self.abl.U1*Ks+self.abl.V1*Ls
@@ -245,6 +469,14 @@ class S2Dmodel(model):
         return eta
 
     def Bvector(self):
+        '''
+        Compute right-hand side of model equations (B vector)
+
+        Returns
+        -------
+        _: 1d numpy array
+            right-hand side of model equations (Fourier space)
+        '''
         #Compute 0th order forcing term (2D real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space, cast into 1D array and
@@ -262,30 +494,48 @@ class S2Dmodel(model):
         return np.concatenate((Bu,Bv,np.zeros((Nx*Ny,),dtype=np.complex128)))
 
     def PHIvector(self):
+        '''
+        Compute complex stratification coefficient Phi
+
+        Returns
+        -------
+        PHIs: 2d numpy array
+            complex stratification coefficient
+        '''
         Nx = self.grid.Nx
         Ny = self.grid.Ny
         PHI = self.abl.gprime*np.ones((Nx,Ny),dtype=np.complex128)
         for indexk, k in enumerate(self.grid.ks):
             for indexl, l in enumerate(self.grid.ls):
                 sigma3 = self.abl.U3*k+self.abl.V3*l
-                #Non-hydrostatic solution 
-                if not sigma3==0:
-                    if sigma3**2>self.abl.N**2:
-                        m = 1j*np.sqrt((k**2+l**2)*np.abs(self.abl.N**2/sigma3**2-1))
-                    else:
-                        m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2-1))
-                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2-sigma3**2)
-#                #Hydrostatic solution 
+#                #Non-hydrostatic solution 
 #                if not sigma3==0:
-#                    m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2))
-#                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2)
+#                    if sigma3**2>self.abl.N**2:
+#                        m = 1j*np.sqrt((k**2+l**2)*np.abs(self.abl.N**2/sigma3**2-1))
+#                    else:
+#                        m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2-1))
+#                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2-sigma3**2)
+                #Hydrostatic solution 
+                if not sigma3==0:
+                    m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2))
+                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2)
         return PHI
 
     def Mx(self,x):
         '''
-        Find preconditioner M = inv(P) that approximates inv(A)
-        (in Smith model, the approximation is exact)
+        Compute the matrix vector product M*x where preconditioner M = inv(P)
+        approximates inv(A) (in Smith model, the approximation is exact)
         The matrix vector product Mx is found by solving Py=x
+
+        Parameters
+        ----------
+        x: 1d numpy array
+            input vectori
+
+        Returns
+        -------
+        _: 1d numpy array
+            matrix vector product M*x
         '''
         N = self.grid.N
         Nx = self.grid.Nx
@@ -324,11 +574,27 @@ class S2Dmodel(model):
 
 class ABL(object):
     '''
+    Atmospheric state (single-layer)
 
-    Atmospheric boundary-layer model
+    Data structure containing all information about the atmospheric state
     '''
     def __init__(self,input='LESbased',**kwargs):
-        #input flag indicates how the data is specified
+        '''
+        Initialise atmospheric state with one of the following valid methods:
+        - default subcritical state
+        - default supercritical state
+        - based on LES data
+        - based on analytic profile with constant eddy viscosity (out-dated)
+        - based on analytic profile with quadratic eddy viscosity (out-dated)
+        - based on analytic profile with cubic eddy viscosity
+        - directly specifying model parameters
+        - load from file (written with the ABL.saveas() routine)
+
+        Parameters
+        ----------
+        input: str
+            Name of the method used to specify the atmospheric state
+        '''
         assert input in ['default_subcr',
                          'default_supercr',
                          'LESbased',
@@ -347,7 +613,11 @@ class ABL(object):
         function(**kwargs)
 
     def default_supercr(self,**kwargs):
-        #Default supercritical abl state, corresponding to finWF5
+        '''
+        Method to specify the atmospheric state as the default implemented
+        supercritical state, which corresponds to the atmospheric conditions
+        of case S1 of Allaerts and Meyers, J. Fluid Mech. 814, 2017
+        '''
         self.__H1 = 1055.0
         self.__U1 = 11.729
         self.__V1 = -0.6873
@@ -359,7 +629,11 @@ class ABL(object):
         self.__N      = 0.58354e-2
 
     def default_subcr(self,**kwargs):
-        #Default subcritical abl state, corresponding to finSBL_q00
+        '''
+        Method to specify the atmospheric state as the default implemented
+        subcritical state, which corresponds to the atmospheric conditions
+        of case Q00 of Allaerts and Meyers, Bound. Layer Meteorol. 166(2), 2018
+        '''
         self.__H1 = 1060.0
         self.__U1 = 11.508
         self.__V1 = -1.316
@@ -371,6 +645,28 @@ class ABL(object):
         self.__N      = 0.58132e-2
 
     def LESbased(self,**kwargs):
+        '''
+        Method to specify the atmospheric state based on LES data
+
+        This routine assumes that the LES data is obtained with SP-Wind, and
+        the input parameters are filenames and specific data structures rather
+        than general vertical profiles
+
+        Parameters
+        ----------
+        sim: Simulation object (defined in simulation.py of py4sp package)
+            LES simulation meta data structure
+        tstart,tend: float
+            LES start and end time between which time averages are collected
+        ccfilename: str
+            Path and filename of BL_tstatcc.dat (or BL_instcc.dat) file
+        stfilename: str
+            Path and filename of BL_tstatst.dat (or BL_instst.dat) file
+        EKfilename: str
+            Path and filename of ek_post.dat file
+        ENfilename: str
+            Path and filename of en_tstatcc.dat file
+        '''
         arguments = ['sim','tstart','tend',
                      'ccfilename','stfilename',
                      'EKfilename','ENfilename']
@@ -423,7 +719,32 @@ class ABL(object):
         self.__N  = np.sqrt(sim.abl.gravity*CIestimate['gamma']/sim.Tref)
 
     def analytic_constant(self,**kwargs):
-        #ABL state based on analytical formulas for u and v (Csanady 1974)
+        '''
+        Method to specify the atmospheric state based on analytic profiles with
+        a constant eddy viscosity profile. The analytic profiles have been derived
+        by Csanady 1974
+
+        This method might be outdated
+
+        Parameters
+        ----------
+        dth: float
+            Inversion strength
+        fc: float
+            Coriolis parameter
+        N: float
+            Brunt Vaisala frequency
+        G: float
+            Geostrophic wind speed
+        alpha: float
+            Geostrophic wind direction
+        viscosity: float
+            Eddy viscosity
+        utau: float
+            Friction velocity
+        h: float
+            Boundary-layer height
+        '''
         arguments = ['dth','fc','N','G','alpha','viscosity','utau','h']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_constant ABL definition are missing'
         
@@ -458,7 +779,32 @@ class ABL(object):
         self.__C0 = tau01/self.S1**2
 
     def analytic_quadratic(self,**kwargs):
-        #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
+        '''
+        Method to specify the atmospheric state based on analytic profiles with
+        a quadratic eddy viscosity profile. The analytic profiles have been derived
+        by Nieuwstadt 1983
+
+        This method might be outdated
+
+        Parameters
+        ----------
+        dth: float
+            Inversion strength
+        fc: float
+            Coriolis parameter
+        N: float
+            Brunt Vaisala frequency
+        G: float
+            Geostrophic wind speed
+        alpha: float
+            Geostrophic wind direction
+        kappa: float
+            Von Karman constant
+        utau: float
+            Friction velocity
+        h: float
+            Boundary-layer height
+        '''
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
@@ -498,7 +844,30 @@ class ABL(object):
         self.__C0 = tau01/self.S1**2
 
     def analytic_cubic(self,**kwargs):
-        #ABL state based on analytical formulas for u and v (Nieuwstadt 1983)
+        '''
+        Method to specify the atmospheric state based on analytic profiles with
+        a cubic eddy viscosity profile. The analytic profiles have been derived by
+        Nieuwstadt 1983
+
+        Parameters
+        ----------
+        dth: float
+            Inversion strength
+        fc: float
+            Coriolis parameter
+        N: float
+            Brunt Vaisala frequency
+        G: float
+            Geostrophic wind speed
+        alpha: float
+            Geostrophic wind direction
+        kappa: float
+            Von Karman constant
+        utau: float
+            Friction velocity
+        h: float
+            Boundary-layer height
+        '''
         arguments = ['dth','fc','N','G','alpha','kappa','utau','h']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for analytic_quadratic ABL definition are missing'
         
@@ -537,6 +906,24 @@ class ABL(object):
         self.__C0 = tau01/self.S1**2
 
     def userdefined(self,**kwargs):
+        '''
+        Directly specify atmospheric model parameters
+
+        Parameters
+        ----------
+        H1: float
+            Boundary-layer height
+        U1,V1: float
+            Boundary-layer velocities in x and y directions
+        U3,V3: float
+            Free atmosphere velocities in x and y directions
+        C0,C1: float
+            Friction coefficient at surface and at boundary-layer top
+        gprime: float
+            Reduced gravity
+        N: float
+            Brunt Vaisala frequency
+        '''
         arguments = ['H1','U1','V1','U3','V3','C0','C1','gprime','N']
         assert all([i in kwargs for i in arguments]), 'Error: some arguments for LESbased ABL definition are missing'
 
@@ -551,7 +938,14 @@ class ABL(object):
         self.__N      = kwargs['N']
 
     def fromfile(self,**kwargs):
-        #load ABL state from file
+        '''
+        Load ABL object from file
+
+        Parameters
+        ----------
+        filename: str
+            File containing the ABL object
+        '''
         assert 'filename' in kwargs, 'Error: filename not specified'
         
         #Read from file
@@ -591,6 +985,14 @@ class ABL(object):
                 self.__zst = None
 
     def rotate(self,alpha):
+        '''
+        Rotate coordinate axis over a certain angle
+
+        Parameters
+        ----------
+        alpha: float
+            Angle over which the coordinate axis is to be rotated (in radians)
+        '''
         U1n = self.U1*np.cos(alpha)+self.V1*np.sin(alpha)
         V1n = self.V1*np.cos(alpha)-self.U1*np.sin(alpha)
         self.__U1 = U1n
@@ -601,6 +1003,17 @@ class ABL(object):
         self.__V3 = V3n
 
     def saveas(self,filename,info=''):
+        '''
+        Save ABL object to file
+
+        Parameters
+        ----------
+        filename: str
+            Name of destination file
+        info (optional): str
+            String with information about the ABL object
+            Default: Empty string
+        '''
         with open(filename,'w') as file:
             file.write('%%%%%%%%%%%%%%\n')
             file.write('SLM ABL object\n')
@@ -638,61 +1051,93 @@ class ABL(object):
 
     @property
     def us(self):
+        '''Velocity profile in dimension 0 used to derive
+        height-averaged velocities'''
         return self.__us
     @property
     def vs(self):
+        '''Velocity profile in dimension 1 used to derive
+        height-averaged velocities'''
         return self.__vs
     @property
     def Ms(self):
+        '''Velocity magnitude profile (for post-processing purposes)'''
         return np.sqrt(self.us**2+self.vs**2)
     @property
     def zs(self):
+        '''Height corresponding to the vertical profiles (at cell centers)'''
         return self.__zs
     @property
     def zst(self):
+        '''Height corresponding to the vertical profiles (at cell faces)'''
         return self.__zst
     @property
     def H1(self):
+        '''Boundary-layer height'''
         return self.__H1
     @property
     def U1(self):
+        '''Boundary-layer velocity in dimension 0'''
         return self.__U1
     @property
     def V1(self):
+        '''Boundary-layer velocity in dimension 1'''
         return self.__V1
     @V1.setter
     def V1(self,value):
         self.__V1 = value
     @property
     def S1(self):
+        '''Boundary-layer velocity magnitude'''
         return np.sqrt(self.U1**2 + self.V1**2)
     @property
     def WD1(self):
+        '''
+        Wind direction in the boundary layer (degrees)
+    
+        Bug: np.arctan only recognises angles between -90 and +90
+        Better would be to return np.arctan2(self.V1,self.U1)*180/np.pi
+        Even better is to return the actual wind direction:
+            return 180. + np.arctan2(self.U1,self.V1)*180/np.pi
+        '''
         return np.arctan(self.V1/self.U1)*180/np.pi
     @property
     def U3(self):
+        '''Velocity in the free atmosphere in dimension 0'''
         return self.__U3
     @property
     def V3(self):
+        '''Velocity in the free atmosphere in dimension 1'''
         return self.__V3
     @property
     def S3(self):
+        '''Velocity magnitude in the free atmosphere'''
         return np.sqrt(self.U3**2 + self.V3**2)
     @property
     def WD3(self):
+        '''
+        Wind direction in the free atmosphere (degrees)
+    
+        Bug: see WD1
+        '''
         return np.arctan(self.V3/self.U3)*180/np.pi
     @property
     def C0(self):
+        '''Friction coefficient at the surface'''
         return self.__C0
     @property
     def C1(self):
+        '''Friction coefficient at the boundary-layer top'''
         return self.__C1
     @property
     def gprime(self):
+        '''Reduced gravity'''
         return self.__gprime
     @property
     def N(self):
+        '''Brunt Vaisala frequency'''
         return self.__N
     @property
     def Fr(self):
+        '''Froude number'''
         return self.U1/np.sqrt(self.gprime*self.H1)
