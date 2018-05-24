@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['ptheory',['Ptheory',['../classtlmpy_1_1TLMForcing_1_1WF.html#a1dc49624daac1331dab8b95d5e3ca97a',1,'tlmpy::TLMForcing::WF']]],
-  ['ptot',['Ptot',['../classtlmpy_1_1TLMForcing_1_1WF.html#ae37e2392189a75c6a201d7ea36382b07',1,'tlmpy::TLMForcing::WF']]],
-  ['ptot0',['Ptot0',['../classtlmpy_1_1TLMForcing_1_1WF.html#af6b7140c54fe617f80700015cc44ea4a',1,'tlmpy::TLMForcing::WF']]]
+  ['jensen',['jensen',['../namespaceDropbox_1_1ThreeLayerModel_1_1WakeModel.html#a33c75bc026c9ab9a69a57ca3abd5baf6',1,'Dropbox::ThreeLayerModel::WakeModel']]]
 ];

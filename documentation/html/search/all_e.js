@@ -1,10 +1,13 @@
 var searchData=
 [
-  ['taus',['taus',['../classtlmpy_1_1TLM_1_1ABL.html#a6a62d9c4eb4a8fa0ce6998fd8d206dab',1,'tlmpy::TLM::ABL']]],
-  ['ths',['ths',['../classtlmpy_1_1TLM_1_1ABL.html#a8af1b85a3f065752c51478f805532626',1,'tlmpy::TLM::ABL']]],
-  ['ti',['TI',['../classtlmpy_1_1TLM_1_1ABL.html#aa1399396550f38bf649bad4b60d514c0',1,'tlmpy::TLM::ABL']]],
-  ['tis',['TIs',['../classtlmpy_1_1TLM_1_1ABL.html#a8de8fc71899663742bb2a3b9de729852',1,'tlmpy::TLM::ABL']]],
-  ['ts',['ts',['../classtlmpy_1_1TLM_1_1Dyn1Dgrid.html#ab0e435e1db2a4f9835bd0199bd9f2f0a',1,'tlmpy::TLM::Dyn1Dgrid']]],
-  ['turbine',['turbine',['../classtlmpy_1_1TLMForcing_1_1turbine.html',1,'tlmpy::TLMForcing']]],
-  ['turbine1d',['turbine1D',['../classtlmpy_1_1TLMForcing_1_1turbine1D.html',1,'tlmpy::TLMForcing']]]
+  ['n',['N',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Stat1Dgrid.html#af7e4679a087fc7d67d63e94b66d822e2',1,'Dropbox.ThreeLayerModel.TLM.Stat1Dgrid.N()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Stat2Dgrid.html#a927e58252be86748a3fd5a19175f3d26',1,'Dropbox.ThreeLayerModel.TLM.Stat2Dgrid.N()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Dyn1Dgrid.html#a4dea93ba6d4d807faf4cd3514e950976',1,'Dropbox.ThreeLayerModel.TLM.Dyn1Dgrid.N()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1lgmres__counter.html#a4d640992a263ebd8c2498d8d6041cccb',1,'Dropbox.ThreeLayerModel.TLM.lgmres_counter.N()'],['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1ABL.html#a570546bdf1c1162af3c7903b28a3ac73',1,'Dropbox.ThreeLayerModel.SLM.ABL.N()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Grid.html#a8343c6c563d0bad74c35f867c0491390',1,'Dropbox.ThreeLayerModel.TLM.Grid.N'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Grid.html#a8343c6c563d0bad74c35f867c0491390',1,'Dropbox.ThreeLayerModel.TLM.Grid.N'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#a7cbb49c75003fbe94ae70d2c3f5c710d',1,'Dropbox.ThreeLayerModel.TLM.ABL.N()']]],
+  ['niter',['niter',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1gmres__counter.html#a06345986c3808b531029b01953ec92a5',1,'Dropbox.ThreeLayerModel.TLM.gmres_counter.niter()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1lgmres__counter.html#a086eb28032369e4976851982e49f5168',1,'Dropbox.ThreeLayerModel.TLM.lgmres_counter.niter()']]],
+  ['nowake',['nowake',['../namespaceDropbox_1_1ThreeLayerModel_1_1WakeModel.html#af417117812345db43c1c4080f5c8f06d',1,'Dropbox::ThreeLayerModel::WakeModel']]],
+  ['nowake_5fjac',['nowake_jac',['../namespaceDropbox_1_1ThreeLayerModel_1_1WakeModel.html#ad41838fef283a2082c7cbac79c9f3eb0',1,'Dropbox::ThreeLayerModel::WakeModel']]],
+  ['nt',['Nt',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Dyn1Dgrid.html#a0aea30cfa82c88f4cf78a2f72dab78cb',1,'Dropbox::ThreeLayerModel::TLM::Dyn1Dgrid']]],
+  ['nturb',['Nturb',['../classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1WF.html#af33dfd3ad0a42e2b0e6688cdef841f7d',1,'Dropbox::ThreeLayerModel::TLMForcing::WF']]],
+  ['nu1',['nu1',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#a92d15ccc1a6e50eaab046460f132bfd6',1,'Dropbox.ThreeLayerModel.TLM.ABL.nu1'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#a92d15ccc1a6e50eaab046460f132bfd6',1,'Dropbox.ThreeLayerModel.TLM.ABL.nu1']]],
+  ['nu2',['nu2',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#ad09af1fd98e5e3d75928cbf0b5c34fcc',1,'Dropbox.ThreeLayerModel.TLM.ABL.nu2'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#ad09af1fd98e5e3d75928cbf0b5c34fcc',1,'Dropbox.ThreeLayerModel.TLM.ABL.nu2']]],
+  ['nx',['Nx',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Stat1Dgrid.html#a7c6bba20b5e746832622173ea49f6946',1,'Dropbox.ThreeLayerModel.TLM.Stat1Dgrid.Nx()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Stat2Dgrid.html#ab89945446b9ec0622ad9630cc69f2c20',1,'Dropbox.ThreeLayerModel.TLM.Stat2Dgrid.Nx()']]],
+  ['ny',['Ny',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1Stat2Dgrid.html#ad7a6cb9f101337c5be4be85a77ef247b',1,'Dropbox::ThreeLayerModel::TLM::Stat2Dgrid']]]
 ];

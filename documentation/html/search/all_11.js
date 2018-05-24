@@ -1,8 +1,8 @@
 var searchData=
 [
-  ['wd1',['WD1',['../classtlmpy_1_1TLM_1_1ABL.html#aafc3703c9580848c05376025050e09c6',1,'tlmpy::TLM::ABL']]],
-  ['wd2',['WD2',['../classtlmpy_1_1TLM_1_1ABL.html#a4e04f6d971d1607cae18b361520d0f31',1,'tlmpy::TLM::ABL']]],
-  ['wd3',['WD3',['../classtlmpy_1_1TLM_1_1ABL.html#a8efd6f2424756cf8e8d1cdb8a257309b',1,'tlmpy::TLM::ABL']]],
-  ['wf',['WF',['../classtlmpy_1_1TLMForcing_1_1WF.html',1,'tlmpy::TLMForcing']]],
-  ['wf1d',['WF1D',['../classtlmpy_1_1TLMForcing_1_1WF1D.html',1,'tlmpy::TLMForcing']]]
+  ['r2c',['r2c',['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S1Dmodel.html#af1a89cc1766a7149a0207a6f69e356cd',1,'Dropbox.ThreeLayerModel.SLM.S1Dmodel.r2c()'],['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel.html#a6f3179f648c6b8ee75ba453586e3589b',1,'Dropbox.ThreeLayerModel.SLM.S2Dmodel.r2c()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1Dmodel.html#a037a9f48dc97d9c80925d2b3b85abb9c',1,'Dropbox.ThreeLayerModel.TLM.S1Dmodel.r2c()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S2Dmodel.html#a2a57f7973f0a589cdfcc9a14abcb0319',1,'Dropbox.ThreeLayerModel.TLM.S2Dmodel.r2c()']]],
+  ['r2c_5fdeal',['r2c_deal',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1Dmodel.html#a07e444e9445cd1e64d8f60df0a6e1034',1,'Dropbox.ThreeLayerModel.TLM.S1Dmodel.r2c_deal()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S2Dmodel.html#a989422c70341b2cc4f1e15afa7665581',1,'Dropbox.ThreeLayerModel.TLM.S2Dmodel.r2c_deal()']]],
+  ['residu',['residu',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1lgmres__counter.html#a7bf0e97e87c6fc63314345373c70e836',1,'Dropbox::ThreeLayerModel::TLM::lgmres_counter']]],
+  ['rotate',['rotate',['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1ABL.html#a9aa831b82e4c0d89517f0605f9fbbcb1',1,'Dropbox.ThreeLayerModel.SLM.ABL.rotate()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#a98eeb75ddd163f7b109e2463cd8d690b',1,'Dropbox.ThreeLayerModel.TLM.ABL.rotate()']]],
+  ['rotorarea',['rotorarea',['../classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1turbine.html#a4b3adfb97a0e5665dd1cbf97c6fa428a',1,'Dropbox::ThreeLayerModel::TLMForcing::turbine']]]
 ];

@@ -1,0 +1,171 @@
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model}{\section{Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model Class Reference}
+\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model}\index{Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model@{Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model}}
+}
+Inheritance diagram for Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.755228cm]{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a0378bf4b47bc1faa4d4b4cd32b579c97}{\+\_\+\+\_\+init\+\_\+\+\_\+}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a7b62da67d2b7900b87d23ffa33f2a333}{solve}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_ab60a7148d782226aeba7a12ba0f20d68}{grid}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a9cd86b0e424fd2f81c218c42ba47098e}{grid32}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_ad7dc85bb8777d0e541595c62e67eada4}{abl}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a90b464d013da1e1ad90bd37fb603b46e}{forcing}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_af66e2b00fe3ebe689cedddaba79c7043}{P\+H\+I}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_af66e2b00fe3ebe689cedddaba79c7043}{P\+H\+I}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Common interface for three-layer models
+\end{DoxyVerb}
+ 
+
+Definition at line 252 of file T\+L\+M.\+py.
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a0378bf4b47bc1faa4d4b4cd32b579c97}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!\+\_\+\+\_\+init\+\_\+\+\_\+@{\+\_\+\+\_\+init\+\_\+\+\_\+}}
+\index{\+\_\+\+\_\+init\+\_\+\+\_\+@{\+\_\+\+\_\+init\+\_\+\+\_\+}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{\+\_\+\+\_\+init\+\_\+\+\_\+}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+\_\+\+\_\+init\+\_\+\+\_\+ (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{grid, }
+\item[{}]{forcing, }
+\item[{}]{abl}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a0378bf4b47bc1faa4d4b4cd32b579c97}
+\begin{DoxyVerb}Parameters
+----------
+grid: Grid object
+    numerical grid
+forcing: CST/WF object (defined in TLMForcing.py)
+    perturbing force
+abl: ABL object
+    atmospheric state
+\end{DoxyVerb}
+ 
+
+Definition at line 256 of file T\+L\+M.\+py.
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_ad7dc85bb8777d0e541595c62e67eada4}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!abl@{abl}}
+\index{abl@{abl}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{abl}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+abl (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_ad7dc85bb8777d0e541595c62e67eada4}
+\begin{DoxyVerb}Atmospheric state\end{DoxyVerb}
+ 
+
+Definition at line 450 of file T\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a90b464d013da1e1ad90bd37fb603b46e}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!forcing@{forcing}}
+\index{forcing@{forcing}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{forcing}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+forcing (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a90b464d013da1e1ad90bd37fb603b46e}
+\begin{DoxyVerb}Perturbing force\end{DoxyVerb}
+ 
+
+Definition at line 454 of file T\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_ab60a7148d782226aeba7a12ba0f20d68}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!grid@{grid}}
+\index{grid@{grid}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{grid}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+grid (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_ab60a7148d782226aeba7a12ba0f20d68}
+\begin{DoxyVerb}Numerical grid\end{DoxyVerb}
+ 
+
+Definition at line 442 of file T\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a9cd86b0e424fd2f81c218c42ba47098e}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!grid32@{grid32}}
+\index{grid32@{grid32}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{grid32}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+grid32 (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a9cd86b0e424fd2f81c218c42ba47098e}
+\begin{DoxyVerb}Dealiasing grid\end{DoxyVerb}
+ 
+
+Definition at line 446 of file T\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_af66e2b00fe3ebe689cedddaba79c7043}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!P\+H\+I@{P\+H\+I}}
+\index{P\+H\+I@{P\+H\+I}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{P\+H\+I}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+P\+H\+I (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_af66e2b00fe3ebe689cedddaba79c7043}
+\begin{DoxyVerb}Complex stratification coefficient\end{DoxyVerb}
+ 
+
+Definition at line 458 of file T\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_af66e2b00fe3ebe689cedddaba79c7043}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!P\+H\+I@{P\+H\+I}}
+\index{P\+H\+I@{P\+H\+I}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{P\+H\+I}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+P\+H\+I (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{value}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_af66e2b00fe3ebe689cedddaba79c7043}
+
+
+Definition at line 462 of file T\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a7b62da67d2b7900b87d23ffa33f2a333}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}!solve@{solve}}
+\index{solve@{solve}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+::model}}
+\subsubsection[{solve}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M.\+model.\+solve (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{method = {\ttfamily 'lgmres'}, }
+\item[{}]{verbose = {\ttfamily False}, }
+\item[{}]{W\+Ffeedback = {\ttfamily True}}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model_a7b62da67d2b7900b87d23ffa33f2a333}
+\begin{DoxyVerb}Solve the three-layer model
+
+Parameters
+----------
+method (optional): str
+    method used to solve the linear matrix equation
+    default: lgmres
+verbose (optional): bool
+    flag for printing solver results
+    default: False
+WFfeedback (optional): bool
+    flag for including first-order term of wind-farm drag
+    default: True
+\end{DoxyVerb}
+ 
+
+Definition at line 273 of file T\+L\+M.\+py.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/dries/\+Dropbox/\+Three\+Layer\+Model/\hyperlink{TLM_8py}{T\+L\+M.\+py}\end{DoxyCompactItemize}

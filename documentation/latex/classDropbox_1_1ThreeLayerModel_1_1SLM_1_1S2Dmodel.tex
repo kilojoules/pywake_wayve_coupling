@@ -1,0 +1,285 @@
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel}{\section{Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel Class Reference}
+\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel}\index{Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel@{Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel}}
+}
+Inheritance diagram for Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.000000cm]{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a0e5bad1902550704f4fa7f3ae31c6ea7}{\+\_\+\+\_\+init\+\_\+\+\_\+}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a15f8556c52d36104d6b5f0a8e48f2fab}{format\+\_\+solution}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a8d3e61acd9088f48f62f60d4127eeda3}{expand\+X}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a75a4058dff5dd2605dd59d8922eb30c5}{c2r}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a6f3179f648c6b8ee75ba453586e3589b}{r2c}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_aa50cd942a2804c813e193e3355d4f069}{continuity}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_ae9f492726ac6a2516f6279921233368a}{Bvector}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a46358e0649990b84e337fc58915a8306}{P\+H\+Ivector}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a9c576806f12523cc2b4c4cb0818c047f}{Mx}
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a30b802120760fbc176900016c8db7b4d}{P\+H\+I}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Steady two-dimensional gravity wave model
+\end{DoxyVerb}
+ 
+
+Definition at line 320 of file S\+L\+M.\+py.
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a0e5bad1902550704f4fa7f3ae31c6ea7}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!\+\_\+\+\_\+init\+\_\+\+\_\+@{\+\_\+\+\_\+init\+\_\+\+\_\+}}
+\index{\+\_\+\+\_\+init\+\_\+\+\_\+@{\+\_\+\+\_\+init\+\_\+\+\_\+}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{\+\_\+\+\_\+init\+\_\+\+\_\+}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+\_\+\+\_\+init\+\_\+\+\_\+ (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{grid, }
+\item[{}]{forcing, }
+\item[{}]{abl}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a0e5bad1902550704f4fa7f3ae31c6ea7}
+\begin{DoxyVerb}Parameters
+----------
+grid: Grid object (from TLM)
+    numerical grid
+forcing: CST/WF object (from TLMForcing)
+    perturbing force
+abl: ABL object
+    atmospheric state (single-layer)
+\end{DoxyVerb}
+ 
+
+Definition at line 324 of file S\+L\+M.\+py.
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_ae9f492726ac6a2516f6279921233368a}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!Bvector@{Bvector}}
+\index{Bvector@{Bvector}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{Bvector}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+Bvector (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_ae9f492726ac6a2516f6279921233368a}
+\begin{DoxyVerb}Compute right-hand side of model equations (B vector)
+
+Returns
+-------
+_: 1d numpy array
+    right-hand side of model equations (Fourier space)
+\end{DoxyVerb}
+ 
+
+Definition at line 471 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a75a4058dff5dd2605dd59d8922eb30c5}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!c2r@{c2r}}
+\index{c2r@{c2r}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{c2r}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+c2r (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{cfield, }
+\item[{}]{return\+Err = {\ttfamily False}}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a75a4058dff5dd2605dd59d8922eb30c5}
+\begin{DoxyVerb}Perform an inverse Fourier transform
+
+Parameters
+----------
+cfield: 2d numpy array
+    complex field, assuming
+- Hermitian symmetry
+- zero-wavenumber component at the center of the spectrum
+returnErr (optional): bool
+    flag to return the maximum imaginary part of the real field
+    default: False
+
+Returns
+-------
+rfield: 2d numpy array
+    inverse Fourier transform of cfield (real part)
+err (optional): float
+    maximum imaginary part of rfield (zero if input is Hermitian-symmetric)
+\end{DoxyVerb}
+ 
+
+Definition at line 385 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_aa50cd942a2804c813e193e3355d4f069}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!continuity@{continuity}}
+\index{continuity@{continuity}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{continuity}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+continuity (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{u1c, }
+\item[{}]{v1c, }
+\item[{}]{pc}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_aa50cd942a2804c813e193e3355d4f069}
+\begin{DoxyVerb}Compute boundar-layer displacement based on given velocity field
+
+Parameters
+----------
+u1c,v1c,pc: 2d numpy array
+    perturbation velocities and pressure (Fourier space)
+
+Returns
+-------
+eta: 2d numpy array
+    boundary-layer displacement
+\end{DoxyVerb}
+ 
+
+Definition at line 431 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a8d3e61acd9088f48f62f60d4127eeda3}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!expand\+X@{expand\+X}}
+\index{expand\+X@{expand\+X}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{expand\+X}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+expand\+X (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{X}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a8d3e61acd9088f48f62f60d4127eeda3}
+\begin{DoxyVerb}Expand the general solution vector into
+dependent variables of the problem
+
+Parameters
+----------
+X: 1d numpy array
+    general solution vector
+
+Returns
+-------
+u1,v1,p: 2d numpy array
+    perturbation velocities and pressure
+\end{DoxyVerb}
+ 
+
+Definition at line 364 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a15f8556c52d36104d6b5f0a8e48f2fab}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!format\+\_\+solution@{format\+\_\+solution}}
+\index{format\+\_\+solution@{format\+\_\+solution}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{format\+\_\+solution}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+format\+\_\+solution (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{X}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a15f8556c52d36104d6b5f0a8e48f2fab}
+\begin{DoxyVerb}Calculate perturbation quantities from the general solution vector
+
+Parameters
+----------
+X: 1d numpy array
+    general solution vector
+
+Returns
+-------
+result: dict
+    dictionary with 2d numpy arrays
+    keys > u1c,v1c: perturbation velocity
+   etac: inversion displacement
+   pc: pressure perturbation
+\end{DoxyVerb}
+ 
+
+Definition at line 338 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a9c576806f12523cc2b4c4cb0818c047f}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!Mx@{Mx}}
+\index{Mx@{Mx}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{Mx}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+Mx (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{x}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a9c576806f12523cc2b4c4cb0818c047f}
+\begin{DoxyVerb}Compute the matrix vector product M*x where preconditioner M = inv(P)
+approximates inv(A) (in Smith model, the approximation is exact)
+The matrix vector product Mx is found by solving Py=x
+
+Parameters
+----------
+x: 1d numpy array
+    input vectori
+
+Returns
+-------
+_: 1d numpy array
+    matrix vector product M*x
+\end{DoxyVerb}
+ 
+
+Definition at line 524 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a46358e0649990b84e337fc58915a8306}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!P\+H\+Ivector@{P\+H\+Ivector}}
+\index{P\+H\+Ivector@{P\+H\+Ivector}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{P\+H\+Ivector}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+P\+H\+Ivector (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a46358e0649990b84e337fc58915a8306}
+\begin{DoxyVerb}Compute complex stratification coefficient Phi
+
+Returns
+-------
+PHIs: 2d numpy array
+    complex stratification coefficient
+\end{DoxyVerb}
+ 
+
+Definition at line 496 of file S\+L\+M.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a6f3179f648c6b8ee75ba453586e3589b}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!r2c@{r2c}}
+\index{r2c@{r2c}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{r2c}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+r2c (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{rfield}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a6f3179f648c6b8ee75ba453586e3589b}
+\begin{DoxyVerb}Perform a Fourier transform
+
+Parameters
+----------
+rfield: 2d numpy array
+    real field
+
+Returns
+-------
+cfield: 2d numpy array
+    Fourier transform of rfield
+    (zero-wavenumber at the center of the spectrum)
+\end{DoxyVerb}
+ 
+
+Definition at line 414 of file S\+L\+M.\+py.
+
+
+
+\subsection{Member Data Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a30b802120760fbc176900016c8db7b4d}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}!P\+H\+I@{P\+H\+I}}
+\index{P\+H\+I@{P\+H\+I}!Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel@{Dropbox\+::\+Three\+Layer\+Model\+::\+S\+L\+M\+::\+S2\+Dmodel}}
+\subsubsection[{P\+H\+I}]{\setlength{\rightskip}{0pt plus 5cm}Dropbox.\+Three\+Layer\+Model.\+S\+L\+M.\+S2\+Dmodel.\+P\+H\+I}}\label{classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel_a30b802120760fbc176900016c8db7b4d}
+
+
+Definition at line 336 of file S\+L\+M.\+py.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/dries/\+Dropbox/\+Three\+Layer\+Model/\hyperlink{SLM_8py}{S\+L\+M.\+py}\end{DoxyCompactItemize}

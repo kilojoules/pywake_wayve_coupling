@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['continuity',['continuity',['../classtlmpy_1_1SLM_1_1S1Dmodel.html#a17bfb29107c07758523dcbaa648b8a96',1,'tlmpy.SLM.S1Dmodel.continuity()'],['../classtlmpy_1_1SLM_1_1S2Dmodel.html#a530eb0da3a49c0779375e190e50a46e1',1,'tlmpy.SLM.S2Dmodel.continuity()'],['../classtlmpy_1_1TLM_1_1S1Dmodel.html#a15e3c086d710ad705cdf5a617dfdfbc0',1,'tlmpy.TLM.S1Dmodel.continuity()'],['../classtlmpy_1_1TLM_1_1S2Dmodel.html#a930461687a5208ef5b33c9531c835991',1,'tlmpy.TLM.S2Dmodel.continuity()']]],
-  ['cst',['CST',['../classtlmpy_1_1TLMForcing_1_1CST.html',1,'tlmpy::TLMForcing']]]
+  ['b',['B',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1lgmres__counter.html#acfd51ad322218ae5ebf9f7d1a8bc2203',1,'Dropbox::ThreeLayerModel::TLM::lgmres_counter']]],
+  ['buildabmatrix',['buildABmatrix',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1U1Dmodel.html#a31523a7f1f5fea21cb31ffbccfe7240b',1,'Dropbox::ThreeLayerModel::TLM::U1Dmodel']]],
+  ['bvector',['Bvector',['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S1Dmodel.html#ae0741d6e08d9267b2eb8975dcdd4fcae',1,'Dropbox.ThreeLayerModel.SLM.S1Dmodel.Bvector()'],['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel.html#ae9f492726ac6a2516f6279921233368a',1,'Dropbox.ThreeLayerModel.SLM.S2Dmodel.Bvector()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1Dmodel.html#a668128cad8b3cc1b14d1ebd75e3e1cc8',1,'Dropbox.ThreeLayerModel.TLM.S1Dmodel.Bvector()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1DPmodel.html#a8f44986523e0378dd56e7674be16bb9e',1,'Dropbox.ThreeLayerModel.TLM.S1DPmodel.Bvector()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S2Dmodel.html#a601d94be9810e2d2d891eaa6eeb30625',1,'Dropbox.ThreeLayerModel.TLM.S2Dmodel.Bvector()']]]
 ];

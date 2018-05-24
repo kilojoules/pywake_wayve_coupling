@@ -1,0 +1,249 @@
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST}{\section{Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T Class Reference}
+\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST}\index{Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T@{Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T}}
+}
+Inheritance diagram for Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=3.672131cm]{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_aa9f5437e4f1374871b07dad6e1ea564a}{\+\_\+\+\_\+init\+\_\+\+\_\+}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a40d12da9a5cab73d24e1deb8258ec415}{default}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_aba75508ddcbc36d92d092e9dc24b1340}{L\+E\+Sbased}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a8b6b2f1c0b0025cde40124e77bff029e}{userdefined}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a67bd4090c30e9c1f9e2e7a3eedd418b2}{F0}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a6d285d6fea589e73bc83228da5ac1fea}{F1}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a86f437f3acfafb38777c722655fa8c79}{preprocess}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_acb9db3fa19296057b4341f3d341b5280}{C\+T}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a292556aa5de9911a2c25c6fe258e7bf3}{length}
+\item 
+def \hyperlink{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a9f366ec0ad7090f1b300f6de3915da13}{width}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\begin{DoxyVerb}Common class for perturbing force models with a constant drag coefficient
+\end{DoxyVerb}
+ 
+
+Definition at line 15 of file T\+L\+M\+Forcing.\+py.
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_aa9f5437e4f1374871b07dad6e1ea564a}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!\+\_\+\+\_\+init\+\_\+\+\_\+@{\+\_\+\+\_\+init\+\_\+\+\_\+}}
+\index{\+\_\+\+\_\+init\+\_\+\+\_\+@{\+\_\+\+\_\+init\+\_\+\+\_\+}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{\+\_\+\+\_\+init\+\_\+\+\_\+}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+\_\+\+\_\+init\+\_\+\+\_\+ (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{input = {\ttfamily '{\bf default}'}, }
+\item[{}]{kwargs}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_aa9f5437e4f1374871b07dad6e1ea564a}
+\begin{DoxyVerb}Initialise forcing parameters with one of the following valid methods:
+- default forcing parameters
+- based on LES data
+- directly specify forcing parameters
+
+Parameters
+----------
+input (optional): str
+    Name of the method used to specify the forcing parameters
+    Default: 'default' method (use default forcing parameters)
+\end{DoxyVerb}
+ 
+
+Definition at line 19 of file T\+L\+M\+Forcing.\+py.
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_acb9db3fa19296057b4341f3d341b5280}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!C\+T@{C\+T}}
+\index{C\+T@{C\+T}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{C\+T}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+C\+T (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_acb9db3fa19296057b4341f3d341b5280}
+\begin{DoxyVerb}Drag coefficient\end{DoxyVerb}
+ 
+
+Definition at line 155 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a40d12da9a5cab73d24e1deb8258ec415}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!default@{default}}
+\index{default@{default}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{default}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+default (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{kwargs}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a40d12da9a5cab73d24e1deb8258ec415}
+\begin{DoxyVerb}Method to specify the forcing parameters as the default implemented values,
+which correspond to the wind-farm parameters of case S1 of
+Allaerts and Meyers, J. Fluid Mech. 814, 2017.
+\end{DoxyVerb}
+ 
+
+Definition at line 39 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a67bd4090c30e9c1f9e2e7a3eedd418b2}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!F0@{F0}}
+\index{F0@{F0}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{F0}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+F0 (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{abl, }
+\item[{}]{grid}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a67bd4090c30e9c1f9e2e7a3eedd418b2}
+\begin{DoxyVerb}Compute the zero-th order term of the drag force on the given numerical grid
+
+Parameters
+----------
+abl: ABL object (defined in TLM.py or SLM.py)
+    Atmospheric state
+grid: Grid object (defined in TLM.py)
+    Numerical grid
+
+Returns
+-------
+F0u, F0v: numpy array with same shape as grid
+    Zero-th order term of the drag force (real space)
+\end{DoxyVerb}
+ 
+
+Definition at line 101 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a6d285d6fea589e73bc83228da5ac1fea}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!F1@{F1}}
+\index{F1@{F1}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{F1}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+F1 (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{abl, }
+\item[{}]{grid, }
+\item[{}]{u1r, }
+\item[{}]{v1r}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a6d285d6fea589e73bc83228da5ac1fea}
+\begin{DoxyVerb}Compute the first order term of the drag force on the given numerical grid
+
+Parameters
+----------
+abl: ABL object (defined in TLM.py or SLM.py)
+    Atmospheric state
+grid: Grid object (defined in TLM.py)
+    Numerical grid
+u1r,v1r: numpy array with same shape as grid
+    Perturbation velocities
+
+Returns
+-------
+F1u, F1v: numpy array with same shape as grid
+    First order term of the drag force (real space)
+\end{DoxyVerb}
+ 
+
+Definition at line 121 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a292556aa5de9911a2c25c6fe258e7bf3}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!length@{length}}
+\index{length@{length}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{length}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+length (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a292556aa5de9911a2c25c6fe258e7bf3}
+\begin{DoxyVerb}Length of the area where the perturbing force is added\end{DoxyVerb}
+ 
+
+Definition at line 159 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_aba75508ddcbc36d92d092e9dc24b1340}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!L\+E\+Sbased@{L\+E\+Sbased}}
+\index{L\+E\+Sbased@{L\+E\+Sbased}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{L\+E\+Sbased}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+L\+E\+Sbased (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{kwargs}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_aba75508ddcbc36d92d092e9dc24b1340}
+\begin{DoxyVerb}Method to specify the forcing parameters based on LES data
+
+This routine assimes that the LES data is obtained with SP-Wind, and
+the input parameters include a specific data structure of the SP-Wind
+post-processing tools
+
+Parameters
+----------
+sim: Simulation object (defined in simulation.py of py4sp package)
+    LES simulation meta data structure
+abl: ABL object (defined in TLM.py or SLM.py)
+    atmospheric state of the Three-layer model
+\end{DoxyVerb}
+ 
+
+Definition at line 49 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a86f437f3acfafb38777c722655fa8c79}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!preprocess@{preprocess}}
+\index{preprocess@{preprocess}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{preprocess}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+preprocess (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{abl}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a86f437f3acfafb38777c722655fa8c79}
+\begin{DoxyVerb}Standard function for preprocessing
+
+Constant drag coefficient models do not require preprocessing,
+so this function is empty
+\end{DoxyVerb}
+ 
+
+Definition at line 145 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a8b6b2f1c0b0025cde40124e77bff029e}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!userdefined@{userdefined}}
+\index{userdefined@{userdefined}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{userdefined}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+userdefined (
+\begin{DoxyParamCaption}
+\item[{}]{self, }
+\item[{}]{kwargs}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a8b6b2f1c0b0025cde40124e77bff029e}
+\begin{DoxyVerb}Method to specify the forcing parameters directly
+
+Parameters
+----------
+length,width: float
+    Length and width of the area where the perturbing force is added
+CT: float
+    Drag coefficient of the perturbing force
+\end{DoxyVerb}
+ 
+
+Definition at line 84 of file T\+L\+M\+Forcing.\+py.
+
+\hypertarget{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a9f366ec0ad7090f1b300f6de3915da13}{\index{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}!width@{width}}
+\index{width@{width}!Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T@{Dropbox\+::\+Three\+Layer\+Model\+::\+T\+L\+M\+Forcing\+::\+C\+S\+T}}
+\subsubsection[{width}]{\setlength{\rightskip}{0pt plus 5cm}def Dropbox.\+Three\+Layer\+Model.\+T\+L\+M\+Forcing.\+C\+S\+T.\+width (
+\begin{DoxyParamCaption}
+\item[{}]{self}
+\end{DoxyParamCaption}
+)}}\label{classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1CST_a9f366ec0ad7090f1b300f6de3915da13}
+\begin{DoxyVerb}Width of the area where the perturbing force is added\end{DoxyVerb}
+ 
+
+Definition at line 163 of file T\+L\+M\+Forcing.\+py.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/dries/\+Dropbox/\+Three\+Layer\+Model/\hyperlink{TLMForcing_8py}{T\+L\+M\+Forcing.\+py}\end{DoxyCompactItemize}

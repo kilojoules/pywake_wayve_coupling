@@ -1,16 +1,9 @@
 var searchData=
 [
-  ['s1',['S1',['../classtlmpy_1_1TLM_1_1ABL.html#a1b1678aa2f3720245c3b41b2d58f6ae8',1,'tlmpy::TLM::ABL']]],
-  ['s1dmodel',['S1Dmodel',['../classtlmpy_1_1TLM_1_1S1Dmodel.html',1,'tlmpy::TLM']]],
-  ['s1dmodel',['S1Dmodel',['../classtlmpy_1_1SLM_1_1S1Dmodel.html',1,'tlmpy::SLM']]],
-  ['s1dmodel_5fold',['S1Dmodel_old',['../classtlmpy_1_1TLM_1_1S1Dmodel__old.html',1,'tlmpy::TLM']]],
-  ['s1dpmodel',['S1DPmodel',['../classtlmpy_1_1TLM_1_1S1DPmodel.html',1,'tlmpy::TLM']]],
-  ['s2dmodel',['S2Dmodel',['../classtlmpy_1_1SLM_1_1S2Dmodel.html',1,'tlmpy::SLM']]],
-  ['s2dmodel',['S2Dmodel',['../classtlmpy_1_1TLM_1_1S2Dmodel.html',1,'tlmpy::TLM']]],
-  ['s2dmodel_5fold',['S2Dmodel_old',['../classtlmpy_1_1TLM_1_1S2Dmodel__old.html',1,'tlmpy::TLM']]],
-  ['shape',['shape',['../classtlmpy_1_1TLM_1_1Grid.html#a871cb9d0bf918a124c04bdaf40369cb3',1,'tlmpy::TLM::Grid']]],
-  ['stat1dcst',['Stat1Dcst',['../classtlmpy_1_1TLMForcing_1_1Stat1Dcst.html',1,'tlmpy::TLMForcing']]],
-  ['stat1dgrid',['Stat1Dgrid',['../classtlmpy_1_1TLM_1_1Stat1Dgrid.html',1,'tlmpy::TLM']]],
-  ['stat2dcst',['Stat2Dcst',['../classtlmpy_1_1TLMForcing_1_1Stat2Dcst.html',1,'tlmpy::TLMForcing']]],
-  ['stat2dgrid',['Stat2Dgrid',['../classtlmpy_1_1TLM_1_1Stat2Dgrid.html',1,'tlmpy::TLM']]]
+  ['method',['method',['../classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1Fringe1D.html#a064b5ef34070d46ab0ff174a841bfa5b',1,'Dropbox.ThreeLayerModel.TLMForcing.Fringe1D.method()'],['../classDropbox_1_1ThreeLayerModel_1_1TLMForcing_1_1Fringe1D.html#a8087c821ca5f0b6ee8d01eee96fdd1a1',1,'Dropbox.ThreeLayerModel.TLMForcing.Fringe1D.method']]],
+  ['model',['model',['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1model.html',1,'Dropbox::ThreeLayerModel::SLM']]],
+  ['model',['model',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1model.html',1,'Dropbox::ThreeLayerModel::TLM']]],
+  ['moperator',['Moperator',['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1Dmodel.html#a7e305e46f4bb027807c7e478edf2750e',1,'Dropbox.ThreeLayerModel.TLM.S1Dmodel.Moperator()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S2Dmodel.html#a1f7f83044831a19edcdbdf7bdfdf96be',1,'Dropbox.ThreeLayerModel.TLM.S2Dmodel.Moperator()']]],
+  ['ms',['Ms',['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1ABL.html#ae1cfd02bf6e5650cc6ec9b14fead412d',1,'Dropbox.ThreeLayerModel.SLM.ABL.Ms()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1ABL.html#afdef587df5d5fdbe6a7d27b09066ffb9',1,'Dropbox.ThreeLayerModel.TLM.ABL.Ms()']]],
+  ['mx',['Mx',['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S1Dmodel.html#af64adbdf86b243b29b82464ca76c6afe',1,'Dropbox.ThreeLayerModel.SLM.S1Dmodel.Mx()'],['../classDropbox_1_1ThreeLayerModel_1_1SLM_1_1S2Dmodel.html#a9c576806f12523cc2b4c4cb0818c047f',1,'Dropbox.ThreeLayerModel.SLM.S2Dmodel.Mx()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1Dmodel.html#a577d8bbb50b20f21d505c7ad086083a9',1,'Dropbox.ThreeLayerModel.TLM.S1Dmodel.Mx()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S1DPmodel.html#a48746e2ac4c449932d3482c41fe8bffe',1,'Dropbox.ThreeLayerModel.TLM.S1DPmodel.Mx()'],['../classDropbox_1_1ThreeLayerModel_1_1TLM_1_1S2Dmodel.html#af488fccdda5ab412209e2c191d15ed6f',1,'Dropbox.ThreeLayerModel.TLM.S2Dmodel.Mx()']]]
 ];
