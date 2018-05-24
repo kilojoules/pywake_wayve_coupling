@@ -13,6 +13,21 @@ from py4sp.mypy import step
 from py4sp.mypy import pulse
 
 def gauss(turbines,abl):
+    '''
+    Gaussian wake model
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+
+    Returns
+    -------
+    S: 1d numpy array
+        inflow velocities at the turbines
+    '''
     TI = gauss_TI(turbines,abl)  #Compute TI at turbine locations
     A  = gauss_A(turbines,abl,TI)#Compute matrix with wake effects
     B  = nowake(turbines,abl)    #Vector with undisturbed turbine inflow velocities
@@ -20,6 +35,21 @@ def gauss(turbines,abl):
     return S
 
 def gauss_jac(turbines,abl):
+    '''
+    Jacobian of the Gaussian wake model
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+
+    Returns
+    -------
+    _: 2d numpy array with shape (Nturb,2)
+        Jacobian of inflow velocities
+    '''
     Uinf = abl.U1
     Vinf = abl.V1
     Sinf = abl.S1
@@ -37,7 +67,13 @@ def gauss_jac(turbines,abl):
     return np.vstack([dSdu,dSdv]).T
 
 def gauss_alternative(turbines,Uinf,Vinf,kwake):
-#Depreciated
+    '''
+    Alternative implementation of Gaussian wake model (depreciated)
+
+    Sort wind turbines and then advance through farm. Is faster than building
+    a general matrix, but issues arise with the Jacobian when the order of turbines
+    changes due to the perturbation
+    '''
     Nt = len(turbines)                  #Number of turbines
     Nq = 16                             #Number of quadrature points
     Sinf = np.sqrt(Uinf**2+Vinf**2)     #Wind speed
@@ -88,6 +124,25 @@ def gauss_alternative(turbines,Uinf,Vinf,kwake):
     return S[inv_order]
 
 def gauss_TI(turbines,abl):
+    '''
+    Turbulence intensity model of Niayifar and Porte-Agel (2016)
+
+    Turbulence intensity is assumed not to depend on the perturbation velocities so
+    that, contrary to the Gaussian wake model itself, the turbulence intensity model
+    can be calculated by ordering the turbines and then sweeping through the farm
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+
+    Returns
+    -------
+    TI: 1d numpy array
+        local turbulent intensity at the turbines
+    '''
     Nt = len(turbines)                  #Number of turbines
     Uinf = abl.U1
     Vinf = abl.V1
@@ -155,6 +210,23 @@ def gauss_TI(turbines,abl):
     return TI[inv_order]
 
 def gauss_A(turbines,abl,TI):
+    '''
+    Compute system matrix A of Gaussian wake model
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+    TI: 1d numpy array
+        local turbulent intensity at the turbines
+
+    Returns
+    -------
+    A: numpy array with shape (Nt,Nt)
+        system matrix of Gaussian wake model
+    '''
     Nt = len(turbines)                  #Number of turbines
     Uinf = abl.U1
     Vinf = abl.V1
@@ -205,6 +277,23 @@ def gauss_A(turbines,abl,TI):
     return A
 
 def gauss_Ajac(turbines,abl,TI):
+    '''
+    Compute Jacobian of system matrix A of Gaussian wake model
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+    TI: 1d numpy array
+        local turbulent intensity at the turbines
+
+    Returns
+    -------
+    dAdu,dAdv: numpy array with shape (Nt,Nt)
+        Jacobian of system matrix of Gaussian wake model w.r.t. u and v
+    '''
     Nt = len(turbines)                  #Number of turbines
     Uinf = abl.U1
     Vinf = abl.V1
@@ -265,6 +354,25 @@ def gauss_Ajac(turbines,abl,TI):
     return dAdu,dAdv
 
 def gauss_wakedeficit(x,y,z,d0,Ct,kwake):
+    '''
+    Wake deficit function
+
+    Parameters
+    ----------
+    x,y,z: float
+        relative streamwise, spanwise and vertical distance in the wake
+    d0: float
+        rotor diameter
+    Ct: float
+        thrust coefficient
+    kwake: float
+        wake expansion coefficient
+
+    Returns
+    -------
+    deficit: float
+        velocity deficit
+    '''
     beta = 0.5*(1+np.sqrt(1-Ct))/np.sqrt(1-Ct)
     eps = 0.2*np.sqrt(beta)
     sigma_d0 = kwake*x/d0+eps
@@ -273,6 +381,25 @@ def gauss_wakedeficit(x,y,z,d0,Ct,kwake):
     return deficit
 
 def gauss_wakedeficit_jac(x,y,z,d0,Ct,kwake):
+    '''
+    Jacobian of wake deficit function
+
+    Parameters
+    ----------
+    x,y,z: float
+        relative streamwise, spanwise and vertical distance in the wake
+    d0: float
+        rotor diameter
+    Ct: float
+        thrust coefficient
+    kwake: float
+        wake expansion coefficient
+
+    Returns
+    -------
+    _: numpy array with size (2,)
+        Jacobian of velocity deficit w.r.t. x and y
+    '''
     beta = 0.5*(1+np.sqrt(1-Ct))/np.sqrt(1-Ct)
     eps = 0.2*np.sqrt(beta)
     sigma_d0 = kwake*x/d0+eps
@@ -284,13 +411,15 @@ def gauss_wakedeficit_jac(x,y,z,d0,Ct,kwake):
     return np.array([defdx,defdy])
 
 def area_circle_segment(R,d):
+    '''Area of a circle segment when the angle is less than 180°'''
     return R**2*np.arccos(d/R)-d*np.sqrt(R**2-d**2)
 def area_circle_reflex(R,d):
+    '''Area of a circle segment when the angle is greater than 180°'''
     alpha = np.arccos(d/R)
     return (np.pi-alpha)*R**2+d*np.sqrt(R**2-d**2)
 
 def jensen(turbines,Uinf,Vinf,kwake):
-#Depreciated
+    '''Jensen wake model (depreciated)'''
     Sinf = np.sqrt(Uinf**2+Vinf**2)   #Wind speed
     e_str = np.array([Uinf,Vinf])/Sinf #Unit vector along the wind direction
     e_span = np.array([-Vinf,Uinf])/Sinf #Unit vector in cross wind direction
@@ -326,9 +455,41 @@ def jensen(turbines,Uinf,Vinf,kwake):
     return Ftu,Ftv,S
 
 def nowake(turbines,abl):
+    '''
+    No wake model
+
+    No wake effects so inflow velocities are just the unperturbed wind speed
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+
+    Returns
+    -------
+    S: 1d numpy array
+        inflow velocities at the turbines
+    '''
     return abl.S1*np.ones((len(turbines)))
 
 def nowake_jac(turbines,abl):
+    '''
+    Jacobian of the no wake model
+
+    Parameters
+    ----------
+    turbines: list of turbine objects (defined in TLMForcing.py)
+        list with the wind turbines
+    abl: ABL object (defined in TLMForcing.py)
+        atmospheric state
+
+    Returns
+    -------
+    _: 2d numpy array with shape (Nturb,2)
+        Jacobian of inflow velocities
+    '''
     Nt = len(turbines)
     dSdu = abl.U1/abl.S1*np.ones((Nt))
     dSdv = abl.V1/abl.S1*np.ones((Nt))
