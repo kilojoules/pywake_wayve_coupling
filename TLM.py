@@ -259,7 +259,7 @@ class model(object):
         ----------
         grid: Grid object
             numerical grid
-        forcing: CST/WF object (from TLMForcing)
+        forcing: CST/WF object (defined in TLMForcing.py)
             perturbing force
         abl: ABL object
             atmospheric state
