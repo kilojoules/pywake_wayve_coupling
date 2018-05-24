@@ -1817,14 +1817,16 @@ class ABL(object):
     def __init__(self,input='LESbased',**kwargs):
         '''
         Initialise atmospheric state with one of the following valid methods:
-        - default subcritical state
-        - default supercritical state
-        - based on LES data
-        - based on analytic profile with constant eddy viscosity (out-dated)
-        - based on analytic profile with quadratic eddy viscosity (out-dated)
-        - based on analytic profile with cubic eddy viscosity
-        - based on ERA5 data
-        - load from file (written with the ABL.saveas() routine)
+        - 'default_subcr'     : default subcritical state
+        - 'default_supercr'   : default supercritical state
+        - 'LESbased'          : based on LES data
+        - 'analytic_constant' : based on analytic profile with constant eddy
+                                viscosity (out-dated)
+        - 'analytic_quadratic': based on analytic profile with quadratic eddy
+                                viscosity (out-dated)
+        - 'analytic_cubic'    : based on analytic profile with cubic eddy viscosity
+        - 'ERA5'              : based on ERA5 data
+        - 'fromfile'          : load from file (written with the ABL.saveas())
 
         Parameters
         ----------
