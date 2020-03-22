@@ -6,22 +6,19 @@ Three-layer module
 Module defining data structures for
 - Numerical grids
 - Atmospheric state
-- Three-layer module
+- Equations solver
 '''
-__author__ = "Dries Allaerts"
-__date__ = "June 15, 2017"
 
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import interpolate
 import scipy.linalg
 import scipy.sparse.linalg
 import mpmath
-import os
 import time
 from py4sp import loadsp
 from py4sp import mypy
 from py4sp import CIops
+from tlmpy import TLM_tools
 
 class Grid(object):
     '''
@@ -86,6 +83,7 @@ class Stat1Dgrid(Grid):
         return Stat1Dgrid(self.Lx,int(3*self.Nx/2))
 
     @property
+    
     def Lx(self):
         '''Length of the numerical domain in dimension 0'''
         return self.__Lx
@@ -270,7 +268,7 @@ class model(object):
         self.__abl = abl
         self.__PHI = None
     
-    def solve(self,method='lgmres',verbose=False,WFfeedback=True):
+    def solve(self,method='lgmres',verbose=False,WFfeedback=True,SpeedUp=True):
         '''
         Solve the three-layer model
 
@@ -285,8 +283,10 @@ class model(object):
         WFfeedback (optional): bool
             flag for including first-order term of wind-farm drag
             default: True
+        SpeedUp (optional): bool
+            flag for avoiding lgmres statistic evaluation (#iteration, residual)
+            default: True
         '''
-        N = self.grid.N
         err = 1
         if not WFfeedback:
             #######################
@@ -296,7 +296,7 @@ class model(object):
                 print('Start preprocessing WF model')
                 start = time.time()
 
-            self.forcing.preprocess(self.abl,WFfeedback)
+            self.forcing.preprocess(self.abl,self.grid,self.grid32,WFfeedback)
 
             if verbose:
                 end = time.time()
@@ -325,7 +325,7 @@ class model(object):
             ##########################
 
         elif method=='direct':
-            print('Error, direct methode not supported anymore')
+            print('Error, direct method not supported anymore')
             return 1
             #######################
             #Build A and B matrices
@@ -357,7 +357,7 @@ class model(object):
                 print('Start preprocessing WF model')
                 start = time.time()
 
-            self.forcing.preprocess(self.abl)
+            self.forcing.preprocess(self.abl,self.grid,self.grid32)
 
             if verbose:
                 end = time.time()
@@ -387,15 +387,18 @@ class model(object):
                             callback=counter)
                 print('gmres finished with output flag ',err)
             elif method=='lgmres':
-                maxiter = 2000
-                counter = lgmres_counter(A,B,maxiter,disp=verbose)
-                X,err = scipy.sparse.linalg.lgmres(A,B,
-                            tol=1.0e-10,
-                            maxiter=maxiter,M=M,
-                            callback=counter)
-                if verbose:
-                    print('lgmres finished with output flag ',err)
-                    print('lmgres needed ',counter.niter,' iterations')
+                if SpeedUp:
+                    X,err = scipy.sparse.linalg.lgmres(A,B,tol=1.0e-10,M=M)
+                else:                    
+                    maxiter = 2000
+                    counter = lgmres_counter(A,B,maxiter,disp=verbose)
+                    X,err = scipy.sparse.linalg.lgmres(A,B,
+                                tol=1.0e-10,
+                                maxiter=maxiter,M=M,
+                                callback=counter)
+                    if verbose:
+                        print('lgmres finished with output flag ',err)
+                        print('lmgres needed ',counter.niter,' iterations')
 #                plt.figure()
 #                indices = np.nonzero(counter.residu)[0]
 #                plt.semilogy(indices,counter.residu[indices],'-b')
@@ -406,11 +409,16 @@ class model(object):
             else:
                 print('Method unknown')
                 X = np.zeros((B.shape))
-            if verbose:
-                end = time.time()
-                print('Time to calculate model was',end-start,'s')
-                rk = A.matvec(X)-B
-                print('Euclidean norm of the complex residual is',np.linalg.norm(rk))
+            if SpeedUp:
+                if verbose:
+                    end = time.time()
+                    print('Time to calculate model was',end-start,'s')
+            else:           
+                if verbose:
+                    end = time.time()
+                    print('Time to calculate model was',end-start,'s')
+                    rk = A.matvec(X)-B
+                    print('Euclidean norm of the complex residual is',np.linalg.norm(rk))
             ##########################
 
         ##################################
@@ -1254,6 +1262,7 @@ class S2Dmodel(model):
             maximum imaginary part of rfield (zero if input is Hermitian-symmetric)
         '''
         rfield = np.fft.ifft2(np.fft.ifftshift(cfield*self.grid.N))
+
         if returnErr:
             err = np.amax(np.abs(np.imag(rfield)))
             out = (np.real(rfield), err)
@@ -1307,9 +1316,10 @@ class S2Dmodel(model):
             cfield32,
             np.zeros((self.grid32.Nx,int(self.grid.Ny/4)),dtype=np.complex128) ),
                                    axis=1)
-
+        #Cleaner but slower
+        #cfield32 =np.pad(cfield, ((int(Nx/4), int(Nx/4)),(int(Ny/4), int(Ny/4))),
+        #                    'constant', constant_values=(0, 0))
         rfield = np.fft.ifft2(np.fft.ifftshift(cfield32*self.grid32.N))
-
         return np.real(rfield)
 
     def r2c_deal(self,rfield32):
@@ -1372,16 +1382,24 @@ class S2Dmodel(model):
         #However, this method is numerically more stable as it only involves a
         #product, whereas the continuity approach can result in the division of
         #two very small numbers (order of 1.0e-21) which is inaccurate
+
+        U1 = self.abl.U1
+        V1 = self.abl.V1
+        U2 = self.abl.U2
+        V2 = self.abl.V2
+        H1 = self.abl.H1
+        H2 = self.abl.H2
+        
         with np.errstate(divide='ignore',invalid='ignore'):
             eta1 = p1c/self.PHI
             eta2 = p2c/self.PHI
         #The only issue here is when PHI=0., which can occur for gprime=0.
         Ks, Ls = np.meshgrid(self.grid.ks,self.grid.ls,indexing='ij')
-        sigma1 = self.abl.U1*Ks+self.abl.V1*Ls
-        sigma2 = self.abl.U2*Ks+self.abl.V2*Ls
+        sigma1 = U1*Ks+V1*Ls
+        sigma2 = U2*Ks+V2*Ls
         with np.errstate(divide='ignore',invalid='ignore'):
-            eta1[self.PHI==0.] = -self.abl.H1*(Ks[self.PHI==0.]*u1c[self.PHI==0.]+Ls[self.PHI==0.]*v1c[self.PHI==0.])/sigma1[self.PHI==0.]
-            eta2[self.PHI==0.] = -self.abl.H2*(Ks[self.PHI==0.]*u2c[self.PHI==0.]+Ls[self.PHI==0.]*v2c[self.PHI==0.])/sigma2[self.PHI==0.]
+            eta1[self.PHI==0.] = -H1*(Ks[self.PHI==0.]*u1c[self.PHI==0.]+Ls[self.PHI==0.]*v1c[self.PHI==0.])/sigma1[self.PHI==0.]
+            eta2[self.PHI==0.] = -H2*(Ks[self.PHI==0.]*u2c[self.PHI==0.]+Ls[self.PHI==0.]*v2c[self.PHI==0.])/sigma2[self.PHI==0.]
         #Careful now when sigma1,2 is close to zero
         #in fact, atol=1.e-8 still doesn't provide satifactory results
         eta1[(self.PHI==0.) & (np.isclose(sigma1,0.,atol=1.e-8))] = 0.
@@ -1397,13 +1415,15 @@ class S2Dmodel(model):
         -------
         _: 1d numpy array
             right-hand side of model equations (Fourier space)
-        '''
+        '''       
+        H1 = self.abl.H1
+        
         #Compute 0th order forcing term (2D real)
         F0u, F0v = self.forcing.F0(self.abl,self.grid)
         #Convert to fourier space, cast into 1D array and
         #divide by H1 (TLM solves height-averaged equations)
-        Bu = np.ravel(self.r2c(F0u))/self.abl.H1
-        Bv = np.ravel(self.r2c(F0v))/self.abl.H1
+        Bu = np.ravel(self.r2c(F0u))/H1
+        Bv = np.ravel(self.r2c(F0v))/H1
         #Set defunct modes to zero
         Nx = self.grid.Nx
         Ny = self.grid.Ny
@@ -1413,33 +1433,26 @@ class S2Dmodel(model):
         Bu[defunctindices] = 0.
         Bv[defunctindices] = 0.
         return np.concatenate((Bu,Bv,np.zeros((4*Nx*Ny,),dtype=np.complex128)))
-
+    
     def PHIvector(self):
         '''
         Compute complex stratification coefficient Phi
-
+    
         Returns
         -------
         PHI: 2d numpy array
             complex stratification coefficient
         '''
-        PHI = self.abl.gprime*np.ones(self.grid.shape,dtype=np.complex128)
-        for indexk, k in enumerate(self.grid.ks):
-            for indexl, l in enumerate(self.grid.ls):
-                sigma3 = self.abl.U3*k+self.abl.V3*l
-                #Non-hydrostatic solution 
-                if not sigma3==0:
-                    if sigma3**2>self.abl.N**2:
-                        m = 1j*np.sqrt((k**2+l**2)*np.abs(self.abl.N**2/sigma3**2-1))
-                    else:
-                        m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2-1))
-                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2-sigma3**2)
-#                #Hydrostatic solution 
-#                if not sigma3==0:
-#                    m = np.sign(sigma3)*np.sqrt((k**2+l**2)*(self.abl.N**2/sigma3**2))
-#                    PHI[indexk,indexl] += 1j/m*(self.abl.N**2)
-        return PHI
+        gprime = self.abl.gprime
+        U3 = self.abl.U3
+        V3 = self.abl.V3
+        N = self.abl.N
+        
+        PHI = TLM_tools.evaluate_PHI(gprime,self.grid.shape,self.grid.ks,self.grid.ls,U3,V3,N)
+        
 
+        return PHI
+        
     def Aoperator(self):
         '''
         Linear operator interface for performing matrix vector products with
@@ -1471,6 +1484,7 @@ class S2Dmodel(model):
                                                dtype=np.complex128)
         return M
 
+
     def Mx(self,x):
         '''
         Compute the matrix vector product M*x where preconditioner M = inv(P)
@@ -1487,139 +1501,76 @@ class S2Dmodel(model):
         _: 1d numpy array
             matrix vector product M*x
         '''
+        U1 = self.abl.U1
+        V1 = self.abl.V1
+        U2 = self.abl.U2
+        V2 = self.abl.V2
+        S1 = self.abl.S1
+        dU12 = self.abl.dU12
+        dV12 = self.abl.dV12
+        dS12 = self.abl.dS12
+        H1 = self.abl.H1
+        H2 = self.abl.H2  
+        C0 = self.abl.C0
+        C1 = self.abl.C1
+        nu1 = self.abl.nu1
+        nu2 = self.abl.nu2
+        fc = self.abl.fc
+        
         N = self.grid.N
         Nx = self.grid.Nx
         Ny = self.grid.Ny
-        M = np.zeros((6,N),dtype=np.complex128)
-        X = x.reshape(6,N)
-        for indexk, k in enumerate(self.grid.ks):
-            for indexl, l in enumerate(self.grid.ls):
-                index = indexl + Ny*indexk
-                P = np.zeros((6,6),dtype=np.complex128)
-                sigma1 = self.abl.U1*k+self.abl.V1*l
-                sigma2 = self.abl.U2*k+self.abl.V2*l
-                #u1 equation
-                P[0,0] = (-1j*sigma1
-                          -self.abl.C0*( (self.abl.S1**2+self.abl.U1**2)/
-                                         (self.abl.S1*self.abl.H1) )
-                          -self.abl.C1*( (self.abl.dS12**2+self.abl.dU12**2)/
-                                         (self.abl.dS12*self.abl.H1) ) 
-                          -self.abl.nu1*(k**2+l**2) )
-                P[0,1] = (+self.abl.fc
-                          -self.abl.C0*( (self.abl.U1*self.abl.V1)/
-                                         (self.abl.S1*self.abl.H1) )
-                          -self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                         (self.abl.dS12*self.abl.H1) ) )
-                P[0,2] = +self.abl.C1*( (self.abl.dS12**2+self.abl.dU12**2)/
-                                        (self.abl.dS12*self.abl.H1) )
-                P[0,3] = +self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                        (self.abl.dS12*self.abl.H1) )
-                P[0,4] = -1j*k
-                P[0,5] = -1j*k
-                #v1 equation
-                P[1,0] = (-self.abl.fc
-                          -self.abl.C0*( (self.abl.U1*self.abl.V1)/
-                                         (self.abl.S1*self.abl.H1) )
-                          -self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                         (self.abl.dS12*self.abl.H1) ) )
-                P[1,1] = (-1j*sigma1
-                          -self.abl.C0*( (self.abl.S1**2+self.abl.V1**2)/
-                                         (self.abl.S1*self.abl.H1) )
-                          -self.abl.C1*( (self.abl.dS12**2+self.abl.dV12**2)/
-                                         (self.abl.dS12*self.abl.H1) )
-                          -self.abl.nu1*(k**2+l**2) )
-                P[1,2] = +self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                        (self.abl.dS12*self.abl.H1) )
-                P[1,3] = +self.abl.C1*( (self.abl.dS12**2+self.abl.dV12**2)/
-                                        (self.abl.dS12*self.abl.H1) )
-                P[1,4] = -1j*l
-                P[1,5] = -1j*l
-                #u2 equation
-                P[2,0] = +self.abl.C1*( (self.abl.dS12**2+self.abl.dU12**2)/
-                                        (self.abl.dS12*self.abl.H2) )
-                P[2,1] = +self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                        (self.abl.dS12*self.abl.H2) )
-                P[2,2] = (-1j*sigma2
-                          -self.abl.C1*( (self.abl.dS12**2+self.abl.dU12**2)/
-                                         (self.abl.dS12*self.abl.H2) )
-                          -self.abl.nu2*(k**2+l**2) )
-                P[2,3] = (+self.abl.fc
-                          -self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                         (self.abl.dS12*self.abl.H2) ) )
-                P[2,4] = -1j*k
-                P[2,5] = -1j*k
-                #v2 equation
-                P[3,0] = +self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                        (self.abl.dS12*self.abl.H2) )
-                P[3,1] = +self.abl.C1*( (self.abl.dS12**2+self.abl.dV12**2)/
-                                        (self.abl.dS12*self.abl.H2) )
-                P[3,2] = (-self.abl.fc
-                          -self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                                         (self.abl.dS12*self.abl.H2) ) )
-                P[3,3] = (-1j*sigma2
-                          -self.abl.C1*( (self.abl.dS12**2+self.abl.dV12**2)/
-                                         (self.abl.dS12*self.abl.H2) )
-                          -self.abl.nu2*(k**2+l**2) )
-                P[3,4] = -1j*l
-                P[3,5] = -1j*l
-                #p1 equation
-                #General case
-                P[4,0] = self.PHI[indexk,indexl]*self.abl.H1*k
-                P[4,1] = self.PHI[indexk,indexl]*self.abl.H1*l
-                P[4,4] = sigma1
-                #p2 equation
-                #General case
-                P[5,2] = self.PHI[indexk,indexl]*self.abl.H2*k
-                P[5,3] = self.PHI[indexk,indexl]*self.abl.H2*l
-                P[5,5] = sigma2
-                #k=l=0
-                if k==0 and l == 0:
-                    P[4,4] = 1.+0.j
-                    P[5,5] = 1.+0.j
-                #PHI=0
-                if self.PHI[indexk,indexl]==0.:
-                    P[4,4] = 1.+0.j
-                    P[5,5] = 1.+0.j
+        
+        M = TLM_tools.evaluate_M(self.grid.ks,self.grid.ls,Ny,Nx,U1,V1,U2,V2,C0,C1,S1,H1,
+                                 dS12,dU12,nu1,nu2,dV12,fc,H2,self.PHI,N,x.reshape(6,N))
 
-                M[:,index] = scipy.linalg.solve(P,X[:,index])
         #Defunct mode
         defunct_k = [i for i in range(Ny)]
         defunct_l = [i*Ny for i in range(1,Nx)]
         defunctindices = np.array(defunct_k + defunct_l)
         M[:,defunctindices] = 0.+0.j
         return M.reshape(6*N)
-
+    
     def Ax(self,x):
         '''
         Compute the matrix vector product A*x
-
+    
         The pressure is split in two variables p1,2=Phi*eta_1,2 which are treated
         as independent variables instead of using a direct substituion in terms of
         eta_1,2 in the momentum equations. The reason is that for cases where
         sigma_1,2 is zero but l or k is not, the pressure is not zero but follows
         indirectly from the continuity equation. When k=l=0 the continuity
         equations become trivial and should be replaced by p1,2=0
-
+    
         Parameters
         ----------
         x: 1d numpy array
             input vector
-
+    
         Returns
         -------
         _: 1d numpy array
             matrix vector product A*x
         '''
+        U1 = self.abl.U1
+        V1 = self.abl.V1
+        U2 = self.abl.U2
+        V2 = self.abl.V2
+        S1 = self.abl.S1
+        dU12 = self.abl.dU12
+        dV12 = self.abl.dV12
+        dS12 = self.abl.dS12
+        H1 = self.abl.H1
+        H2 = self.abl.H2  
+        C0 = self.abl.C0
+        C1 = self.abl.C1
+        nu1 = self.abl.nu1
+        nu2 = self.abl.nu2
+        fc = self.abl.fc
+        
         N = self.grid.N
         Nx = self.grid.Nx
         Ny = self.grid.Ny
-        #Initialise components of the matrix vector product
-        Axu1 = np.zeros((N),dtype=np.complex128)
-        Axv1 = np.zeros((N),dtype=np.complex128)
-        Axu2 = np.zeros((N),dtype=np.complex128)
-        Axv2 = np.zeros((N),dtype=np.complex128)
-        Axp1 = np.zeros((N),dtype=np.complex128)
-        Axp2 = np.zeros((N),dtype=np.complex128)
         #Extract dependent variables (u1,v1,u2,v2,p1,p2) from the vector
         u1 = x[0:N]
         v1 = x[N:2*N]
@@ -1631,77 +1582,15 @@ class S2Dmodel(model):
         Ks, Ls = np.meshgrid(self.grid.ks,self.grid.ls,indexing='ij')
         ks = np.ravel(Ks)
         ls = np.ravel(Ls)
-        sigma1 = self.abl.U1*ks+self.abl.V1*ls
-        sigma2 = self.abl.U2*ks+self.abl.V2*ls
-        #Regular entries
-        #u1 equation
-        Axu1 += -1j*sigma1*u1
-        Axu1 += -1j*ks*(p1+p2)
-        Axu1 += +self.abl.fc*v1
-        Axu1 += -self.abl.C0*( (self.abl.S1**2+self.abl.U1**2)/
-                    (self.abl.S1*self.abl.H1) )*u1
-        Axu1 += -self.abl.C0*( (self.abl.U1*self.abl.V1)/
-                    (self.abl.S1*self.abl.H1) )*v1
-        Axu1 += -self.abl.C1*( (self.abl.dS12**2+self.abl.dU12**2)/
-                    (self.abl.dS12*self.abl.H1) )*(u1-u2)
-        Axu1 += -self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                    (self.abl.dS12*self.abl.H1) )*(v1-v2)
-        Axu1 += -self.abl.nu1*(ks**2+ls**2)*u1
-        #v1 equation
-        Axv1 += -1j*sigma1*v1
-        Axv1 += -1j*ls*(p1+p2)
-        Axv1 += -self.abl.fc*u1
-        Axv1 += -self.abl.C0*( (self.abl.S1**2+self.abl.V1**2)/
-                    (self.abl.S1*self.abl.H1) )*v1
-        Axv1 += -self.abl.C0*( (self.abl.U1*self.abl.V1)/
-                    (self.abl.S1*self.abl.H1) )*u1
-        Axv1 += -self.abl.C1*( (self.abl.dS12**2+self.abl.dV12**2)/
-                    (self.abl.dS12*self.abl.H1) )*(v1-v2)
-        Axv1 += -self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                    (self.abl.dS12*self.abl.H1) )*(u1-u2)
-        Axv1 += -self.abl.nu1*(ks**2+ls**2)*v1
-        #u2 equation
-        Axu2 += -1j*sigma2*u2
-        Axu2 += -1j*ks*(p1+p2)
-        Axu2 += +self.abl.fc*v2
-        Axu2 += +self.abl.C1*( (self.abl.dS12**2+self.abl.dU12**2)/
-                    (self.abl.dS12*self.abl.H2) )*(u1-u2)
-        Axu2 += +self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                    (self.abl.dS12*self.abl.H2) )*(v1-v2)
-        Axu2 += -self.abl.nu2*(ks**2+ls**2)*u2
-        #v2 equation
-        Axv2 += -1j*sigma2*v2
-        Axv2 += -1j*ls*(p1+p2)
-        Axv2 += -self.abl.fc*u2
-        Axv2 += +self.abl.C1*( (self.abl.dS12**2+self.abl.dV12**2)/
-                    (self.abl.dS12*self.abl.H2) )*(v1-v2)
-        Axv2 += +self.abl.C1*( (self.abl.dU12*self.abl.dV12)/
-                    (self.abl.dS12*self.abl.H2) )*(u1-u2)
-        Axv2 += -self.abl.nu2*(ks**2+ls**2)*v2
-        #p1 equation
-        #General case
-        Axp1 += np.ravel(self.PHI)*self.abl.H1*ks*u1
-        Axp1 += np.ravel(self.PHI)*self.abl.H1*ls*v1
-        Axp1 += sigma1*p1
-        #p2 equation
-        #General case
-        Axp2 += np.ravel(self.PHI)*self.abl.H2*ks*u2
-        Axp2 += np.ravel(self.PHI)*self.abl.H2*ls*v2
-        Axp2 += sigma2*p2
-        #p1,2 equation: k=l=0
-        indices_klzero = int(Nx/2)*Ny+int(Ny/2)
-        Axp1[indices_klzero] = p1[indices_klzero]
-        Axp2[indices_klzero] = p2[indices_klzero]
-
+        
         #Compute 1st order forcing term
         u1r = self.c2r_deal(u1.reshape(self.grid.shape))
         v1r = self.c2r_deal(v1.reshape(self.grid.shape))
         F1u, F1v = self.forcing.F1(self.abl,self.grid32,u1r,v1r)
-        #Convert back to fourier space, cast into 1D array and
-        #divide by H1 (TLM solves height-averaged equations)
-        Axu1 += -np.ravel(self.r2c_deal(F1u))/self.abl.H1
-        Axv1 += -np.ravel(self.r2c_deal(F1v))/self.abl.H1
 
+        Axu1,Axv1,Axu2,Axv2,Axp1,Axp2 = TLM_tools.evaluate_A(U1,V1,U2,V2,S1,dU12,dV12,dS12,H1,H2,C0,C1,nu1,nu2,fc,Nx,Ny,N,
+                                                               u1,v1,u2,v2,p1,p2,ks,ls,np.ravel(self.PHI),
+                                                               np.ravel(self.r2c_deal(F1u)),np.ravel(self.r2c_deal(F1v)))
         #Set defunct modes to zero
         defunct_k = [i for i in range(Ny)]
         defunct_l = [i*Ny for i in range(1,Nx)]
@@ -1712,8 +1601,8 @@ class S2Dmodel(model):
         Axv2[defunctindices] = 0.
         Axp1[defunctindices] = 0.
         Axp2[defunctindices] = 0.
-        return np.concatenate((Axu1,Axv1,Axu2,Axv2,Axp1,Axp2))
-
+        return np.concatenate((Axu1,Axv1,Axu2,Axv2,Axp1,Axp2))     
+    
 class U1Dmodel(model):
     '''
     Unsteady one-dimensional gravity wave model
@@ -2236,7 +2125,7 @@ class ABL(object):
         Gmode: str
             Method to define free atmosphere velocity
             "h1": take velocity at h1 (inversion center)
-            "h2": take velocity at h2 (inversion top)
+            "h2": take velocity at h2 (inversion top)  (h2=h1+Deltah/2)
             "top": take velocity at 5000 m
             "avg": average velocity profile between h1 and 5000 m
         dh_max (optional): float
@@ -2249,11 +2138,11 @@ class ABL(object):
         assert all([i in kwargs for i in arguments]),'Error: some arguments for ERA5 based ABL definition are missing'
 
         gravity = 9.80665    # [m s-2]
-        P0 = 1.e5 # Reference pressure [Pa]
-        R_air = 287.058 # Specific gas constant for dry air [J kg-1 K-1]
-        Cp_air = 1005   # Specific heat of air [J kg-1 K-1]
+        #P0 = 1.e5 # Reference pressure [Pa]
+        #R_air = 287.058 # Specific gas constant for dry air [J kg-1 K-1]
+        #Cp_air = 1005   # Specific heat of air [J kg-1 K-1]
         kappa  = 0.41   # Von Karman constant
-        eps = 0.609133  # Rv/Rd-1
+        #eps = 0.609133  # Rv/Rd-1
         omega = 7.2921159e-5    # angular speed of the Earth [rad/s]
 
         #Surface parameters
@@ -2280,32 +2169,41 @@ class ABL(object):
         if zeta>0.02:
             #Ignore temperature decrease inside SBL
             #(we are trying to indentify the mixing layer that preceded this SBL)
+            #We want to caputre the mixed layer (or residual layer since we are in 
+            #SBL) that preceeded the SBL. Therefore, we take the potential temperature
+            #ad the top of the ABL where we have the mixed layer and we extrapolate
+            #till the bottom. We use this constant value in the ABL.
+            #p0 are the initial guess for [a,b,thm,l,dh] used in Ramp&Zar model
             thCI[zCI<blh] = interpolate.interp1d(zCI,thCI)(blh)
             CIestimate = CIops.RZfit(zCI,thCI,p0=[0.9,0.1,T2,1000.,100.0],
                                             dh_max=dh_max)
         else:
-            #Ignore temperature increase in CBL surface layer
+            #Ignore temperature increase in CBL surface layer, therefore we take
+            #the lowest value of potential temperature. We are able to capture the
+            #mixed layer in this way, where the temperature is constant and equal
+            #to the lowest theta. We use this constant value in the ABL.
+            #p0 are the initial guess for [a,b,thm,l,dh] used in Ramp&Zar model
             thCI[0:np.argmin(thCI)] = np.min(thCI)
             CIestimate = CIops.RZfit(zCI,thCI,p0=[0.9,0.1,T2,blh,100.0],
                                             dh_max=dh_max)
 
         #No inversion strength in the following cases:
-        #a<=0.2: encroachment
+        #a<=0.2: encroachment (No inversion layer, so the entire profile is given by g and a=0 (considered a,0.2 as in paper))
         #a<=2*b: inversion lapse rate is equal to or smaller than free lapse rate
         if (CIestimate['a']<=0.2 or CIestimate['a']<=2*CIestimate['b']):
-            H = np.max([CIestimate['h1'],kwargs['H1']+10])
+            H = np.max([CIestimate['h1'],kwargs['H1']+10])  #Becuase H cannot be lower than H1 and the upper layer must be atleast 10 meter
             self.__gprime = 0.
         else:
-            H = np.max([CIestimate['h1'],kwargs['H1']+10])
+            H = np.max([CIestimate['h1'],kwargs['H1']+10])  #Becuase H cannot be lower than H1 and the upper layer must be atleast 10 meter
             self.__gprime = gravity*CIestimate['dth']/T2
 
         #Flux profile
         tau    = np.zeros(self.zs.shape)
         nu     = np.zeros(self.zs.shape)
-        if zeta>0.0:
+        if zeta>0.0:  #stable
             tau[self.zs<=blh] = ust**2*(1-self.zs[self.zs<=blh]/blh)**(1.5)
             nu[self.zs<=blh]  = kappa*ust*self.zs[self.zs<=blh]*(1-self.zs[self.zs<=blh]/blh)**2
-        else:
+        else: #unstable
             tau[self.zs<=H] = ust**2*(1-self.zs[self.zs<=H]/H)
             nu[self.zs<=H]  = kappa*ust*self.zs[self.zs<=H]*(1-self.zs[self.zs<=H]/H)**2
         self.__taus = tau
@@ -2313,7 +2211,7 @@ class ABL(object):
         fu = interpolate.interp1d(self.zs,self.us,fill_value='extrapolate')
         fv = interpolate.interp1d(self.zs,self.vs,fill_value='extrapolate')
         ft = interpolate.interp1d(self.zs,self.taus,fill_value='extrapolate')
-        fn = interpolate.interp1d(self.zs,nu,fill_value='extrapolate')
+        #fn = interpolate.interp1d(self.zs,nu,fill_value='extrapolate')
         #Compute height averaged quantities
         #Layer 1
         self.__H1 = kwargs['H1']
@@ -2354,11 +2252,11 @@ class ABL(object):
         self.__C2 = tau23/self.dS23**2
 
         #Turbulent intensity at hub height
-        if zeta>0.0:
+        if zeta>0.0: #stable
             #From Nieuwstadt (1984): q/sqrt(tau) = 3
             tke = 4.5*tau
             f = interpolate.interp1d(self.zs,np.sqrt(2./3.*tke/self.Ms))
-        else:
+        else: #unstable
             #From Stull (1988): q^2/tau = 8.5+2.5
             tke = 5.5*tau
             f = interpolate.interp1d(self.zs,np.sqrt(2./3.*tke/self.Ms))
@@ -2402,7 +2300,7 @@ class ABL(object):
             self.__TI     = float(file.readline().rstrip('\r\n').split('=')[1])
             file.readline()
             #If not yet at end of file, continue reading zs, us, vs and zst
-            if file.readline() is not '':
+            if file.readline() != '':
                 file.readline()
                 Nz = int(file.readline().rstrip('\r\n').split('=')[1])
                 file.readline()
@@ -2861,4 +2759,5 @@ class lgmres_counter(object):
         #Reached the end
         if self._disp and self.niter==self.N:
             print('\n')
+            
 

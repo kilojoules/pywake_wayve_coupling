@@ -4,13 +4,11 @@
 Forcing models for TLM
 '''
 
-__author__ = "Dries Allaerts"
-__date__ = "August 7, 2017"
-
 import numpy as np
 from scipy import interpolate
 from py4sp import mypy
 from tlmpy import WakeModel
+from tlmpy import TLM_tools
 
 class CST(object):
     '''
@@ -416,7 +414,7 @@ class WF(object):
     Wind-farm perturbing force model with individual turbines and Gaussian filtering
     only for 2D grids
     '''
-    def __init__(self,xs,ys,diameters,Cts,Lfilter=1000.,wakemodel='nowake',coupling='upstream'):
+    def __init__(self,grid,xs,ys,diameters,Cts,zhs,Lfilter=1000.,wakemodel='nowake',coupling='upstream'):
         '''
         Initialise the wind farm model with choice of wake model and coupling
         wake model:
@@ -430,10 +428,12 @@ class WF(object):
 
         Parameters
         ----------
+        grid: Grid object
+            numerical grid
         xs,ys: 1d numpy array
             x and y location of the individual turbines
-        diameters, Cts: 1d numpy array
-            diameters and thrust coefficients of individual turbines
+        diameters, Cts, zhs: 1d numpy array
+            diameters, thrust coefficients and hub height of individual turbines
         Lfilter (optional): float
             filter length for the Gaussian filter
             default: 1000.
@@ -444,6 +444,9 @@ class WF(object):
             name of the coupling method
             default: upstream
         '''
+        self.__grid = grid
+        self.__xs = xs
+        self.__ys = ys
         self.__Lfilter = Lfilter
         self.__wakemodel = wakemodel
         self.__coupling  = coupling
@@ -454,10 +457,13 @@ class WF(object):
         self.__yend   = np.max(ys)
         self.__St = None
         self.__Stjac = None
+        self.__Footprint = [0] * len(xs)          
+        self.__Footprint32 = [0] * len(xs)        
         self.__turbines = []
-        self.initturbines(xs,ys,diameters,Cts)
+        self.initturbines(xs,ys,diameters,Cts,zhs)
+        
 
-    def initturbines(self,xs,ys,diameters,Cts):
+    def initturbines(self,xs,ys,diameters,Cts,zhs):
         '''
         Make list with turbines
         
@@ -465,37 +471,45 @@ class WF(object):
         ----------
         xs,ys: 1d numpy array
             x and y location of the individual turbines
-        diameters, Cts: 1d numpy array
-            diameters and thrust coefficients of individual turbines
+        diameters, Cts, zhs: 1d numpy array
+            diameters, thrust coefficients and hub height of individual turbines
         '''
         #List with all turbines
         for turb in range(self.Nturb):
             self.__turbines.append(turbine(xs[turb],ys[turb],
-                                   diameters[turb],Cts[turb]))
+                                   diameters[turb],Cts[turb],zhs[turb]))
 
-    def preprocess(self,abl,WFfeedback=True):
+    
+    def preprocess(self,abl,grid,grid32,WFfeedback=True):
         '''
         Standard function for preprocessing
         
         Compute inflow velocities St and Jacobian of inflow velocities Stjac
-        in preprocessing step as this is independent of the perturbation velocity
-        and might take a while
+        in preprocessing step as this is independent of the perturbation velocity.
+        The footprint is a list of sparse matrix.
 
         Parameters
         ----------
         abl: ABL object (defined in TLM.py)
             atmospheric state
+        grid: Grid object
+            numerical grid
+        grid32: Grid object
+            dealiasing grid
         WFfeedback (optional): bool
             flag to turn on/off two-way coupling of wind-farm forcing
             default: True
         '''
         function = getattr(WakeModel,self.wakemodel)
-        self.__St = function(self.turbines,abl)
-        if WFfeedback:
-            function = getattr(WakeModel,self.wakemodel+'_jac')
-            self.__Stjac = function(self.turbines,abl)
-        else:
+        self.__St,self.__Stjac = function(self.turbines,abl)
+        if WFfeedback==False:
             self.__Stjac = np.zeros((self.Nturb,2))
+        function = getattr(WakeModel,'footprint')
+        for index,turb in enumerate(self.turbines):
+            self.__Footprint[index]   = function(grid.xs,grid.ys,grid.dx,grid.dy,self.Lfilter,
+                                                    self.xs[index],self.ys[index])
+            self.__Footprint32[index] = function(grid32.xs,grid32.ys,grid32.dx,grid32.dy,self.Lfilter,
+                                                    self.xs[index],self.ys[index])
     
     def F0(self,abl,grid):
         '''
@@ -513,18 +527,22 @@ class WF(object):
         F0u, F0v: 2d numpy array
             zero-th order wind-farm force in x and y (same shape as grid)
         '''
-        F0u = np.zeros(grid.shape)
-        F0v = np.zeros(grid.shape)
-        e_str = WakeModel.e_streamwise(abl.U1,abl.V1)
-        for index,turb in enumerate(self.turbines):
-            F0u += (0.5 * turb.Ct * turb.rotorarea *
-                    self.St[index]**2 * e_str[0] *
-                    turb.footprint(grid,self.Lfilter) )
-            F0v += (0.5 * turb.Ct * turb.rotorarea *
-                    self.St[index]**2 * e_str[1] *
-                    turb.footprint(grid,self.Lfilter) )
-        return F0u,F0v
+        Nx = grid.Nx
+        Ny = grid.Ny
+        F0 = np.zeros((2,Nx,Ny))
 
+        e_str = WakeModel.e_streamwise(abl.U1,abl.V1)
+        Ct = [self.turbines[i].Ct for i in range(self.Nturb)]
+        rotorarea = [self.turbines[i].rotorarea for i in range(self.Nturb)]
+        
+        for index in range(self.Nturb): 
+            F0 = TLM_tools.evaluate_F0(e_str,F0[0],F0[1],
+                                            Ct[index],rotorarea[index],self.St[index],
+                                            self.Footprint[index][0],
+                                            self.Footprint[index][1],
+                                            self.Footprint[index][2]) 
+        return F0[0],F0[1]
+    
     def F1(self,abl,grid,u1r,v1r):
         '''
         Compute first order wind-farm force on specified grid for given
@@ -548,30 +566,25 @@ class WF(object):
         function = getattr(self,'u_'+self.coupling)
         u1inf,v1inf = function(abl,grid,u1r,v1r)
         #Unit vectors and their derivatives
+        Nx = grid.Nx
+        Ny = grid.Ny
+        F1 = np.zeros((2,Nx,Ny))
+        
         e_str  = WakeModel.e_streamwise(abl.U1,abl.V1)
         E_str  = WakeModel.e_str_jac(abl.U1,abl.V1)
-        #Filter turbine forces onto grid
-        F1u = np.zeros(grid.shape)
-        F1v = np.zeros(grid.shape)
-        for index,turb in enumerate(self.turbines):
-            F1u += (0.5 * turb.Ct * turb.rotorarea *
-                        ( 2*self.St[index]*self.Stjac[index,0]*e_str[0] +
-                            self.St[index]**2*E_str[0,0] ) *
-                    u1inf*turb.footprint(grid,self.Lfilter) )
-            F1u += (0.5 * turb.Ct * turb.rotorarea *
-                        ( 2*self.St[index]*self.Stjac[index,1]*e_str[0] +
-                            self.St[index]**2*E_str[0,1] ) *
-                    v1inf*turb.footprint(grid,self.Lfilter) )
-            F1v += (0.5 * turb.Ct * turb.rotorarea *
-                        ( 2*self.St[index]*self.Stjac[index,0]*e_str[1] +
-                            self.St[index]**2*E_str[1,0] ) *
-                    u1inf*turb.footprint(grid,self.Lfilter) )
-            F1v += (0.5 * turb.Ct * turb.rotorarea *
-                        ( 2*self.St[index]*self.Stjac[index,1]*e_str[1] +
-                            self.St[index]**2*E_str[1,1] ) *
-                    v1inf*turb.footprint(grid,self.Lfilter) )
-        return F1u,F1v
-
+        Ct = [self.turbines[i].Ct for i in range(self.Nturb)]
+        rotorarea = [self.turbines[i].rotorarea for i in range(self.Nturb)]
+        
+        for index in range(self.Nturb):      
+            F1 = TLM_tools.evaluate_F1(e_str,E_str,F1[0],F1[1],
+                                             Ct[index],rotorarea[index],self.St[index],
+                                             self.Stjac[index,0],self.Stjac[index,1],
+                                             self.Footprint32[index][0],
+                                             self.Footprint32[index][1],
+                                             self.Footprint32[index][2],
+                                             u1inf,v1inf)        
+        return F1[0],F1[1] 
+    
     def P0(self,abl,grid):
         '''
         Compute zero-th order wind-farm power (on specified grid)
@@ -589,11 +602,18 @@ class WF(object):
             zero-th order wind-farm power (same shape as grid)
         '''
         P0 = np.zeros(grid.shape)
-        for index,turb in enumerate(self.turbines):
-            P0 += (0.5 * turb.Cp * turb.rotorarea * self.St[index]**3 *
-                   turb.footprint(grid,self.Lfilter) )
+        
+        Cp = [self.turbines[i].Cp for i in range(self.Nturb)]
+        rotorarea = [self.turbines[i].rotorarea for i in range(self.Nturb)]
+        
+        for index in range(self.Nturb):
+            P0 = TLM_tools.evaluate_P0(P0,Cp[index],rotorarea[index],self.St[index],
+                                       self.Footprint[index][0],
+                                       self.Footprint[index][1],
+                                       self.Footprint[index][2])
         return P0
-
+    
+    
     def P1(self,abl,grid,u1r,v1r):
         '''
         Compute first order wind-farm power (on specified grid) for given
@@ -618,13 +638,18 @@ class WF(object):
         u1inf,v1inf = function(abl,grid,u1r,v1r)
         #Filter turbine power onto grid
         P1 = np.zeros(grid.shape)
-        for index,turb in enumerate(self.turbines):
-            P1 += (0.5 * turb.Cp * turb.rotorarea *
-                        ( 3*self.St[index]**2*self.Stjac[index,0] ) *
-                    u1inf*turb.footprint(grid,self.Lfilter) )
-            P1 += (0.5 * turb.Cp * turb.rotorarea *
-                        ( 3*self.St[index]**2*self.Stjac[index,1] ) *
-                    v1inf*turb.footprint(grid,self.Lfilter) )
+        
+        Cp = [self.turbines[i].Cp for i in range(self.Nturb)]
+        rotorarea = [self.turbines[i].rotorarea for i in range(self.Nturb)]
+        
+        for index in range(self.Nturb):
+            P1 = TLM_tools.evaluate_P1(P1,Cp[index],rotorarea[index],self.St[index],
+                                        self.Stjac[index,0],self.Stjac[index,1],
+                                        self.Footprint[index][0],
+                                        self.Footprint[index][1],
+                                        self.Footprint[index][2],
+                                        u1inf,v1inf)
+
         return P1
 
     def Ftot0(self,abl,grid):
@@ -776,15 +801,23 @@ class WF(object):
             perturbation velocity in x and y for wake model
         '''
         WDvector = np.array([abl.U1/abl.S1,abl.V1/abl.S1])
-        index = self.firstTurbine(WDvector)
+        index = self.firstTurbine(WDvector)        
         xloc = self.turbines[index].x-10*self.turbines[index].D*WDvector[0]
         yloc = self.turbines[index].y-10*self.turbines[index].D*WDvector[1]
-        fu = interpolate.interp2d(grid.xs,grid.ys,u1r.T)
-        fv = interpolate.interp2d(grid.xs,grid.ys,v1r.T)
+        
+        #To save time, the interpolatation is done only over a 6x6 grid centered in xloc,yloc                
+        limit = 3
+        start_x = int(xloc/grid.dx-limit)
+        end_x = int(xloc/grid.dx+limit)
+        start_y = int(yloc/grid.dy-limit)
+        end_y = int(yloc/grid.dy+limit)
+        
+        fu = interpolate.interp2d(grid.xs[start_x:end_x],grid.ys[start_y:end_y],u1r[start_x:end_x,start_y:end_y].T)
+        fv = interpolate.interp2d(grid.xs[start_x:end_x],grid.ys[start_y:end_y],v1r[start_x:end_x,start_y:end_y].T)
         u1inf = np.asscalar(fu(xloc,yloc))
         v1inf = np.asscalar(fv(xloc,yloc))
         return u1inf,v1inf
-
+    
     def u_farm(self,abl,grid,u1r,v1r):
         '''
         Calculate perturbation velocity for wake model based on farm-averaged
@@ -835,7 +868,19 @@ class WF(object):
         coordinates = np.concatenate([x,y]).reshape(self.Nturb,2,order='F')
         dist = np.dot(coordinates,WDvector)
         return np.argmin(dist)
-
+ 
+    @property
+    def grid(self):
+        '''Numerical grid'''
+        return self.__grid
+    @property
+    def xs(self):
+        '''wind turbine x-coordinate'''
+        return self.__xs
+    @property
+    def ys(self):
+        '''wind turbine y-coordinate'''
+        return self.__ys
     @property
     def Lfilter(self):
         '''Gaussian filter length'''
@@ -864,6 +909,22 @@ class WF(object):
     def Stjac(self):
         '''Jacobian of inflow velocities'''
         return self.__Stjac
+    @property
+    def Footprint(self):
+        '''Wind turbine footprint'''
+        return self.__Footprint
+    @property
+    def Footprint32(self):
+        '''Wind turbine footprint on dealiasing grid'''
+        return self.__Footprint32
+    @property
+    def dAdu(self):
+        '''U-derivative of System matrix of turbine inflow velocities linear system'''
+        return self.__dAdu
+    @property
+    def dAdv(self):
+        '''V-derivative of System matrix of turbine inflow velocities linear system'''
+        return self.__dAdv
     @property
     def length(self):
         '''Length of area covered by the turbines'''
@@ -1028,7 +1089,7 @@ class turbine(object):
     '''
     Turbine object (only for 2D grids)
     '''
-    def __init__(self,xloc,yloc,diameter,thrustcoefficient):
+    def __init__(self,xloc,yloc,diameter,thrustcoefficient,zhs):
         '''
         Parameters
         ----------
@@ -1038,42 +1099,27 @@ class turbine(object):
             rotor diameter
         thrustcoefficient: float
             turbine thrust coefficient Ct
+        zhs: float
+            turbine hub height
         '''
         self.__x = xloc
         self.__y = yloc
         self.__D = diameter
         self.__Ct = thrustcoefficient
-
-    def footprint(self,grid,L):
-        '''
-        Geometrical footprint of the turbine thrust force for the given grid,
-        computed with a Gaussian filter
-
-        Parameters
-        ----------
-        grid: Grid object (defined in TLM.py)
-            Numerical grid
-        L: float
-            Gaussian filter length
-
-        Returns
-        -------
-        R: numpy array with same shape as grid
-            Geometrical footprint of the perturbing force
-        '''
-        Xs, Ys = np.meshgrid(grid.xs,grid.ys,indexing='ij')
-        dist = (Xs-self.x)**2+(Ys-self.y)**2
-        R = 1./(np.pi*L**2)*np.exp(-dist/L**2)
-        return R/(np.sum(R)*grid.dx*grid.dy)
+        self.__zhs = zhs
 
     @property
     def x(self):
-        '''x coordinate'''
+        '''wind turbine x-coordinate'''
         return self.__x
     @property
     def y(self):
-        '''y coordinate'''
+        '''wind turbine y-coordinate'''
         return self.__y
+    @property
+    def zhs(self):
+        '''wind turbine hub heigth'''
+        return self.__zhs
     @property
     def D(self):
         '''rotor diameter'''
