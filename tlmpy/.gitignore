@@ -1,0 +1,18 @@
+# First, ignore everything
+*
+# Now, whitelist anything that's a directory
+!*/
+# File types you're interested in.
+!*.py
+!.gitignore
+!README.md
+!*.html
+!*.js
+!*.png
+!*.eps
+!*.gif
+!*.css
+!*.tex
+!*.sty
+!Doxyfile
+!Makefile
