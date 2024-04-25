@@ -1,0 +1,14 @@
+# First, ignore everything
+*
+# Now, whitelist anything that's a directory
+!*/
+# Ignore __pycache__ directories
+**/__pycache__/
+# File types you're interested in.
+!*.py
+!.gitignore
+!README.md
+!LICENSE.txt
+!*.csv
+!Doxyfile
+!Makefile
