@@ -265,23 +265,23 @@ class UniDirectional(UniDirectionalSelfSimilar):
         # Sort turbines along wind direction
         order = self.sort_turbines(windfarm, e_str)
 
-        # Sort relevant parameters
+        # Sorted lists
         xloc_sort = np.array([xloc[i] for i in order])
         yloc_sort = np.array([yloc[i] for i in order])
         D_sort = np.array([turbines[i].D for i in order])
         zhs_sort = np.array([turbines[i].zh for i in order])
         disk_str_bg_sort = np.array([disk_str[i, :] for i in order])
         disk_points_sort = np.array([disk_points[i, :, :] for i in order])
+        turbines_sort = [turbines[i] for i in order]
 
         # Background TI
         TI_inf = abl.TI
 
-        # Initial Ct estimate
-        Ct_sort = np.array([turbines[i].Ct(abl.S1) for i in order])
-
-        # Velocity and direction arrays
-        St_sort = np.empty(windfarm.Nturb)
-        et_sort = np.empty((windfarm.Nturb, 2))
+        # Initial St, Ct, and et estimates
+        St_sort = np.array([np.mean(disk_str[i, :]) for i in order])
+        Ct_sort = np.array([turbines[i].Ct(np.mean(disk_str[i, :])) for i in order])
+        et_sort = np.array([np.array([np.cos(theta_str),
+                                      np.sin(theta_str)]) for _ in order])
 
         # Repeat calculation until Ct converges
         Ct0 = 0.
@@ -306,7 +306,7 @@ class UniDirectional(UniDirectionalSelfSimilar):
                 # Get inflow conditions for current Turbine
                 St_sort[i] = np.mean(disk_str_sort[i, :])
                 et_sort[i] = np.array([np.cos(theta_str), np.sin(theta_str)])
-                Ct_sort[i] = turbines[i].Ct(St_sort[i])
+                Ct_sort[i] = turbines_sort[i].Ct(St_sort[i])
                 if Ct_sort[i] != 0.:
                     # Get wake of current Turbine
                     W = gaussian_wake_function(locations, TI_sort[i], Ct_sort[i], xloc_sort[i], yloc_sort[i], D_sort[i],
