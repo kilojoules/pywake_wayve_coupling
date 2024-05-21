@@ -226,7 +226,7 @@ def mesoscale_based(zs, us, vs, ths,
     Ms = np.sqrt(us ** 2 + vs ** 2)
 
     # Stable or unstable atmosphere
-    stable = l_mo > 100
+    stable = 0. < l_mo < 100
 
     # Estimate inversion parameters with RZ fit #
     # Relevant part of the vertical profiles
