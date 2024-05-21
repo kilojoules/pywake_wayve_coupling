@@ -4,6 +4,8 @@
 !*/
 # Ignore __pycache__ directories
 **/__pycache__/
+# Ignore build directories
+**/build/
 # File types you're interested in.
 !*.py
 !.gitignore
