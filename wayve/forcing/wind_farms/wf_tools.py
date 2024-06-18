@@ -133,10 +133,10 @@ def wind_farm_shape(wind_farm):
     """
     # Set up array of turbine coordinates
     turb_coordinates = np.stack([wind_farm.xs, wind_farm.ys], axis=-1)
-    if turb_coordinates.shape[0] == 1:
+    if turb_coordinates.shape[0] == 1 or turb_coordinates.shape[0] == 2:
         return turb_coordinates, 0.
     # Initialize ConvexHull object
-    hull = ConvexHull(turb_coordinates)
+    hull = ConvexHull(turb_coordinates, qhull_options="QJ")
     # Get edge points (in counter-clockwise order)
     vertices_indices = hull.vertices
     vertices = np.stack([wind_farm.xs[vertices_indices], wind_farm.ys[vertices_indices]], axis=-1)
