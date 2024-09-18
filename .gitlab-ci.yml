@@ -1,0 +1,23 @@
+image: ubuntu:22.04
+
+stages:
+  - pages
+
+# Build the Sphinx for the documentation site;
+# should be done only for the main branch
+pages:
+  stage: pages
+  before_script:
+  - apt-get update
+  - DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential python3-sphinx python3-pip
+  - pip install sphinx_rtd_theme sphinx-autoapi
+  script:
+  - cd docs && make html && cd ../
+  - mv docs/build/html/ public/
+  artifacts:
+    paths:
+    - public
+  only:
+  - main
+  tags:
+  - pages
