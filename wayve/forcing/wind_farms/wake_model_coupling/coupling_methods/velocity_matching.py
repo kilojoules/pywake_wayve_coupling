@@ -36,7 +36,7 @@ class VelocityMatching(VaryingBackground):
         wm_velocity_handler     SelfSimilarWMVH object
                         Wake model handler used by this coupling
         shape_frac  float
-                        Ratio of shape to test functions in each direction
+                        Ratio of the filter length to the shape function spacing in each direction
 
         References
         ----------
@@ -49,7 +49,7 @@ class VelocityMatching(VaryingBackground):
 
     @property
     def shape_frac(self):
-        """Ratio of shape to test functions in each direction"""
+        """Ratio of the filter length to the shape function spacing in each direction"""
         return self.__shape_frac
 
     @shape_frac.setter
@@ -117,7 +117,7 @@ class VelocityMatching(VaryingBackground):
         v_b = np.multiply(str_b, np.sin(theta_str_inf))     # Resulting y-component of the velocity
 
         # Get shape functions
-        x_shape, y_shape, dx, dy = self.shape_function_setup(grid, subgrid)
+        x_shape, y_shape, dx, dy = self.shape_function_setup(subgrid, wind_farm.Lfilter)
 
         # Interpolation functions
         f_ub = RegularGridInterpolator((x_shape, y_shape), u_b, method="linear", bounds_error=False, fill_value=None)
@@ -146,7 +146,7 @@ class VelocityMatching(VaryingBackground):
         x_col, y_col = self.collocation_point_setup(grid, subgrid)
         Nx_col = len(x_col)
         Ny_col = len(y_col)
-        x_shape, y_shape, dx, dy = self.shape_function_setup(grid, subgrid)
+        x_shape, y_shape, dx, dy = self.shape_function_setup(subgrid, wind_farm.Lfilter)
         Nx_shape = len(x_shape)
         Ny_shape = len(y_shape)
 
@@ -188,20 +188,16 @@ class VelocityMatching(VaryingBackground):
         var_col = subgrid.in_domain(var, grid)
         return var_col
 
-    def shape_function_setup(self, grid, subgrid):
+    def shape_function_setup(self, subgrid, L_f):
         """Set up the shape functions. These are defined by their centers and their spacing."""
         # Region bounds
         x_min = subgrid.x_min
         x_max = subgrid.x_max
         y_min = subgrid.y_min
         y_max = subgrid.y_max
-        # Collocation points
-        x_c, y_c = self.collocation_point_setup(grid, subgrid)
-        Nx_c = len(x_c)
-        Ny_c = len(y_c)
         # Number of shape functions
-        Nx_shape = max(2, int(self.shape_frac * Nx_c))
-        Ny_shape = max(2, int(self.shape_frac * Ny_c))
+        Nx_shape = max(2, int(self.shape_frac * (x_max-x_min) / L_f))
+        Ny_shape = max(2, int(self.shape_frac * (y_max-y_min) / L_f))
         # Shape function setup
         x_shape = np.linspace(x_min, x_max, Nx_shape, endpoint=True)
         y_shape = np.linspace(y_min, y_max, Ny_shape, endpoint=True)

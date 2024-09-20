@@ -115,7 +115,7 @@ subgrid_res = 8     # Ratio of turbine diameter and subgrid spacing
 wm_velocity_handler = SelfSimilarWMVH(subgrid_res)
 
 # Initialize the coupling object
-shape_frac = 0.4    # Ratio of shape to test functions in each direction in the VM least-squares problem
+shape_frac = 0.4    # Ratio of the filter length to the shape function spacing in each direction in the VM least-squares problem
 coupling = VelocityMatching(wake_model, wm_velocity_handler, shape_frac)
 
 
