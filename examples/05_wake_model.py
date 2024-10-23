@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 from wayve.apm import APM
 from wayve.abl.abl_setup import AM2019
 from wayve.grid.grid import Stat2Dgrid
-from wayve.forcing.wind_farms.wake_model_coupling.wake_models.lanzilao_merging import UniDirectional
+from wayve.forcing.wind_farms.wake_model_coupling.wake_models.lanzilao_merging import Lanzilao
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import PureWM
 from wayve.forcing.wind_farms.wind_farm import WindFarm, Turbine
 from wayve.momentum_flux_parametrizations import FrictionCoefficients
@@ -82,7 +82,7 @@ for t in range(Nt):
 
 # Here, we use the uni-directional wake merging method of Lanzilao and Meyers (2022). The default wake model settings
 # are explained in Devesse et al. (2023).
-wake_model = UniDirectional()
+wake_model = Lanzilao()
 
 # Set up coupling object. We use a PureWM object, which inherits from VaryingBackground, and always assumes the
 # background velocity is unchanged.

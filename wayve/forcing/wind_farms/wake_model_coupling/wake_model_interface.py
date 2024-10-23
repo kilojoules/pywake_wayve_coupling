@@ -19,7 +19,7 @@ class WakeModelInterface:
         """
         Calculate the turbine inflow velocities (St), the thrust coefficients (Ct), and the turbine directions (et).
 
-        This method will always be called before the method get_St_Ct_et has been called, and will use the same inputs.
+        This method will always be called before the method get_u_subgrid has been called, and will use the same inputs.
         Therefore, feel free to store any intermediate results that can be re-used.
 
         The basic turbine information can be found in the WindFarm object. The unperturbed atmospheric state can be

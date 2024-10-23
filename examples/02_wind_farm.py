@@ -18,6 +18,9 @@ References
 ..  Stipa, S., Ajay, A., Allaerts, D., & Brinkerhoff, J. (2023). The Multi-Scale Coupled Model : a New Framework
  Capturing Wind Farm-Atmosphere Interaction and Global Blockage Effects. Wind Energy Science Discussions, August, 1–44.
  https://doi.org/https://doi.org/10.5194/wes-2023-75
+..  Devesse, K., Stipa, S., Brinkerhoff, J. ,Allaerts, D., & Meyers, J. (2024). Comparing methods for coupling wake
+ models to an atmospheric perturbation model in WAYVE. Journal of Physics: Conference Series, 2767, 092079.
+ https://doi.org/https://doi.org/10.1088/1742-6596/2767/9/092079
 """
 
 __author__ = "Koen Devesse"
@@ -31,7 +34,7 @@ from wayve.apm import APM
 from wayve.abl.abl_setup import AM2019
 from wayve.grid.grid import Stat2Dgrid
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.velocity_matching import VelocityMatching
-from wayve.forcing.wind_farms.wake_model_coupling.wake_models.lanzilao_merging import UniDirectional
+from wayve.forcing.wind_farms.wake_model_coupling.wake_models.lanzilao_merging import Lanzilao
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import SelfSimilarWMVH
 from wayve.forcing.wind_farms.wind_farm import WindFarm, Turbine
 from wayve.forcing.wind_farms.dispersive_stresses import DispersiveStresses
@@ -95,6 +98,8 @@ for t in range(Nt):
 #   - PressureBased: uses the pressure component of the APM velocity perturbation as the background velocity
 #               see Stipa et al. (2023)
 #
+# For a comparison of these coupling methods, see Devesse et al. (2024).
+#
 # The wake model interface expected by these coupling methods is defined in
 # wayve.forcing.wind_farms.wake_model_coupling.wake_model_interface. When including a new wake model in WAYVE, it
 # suffices to implement the interface defined there.
@@ -107,7 +112,7 @@ for t in range(Nt):
 
 # Here, we use the uni-directional wake merging method of Lanzilao and Meyers (2022). The default wake model settings
 # are explained in Devesse et al. (2023).
-wake_model = UniDirectional()
+wake_model = Lanzilao()
 
 # Since we use the velocity matching method and a parametrization for the dispersive stresses, we require a
 # WakeModelVelocityHandler object.

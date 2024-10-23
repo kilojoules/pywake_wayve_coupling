@@ -20,7 +20,7 @@ from wayve.forcing.wind_farms.wake_model_coupling.wake_models.wake_model_tools i
 from wayve.forcing.forcing_tools import e_streamwise
 
 
-class UniDirectional(UniDirectionalSelfSimilar):
+class Lanzilao(UniDirectionalSelfSimilar):
     """
     An implementation that is based on the unidirectional wake merging method by Lanzilao and Meyers [1]].
 

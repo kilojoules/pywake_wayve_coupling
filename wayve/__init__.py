@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 '''
-Three-layer model
+Atmospheric Perturbation Model
 
-Author: Dries Allaerts
+Author:  Dries Allaerts, Luca Lanzilao, Koen Devesse, Sebastiaan Jamaer, and Johan Meyers.
 Date: September 20, 2017
 '''
