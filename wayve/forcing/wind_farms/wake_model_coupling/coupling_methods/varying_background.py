@@ -712,7 +712,7 @@ class SubGrid:
     @property
     def dz(self):
         """Grid spacing in the z-direction"""
-        return (self.z_min - self.z_max) / (self.Ny - 1)  # Denominator - 1 because endpoint=True in ys
+        return (self.z_min - self.z_max) / (self.Nz - 1)  # Denominator - 1 because endpoint=True in zs
 
     @property
     def xs(self):
