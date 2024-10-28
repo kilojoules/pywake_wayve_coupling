@@ -541,9 +541,11 @@ def filtered_in_contribution(grid, subgrid, field, L_f, x_c, y_c):
                        y_bound[1]-dx_filt_in, y_bound[1]+dx_filt_in])
     y_s = np.append(y_rel, y_edge)
     y_s.sort()
+    # Meshgrid for added points
+    x_s_m, y_s_m = np.meshgrid(x_s, y_s, indexing='ij')
     # Interpolate field onto grid with added points
-    f = interpolate.interp2d(x_rel, y_rel, field_rel.T, kind="linear")
-    field_s = f(x_s, y_s).T
+    f = RegularGridInterpolator((x_rel, y_rel), field_rel)
+    field_s = f((x_s_m, y_s_m))
     # Set field to zero inside domain #
     # Determine gridpoints in WindFarm
     out_dom = np.zeros(field_s.shape)
@@ -556,7 +558,7 @@ def filtered_in_contribution(grid, subgrid, field, L_f, x_c, y_c):
     # Set up meshgrid
     x_m, y_m = np.meshgrid(x_s, y_s, indexing='ij')
     # Filter field
-    filt_in_term = filter_2d_numba(field_s_out, x_c, y_c, x_s, y_s, x_m, y_m, L_f)
+    filt_in_term = filter_2d_numba(field_s_out, x_c, y_c, x_s, y_s, x_s_m, y_s_m, L_f)
     return filt_in_term
 
 

@@ -6,7 +6,7 @@ __author__ = "Koen Devesse"
 __date__ = "January 4, 2024"
 
 import numpy as np
-from scipy import interpolate
+from scipy.interpolate import RegularGridInterpolator
 
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import VaryingBackground
 
@@ -97,6 +97,7 @@ class Upstream(VaryingBackground):
         index = type(self).firstTurbine(turbines, WDvector)
         xloc = turbines[index].x - self.upstr_dist * WDvector[0]
         yloc = turbines[index].y - self.upstr_dist * WDvector[1]
+        loc = np.array([xloc, yloc])
         # To save time, the interpolation is done only over a 6x6 grid centered in xloc,yloc
         limit = 3
         start_x = int((xloc - grid.xs[0]) / grid.dx - limit)
@@ -106,13 +107,13 @@ class Upstream(VaryingBackground):
         x_g = grid.xs[start_x:end_x]
         y_g = grid.ys[start_y:end_y]
         # Set up interpolations functions
-        fu = interpolate.interp2d(x_g, y_g, u1r[start_x:end_x, start_y:end_y].T)
-        fv = interpolate.interp2d(x_g, y_g, v1r[start_x:end_x, start_y:end_y].T)
-        fe = interpolate.interp2d(x_g, y_g, eta1r[start_x:end_x, start_y:end_y].T)
+        fu = RegularGridInterpolator((x_g, y_g), u1r[start_x:end_x, start_y:end_y])
+        fv = RegularGridInterpolator((x_g, y_g), v1r[start_x:end_x, start_y:end_y])
+        fe = RegularGridInterpolator((x_g, y_g), eta1r[start_x:end_x, start_y:end_y])
         # Evaluate at upstream location
-        u1inf = fu(xloc, yloc).item()
-        v1inf = fv(xloc, yloc).item()
-        eta1inf = fe(xloc, yloc).item()
+        u1inf = fu(loc)[0]
+        v1inf = fv(loc)[0]
+        eta1inf = fe(loc)[0]
         return u1inf, v1inf, eta1inf
 
     @classmethod
