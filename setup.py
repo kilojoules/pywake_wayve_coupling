@@ -16,7 +16,8 @@ setup(
         "llvmlite",
         "numba",
         "mpmath",
-        "netCDF4"
+        "netCDF4",
+        "foxes>=1",
     ],
     zip_safe=False
 )
