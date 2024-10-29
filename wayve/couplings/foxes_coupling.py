@@ -230,8 +230,9 @@ class FoxesWakeModel(UniDirectionalSelfSimilar):
         """
         point_results = self._algo.calc_points(self._farm_results, subgrid.locations[None], outputs=[FV.WS, FV.WD])
         uv = wd2uv(point_results[FV.WD].to_numpy()[0], point_results[FV.WS].to_numpy()[0])
+        uv = uv.reshape(subgrid.Nx, subgrid.Ny, subgrid.Nz, 2)
         
-        return uv[:, 0], uv[:, 1]
+        return uv[..., 0], uv[..., 1]
     
     def background_flow_direction(self, wind_farm, abl):
         """

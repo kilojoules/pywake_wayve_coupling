@@ -114,7 +114,7 @@ for t in range(Nt):
 # In this example, we will use the VelocityMatching method with the wake merging method of Lanzilao and Meyers (2022).
 
 # Here, we use the foxes interface
-foxes_engine = Engine.new("multiprocess", n_procs=None, chunk_size_states=1, verbosity=2)
+foxes_engine = Engine.new("multiprocess", n_procs=None, chunk_size_states=1, verbosity=1)
 foxes_engine.initialize()
 wake_model = FoxesWakeModel(
     wake_models=["Bastankhah2014_product_k004"],
@@ -224,6 +224,7 @@ ax.set_aspect('equal', 'box')
 ax.set_xlabel(r'$x\;[\mathrm{km}]$')
 ax.set_ylabel(r'$y\;[\mathrm{km}]$')
 plt.show()
+plt.close()
 
 # Once the coupling object has been (p)re-processed, which happens during the fixed-point iteration, it provides
 # functions to evaluate both the background velocity and the APM lower layer state in a region around the wind farm.
