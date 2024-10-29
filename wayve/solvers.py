@@ -98,10 +98,10 @@ class IterativeSolver(Solver):
     iteration solvers.
     """
 
-    def __init__(self, tol=1.0e-10, maxiter=10):
+    def __init__(self, tol=1.0e-5, maxiter=10):
         """
         tol: float
-            tolerance for the iterative solver method
+            relative tolerance for the iterative solver method
         maxiter: int
             maximum number of iterations
         """
@@ -110,7 +110,7 @@ class IterativeSolver(Solver):
 
     @property
     def tol(self):
-        """Tolerance"""
+        """Relative tolerance"""
         return self.__tol
 
     @tol.setter
@@ -237,7 +237,7 @@ class KrylovMethod(IterativeSolver):
         if not verbose:
             X, err = self.algorithm(A, B, M, None)
         else:
-            f_res = lambda xk: np.linalg.norm(A.matvec(xk) - B)
+            f_res = lambda xk: np.linalg.norm(A.matvec(xk) - B) / np.linalg.norm(B)
             counter = Counter(f_res, self.maxiter, self.tol, disp=True)
             X, err = self.algorithm(A, B, M, counter)
             # Plot residual
@@ -265,7 +265,7 @@ class LGMRES(KrylovMethod):
 
     def algorithm(self, A, B, M, counter=None):
         return scipy.sparse.linalg.lgmres(A, B,
-                                          tol=self.tol,
+                                          rtol=self.tol,
                                           maxiter=self.maxiter,
                                           M=M,
                                           callback=counter
@@ -303,7 +303,7 @@ class GCROTMK(KrylovMethod):
     def algorithm(self, A, B, M, counter=None):
         return scipy.sparse.linalg.gcrotmk(A, B,
                                            M=M,
-                                           tol=self.tol,
+                                           rtol=self.tol,
                                            maxiter=self.maxiter,
                                            m=self.m,
                                            k=self.k,
@@ -319,7 +319,7 @@ class BiCGSTAB(KrylovMethod):
 
     def algorithm(self, A, B, M, counter=None):
         return scipy.sparse.linalg.bicgstab(A, B,
-                                            tol=self.tol,
+                                            rtol=self.tol,
                                             maxiter=self.maxiter,
                                             M=M,
                                             callback=counter
@@ -347,7 +347,7 @@ class GMRES(KrylovMethod):
 
     def algorithm(self, A, B, M, counter=None):
         return scipy.sparse.linalg.gmres(A, B,
-                                         tol=self.tol,
+                                         rtol=self.tol,
                                          restart=self.restart,
                                          maxiter=self.maxiter,
                                          callback=counter)

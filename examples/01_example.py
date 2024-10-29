@@ -145,7 +145,7 @@ model = APM(grid, forcing, abl, mfp, pressure)
 
 # Since the CST forcing can be linearized, we can use an LGMRES solver (a type of KrylovMethod). However, any of the
 # methods mentioned above can be used.
-tol = 1.e-7     # Tolerance threshold
+tol = 1.e-3     # Relative tolerance threshold
 max_iter = 10   # Maximum number of iterations
 solver = LGMRES(tol, max_iter)
 
