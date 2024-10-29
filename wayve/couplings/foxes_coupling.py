@@ -216,13 +216,63 @@ class FoxesWakeModel(UniDirectionalSelfSimilar):
         subgrid     SubGrid object
             Grid on which the velocity should be evaluated
         """
-        self._setup_foxes(wind_farm, u_bg_evaluator, abl)
+
+        results = self._algo.calc_points(self._farm_results, subgrid.locations[None], outputs=[FV.AMB_WS, FV.WS])
+        results = results[FV.WS].to_numpy()[0] / results[FV.AMB_WS].to_numpy()[0]
+        return results.reshape(subgrid.Nx, subgrid.Ny, subgrid.Nz)
         
+    def get_u_subgrid(self, wind_farm, abl, u_bg_evaluator, apm_evaluator, subgrid):
+        """
+        Calculate the wake model velocity field on the given subgrid.
+
+        For uni-directional self-similar wake model, a base implementation is provided that uses the wake deficit shape
+        functions.
+        """
+        point_results = self._algo.calc_points(self._farm_results, subgrid.locations[None], outputs=[FV.WS, FV.WD])
+        uv = wd2uv(point_results[FV.WD].to_numpy()[0], point_results[FV.WS].to_numpy()[0])
         
-        reset_engine()
-        with Engine.new("numpy", chunk_size_states=1, chunk_size_points=100000, verbosity=1):
-            self._farm_results = self._algo.calc_farm()
-            point_results = self._algo.calc_points(self._farm_results, subgrid.locations[None])
+        return uv[:, 0], uv[:, 1]
+    
+    def background_flow_direction(self, wind_farm, abl):
+        """
+        Return the direction of the flow according to the wake model, which is assumed to only depend on the unperturbed
+        background flow defined in the given ABL object.
+        """
+        uv = np.mean(wd2uv(self._farm_results[FV.WD].to_numpy()[0]), axis=0)
+        e_str = uv / np.linalg.norm(uv, axis=-1)
+        e_span = np.array([-e_str[1], e_str[0]])
+        return e_str, e_span
         
-        raise NotImplementedError(f"LOCATIONS {subgrid.locations.shape}")
+    def xy_plane(self, wind_farm, abl, u_bg_evaluator, apm_evaluator, xs, ys, z):
+        """
+        Compute an xy cross-section of the flow.
+        """
+
+        # Get grid information
+        Nx = len(xs)
+        Ny = len(ys)
+        Nz = 1
+
+        # Set up meshgrid
+        zs = np.array([z])
+        x_m, y_m, z_m = np.meshgrid(xs, ys, zs, indexing="ij")
+
+        # Get background velocities #
+        # SubGrid coordinates
+        x_locs = np.ravel(x_m)
+        y_locs = np.ravel(y_m)
+        z_locs = np.ravel(z_m)
+        locations = np.stack([x_locs, y_locs, z_locs], axis=1)
+        del x_locs, y_locs, z_locs
         
+        # run computations
+        point_results = self._algo.calc_points(self._farm_results, locations[None], outputs=[FV.AMB_WS, FV.WS, FV.WD])
+        amb_uv = wd2uv(point_results[FV.WD].to_numpy()[0], point_results[FV.AMB_WS].to_numpy()[0])
+        uv = wd2uv(point_results[FV.WD].to_numpy()[0], point_results[FV.WS].to_numpy()[0])
+        del point_results, locations
+        
+        # pick z = 0 for 2D slice
+        amb_uv = amb_uv.reshape(Nx, Ny, Nz, 2)[:, :, 0]
+        uv = uv.reshape(Nx, Ny, Nz, 2)[:, :, 0]
+        return amb_uv[:, :, 0], amb_uv[:, :, 1], uv[:, :, 0], uv[:, :, 1]
+    

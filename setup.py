@@ -17,7 +17,8 @@ setup(
         "numba",
         "mpmath",
         "netCDF4",
-        "foxes>=1",
+        "foxes>=1.1",
+        "multiprocess",
     ],
     zip_safe=False
 )

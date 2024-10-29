@@ -45,6 +45,8 @@ from wayve.pressure.gravity_waves.gravity_waves import Uniform
 from wayve.solvers import FixedPointIteration
 from wayve.couplings.foxes_coupling import FoxesWakeModel
 
+from foxes import Engine
+
 # ----------------------------------------------------- #
 # ------------- Step 1: set up turbines --------------- #
 # ----------------------------------------------------- #
@@ -112,9 +114,11 @@ for t in range(Nt):
 # In this example, we will use the VelocityMatching method with the wake merging method of Lanzilao and Meyers (2022).
 
 # Here, we use the foxes interface
+foxes_engine = Engine.new("multiprocess", n_procs=None, chunk_size_states=1, verbosity=2)
+foxes_engine.initialize()
 wake_model = FoxesWakeModel(
     wake_models=["Bastankhah2014_product_k004"],
-    verbosity=2
+    verbosity=1
 )
 
 # Since we use the velocity matching method and a parametrization for the dispersive stresses, we require a
@@ -240,6 +244,10 @@ z = zh
 u_bg, v_bg, u_wm, v_wm = wake_model.xy_plane(wind_farm, abl, u_bg_evaluator, apm_evaluator, x, y, z)
 s_bg = np.sqrt(np.square(u_bg) + np.square(v_bg))
 s_wm = np.sqrt(np.square(u_wm) + np.square(v_wm))
+
+# shutdown foxes engine:
+foxes_engine.finalize()
+
 # Set up plot
 f, axarr = plt.subplots(1, 2, figsize=(11., 5.))
 f.subplots_adjust(wspace=0.5)
@@ -273,3 +281,6 @@ for ax in axarr:
     ax.set_ylabel(r'$y\;[\mathrm{km}]$')
 # Show plot
 plt.show()
+
+# shutdown foxes engine:
+foxes_engine.finalize()
