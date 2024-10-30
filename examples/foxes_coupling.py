@@ -119,7 +119,7 @@ foxes_engine = Engine.new("multiprocess", n_procs=None, chunk_size_states=1, ver
 foxes_engine.initialize()
 wake_model = FoxesWakeModel(
     wake_models=["Bastankhah2014_product_k004"],
-    verbosity=1
+    verbosity=0
 )
 
 # Since we use the velocity matching method and a parametrization for the dispersive stresses, we require a
@@ -188,8 +188,8 @@ mfp = FrictionCoefficients()
 pressure = Uniform(dynamic=True, rotating=False)
 
 # Create static 2D model
-#model = APM(grid, forcing, abl, mfp, pressure)
-model = APM(grid, wind_farm, abl, mfp, pressure)
+model = APM(grid, forcing, abl, mfp, pressure)
+#model = APM(grid, wind_farm, abl, mfp, pressure)
 
 
 # ----------------------------------------------------- #
