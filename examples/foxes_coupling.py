@@ -34,8 +34,9 @@ from wayve.apm import APM
 from wayve.abl.abl_setup import AM2019
 from wayve.grid.grid import Stat2Dgrid
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.velocity_matching import VelocityMatching
-from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import SelfSimilarWMVH
+from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import SelfSimilarWMVH, WakeModelVelocityHandler, PureWM
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.upstream import Upstream
+from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.pressure_based import PressureBased
 from wayve.forcing.wind_farms.wind_farm import WindFarm, Turbine
 from wayve.forcing.wind_farms.dispersive_stresses import DispersiveStresses
 from wayve.forcing.wind_farms.entrainment import ConstantFlux
@@ -125,11 +126,14 @@ wake_model = FoxesWakeModel(
 # WakeModelVelocityHandler object.
 subgrid_res = 8     # Ratio of turbine diameter and subgrid spacing
 wm_velocity_handler = SelfSimilarWMVH(subgrid_res)
+#wm_velocity_handler = WakeModelVelocityHandler(subgrid_res)
 
 # Initialize the coupling object
 shape_frac = 0.4    # Ratio of the filter length to the shape function spacing in each direction in the VM least-squares problem
 coupling = VelocityMatching(wake_model, wm_velocity_handler, shape_frac)
 #coupling = Upstream(wake_model, 500.0, wm_velocity_handler)
+#coupling = PressureBased(wake_model, wm_velocity_handler)
+#coupling = PureWM(wake_model)
 
 
 # --------------------------------------------------- #
@@ -184,7 +188,8 @@ mfp = FrictionCoefficients()
 pressure = Uniform(dynamic=True, rotating=False)
 
 # Create static 2D model
-model = APM(grid, forcing, abl, mfp, pressure)
+#model = APM(grid, forcing, abl, mfp, pressure)
+model = APM(grid, wind_farm, abl, mfp, pressure)
 
 
 # ----------------------------------------------------- #
@@ -203,6 +208,7 @@ solver = FixedPointIteration(tol, max_iter, relax)
 
 # Solve APM equations
 result = model.solve(solver, verbose=True)
+
 
 
 # ------------------------------------------------------ #

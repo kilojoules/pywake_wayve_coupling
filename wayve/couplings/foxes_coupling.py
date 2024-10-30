@@ -239,9 +239,20 @@ class FoxesWakeModel(UniDirectionalSelfSimilar):
         Return the direction of the flow according to the wake model, which is assumed to only depend on the unperturbed
         background flow defined in the given ABL object.
         """
-        uv = np.mean(wd2uv(self._farm_results[FV.WD].to_numpy()[0]), axis=0)
-        e_str = uv / np.linalg.norm(uv, axis=-1)
-        e_span = np.array([-e_str[1], e_str[0]])
+        # Get average turbine
+        turbines = wind_farm.turbines
+        z_h = np.mean([turbine.zh for turbine in turbines])     # Turbine hub height
+
+        # Wind speed at hub height
+        u = abl.u(z_h)
+        v = abl.v(z_h)
+
+        # Get wind direction at hub height
+        from wayve.forcing.wind_farms.wake_model_coupling.wake_models.wake_model_tools import e_spanwise
+        from wayve.forcing.forcing_tools import e_streamwise
+        e_str = e_streamwise(u, v)      # Unit vector along the wind direction
+        e_span = e_spanwise(u, v)       # Unit vector in cross wind direction
+
         return e_str, e_span
         
     def xy_plane(self, wind_farm, abl, u_bg_evaluator, apm_evaluator, xs, ys, z):
