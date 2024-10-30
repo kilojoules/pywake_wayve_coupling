@@ -17,6 +17,13 @@ def e_streamwise(Uinf, Vinf):
     return np.array([Uinf, Vinf]) / Sinf
 
 
+@njit
+def e_spanwise(Uinf, Vinf):
+    '''Unit vector in cross wind direction'''
+    Sinf = np.sqrt(Uinf ** 2 + Vinf ** 2)
+    return np.array([-Vinf, Uinf]) / Sinf
+
+
 def fill_shape(vertices, x, y):
     """
     Set the region of the given grid (x, y) within the given polygon to 1, and the remainder to 0.

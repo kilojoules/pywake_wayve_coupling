@@ -117,13 +117,6 @@ def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, ka=0.3837, kb=0.00
 
 
 @njit
-def e_spanwise(Uinf, Vinf):
-    '''Unit vector in cross wind direction'''
-    Sinf = np.sqrt(Uinf ** 2 + Vinf ** 2)
-    return np.array([-Vinf, Uinf]) / Sinf
-
-
-@njit
 def area_circle_segment(R, d):
     '''Area of a circle segment when the angle is less than 180°'''
     return R ** 2 * np.arccos(d / R) - d * np.sqrt(R ** 2 - d ** 2)
