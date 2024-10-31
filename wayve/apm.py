@@ -429,18 +429,18 @@ class APM:
         """
         result = {}
         # State array
-        result['x'] = np.loadtxt(folder + 'x.txt', dtype=np.complex_)
+        result['x'] = np.loadtxt(folder + 'x.txt', dtype=np.complex64)
         # Complex fields
-        result['u1c'] = np.loadtxt(folder + 'u1c.txt', dtype=np.complex_)
-        result['v1c'] = np.loadtxt(folder + 'v1c.txt', dtype=np.complex_)
-        result['u2c'] = np.loadtxt(folder + 'u2c.txt', dtype=np.complex_)
-        result['v2c'] = np.loadtxt(folder + 'v2c.txt', dtype=np.complex_)
-        result['pc'] = np.loadtxt(folder + 'pc.txt', dtype=np.complex_)
-        result['p1c'] = np.loadtxt(folder + 'p1c.txt', dtype=np.complex_)
-        result['p2c'] = np.loadtxt(folder + 'p2c.txt', dtype=np.complex_)
-        result['etac'] = np.loadtxt(folder + 'etac.txt', dtype=np.complex_)
-        result['eta1c'] = np.loadtxt(folder + 'eta1c.txt', dtype=np.complex_)
-        result['eta2c'] = np.loadtxt(folder + 'eta2c.txt', dtype=np.complex_)
+        result['u1c'] = np.loadtxt(folder + 'u1c.txt', dtype=np.complex64)
+        result['v1c'] = np.loadtxt(folder + 'v1c.txt', dtype=np.complex64)
+        result['u2c'] = np.loadtxt(folder + 'u2c.txt', dtype=np.complex64)
+        result['v2c'] = np.loadtxt(folder + 'v2c.txt', dtype=np.complex64)
+        result['pc'] = np.loadtxt(folder + 'pc.txt', dtype=np.complex64)
+        result['p1c'] = np.loadtxt(folder + 'p1c.txt', dtype=np.complex64)
+        result['p2c'] = np.loadtxt(folder + 'p2c.txt', dtype=np.complex64)
+        result['etac'] = np.loadtxt(folder + 'etac.txt', dtype=np.complex64)
+        result['eta1c'] = np.loadtxt(folder + 'eta1c.txt', dtype=np.complex64)
+        result['eta2c'] = np.loadtxt(folder + 'eta2c.txt', dtype=np.complex64)
         # Real fields
         result['u1r'] = np.loadtxt(folder + 'u1r.txt', dtype=float)
         result['v1r'] = np.loadtxt(folder + 'v1r.txt', dtype=float)
