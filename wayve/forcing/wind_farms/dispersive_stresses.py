@@ -131,26 +131,28 @@ class DispersiveStresses(ForcingTerm):
         # Filtered velocities
         u_f = self.filter(subgrid, u_sg, wind_farm.Lfilter, zero_edge=False)
         v_f = self.filter(subgrid, v_sg, wind_farm.Lfilter, zero_edge=False)
-        # Filter difference
-        du_d = u_sg - u_f
-        dv_d = v_sg - v_f
-        # Momentum fluxes #
-        uu1_d = np.power(du_d, 2)
-        vv1_d = np.power(dv_d, 2)
-        uv1_d = np.multiply(du_d, dv_d)
-        # Filter
-        uu1_d = self.filter(subgrid, uu1_d, wind_farm.Lfilter, zero_edge=True)
-        vv1_d = self.filter(subgrid, vv1_d, wind_farm.Lfilter, zero_edge=True)
-        uv1_d = self.filter(subgrid, uv1_d, wind_farm.Lfilter, zero_edge=True)
+        # Dispersive stresses #
+        # Actual convection
+        uu_sg = self.filter(subgrid, np.multiply(u_sg, u_sg), wind_farm.Lfilter, zero_edge=False)
+        uv_sg = self.filter(subgrid, np.multiply(u_sg, v_sg), wind_farm.Lfilter, zero_edge=False)
+        vv_sg = self.filter(subgrid, np.multiply(v_sg, v_sg), wind_farm.Lfilter, zero_edge=False)
+        # Mesoscale convection
+        uu_ms = np.multiply(u_f, u_f)
+        uv_ms = np.multiply(u_f, v_f)
+        vv_ms = np.multiply(v_f, v_f)
+        # Difference
+        tau_uu_sg = uu_sg - uu_ms
+        tau_uv_sg = uv_sg - uv_ms
+        tau_vv_sg = vv_sg - vv_ms
         # Height-average
         z = subgrid.zs
-        uu1_d = height_average(uu1_d, h1_sg, z)
-        vv1_d = height_average(vv1_d, h1_sg, z)
-        uv1_d = height_average(uv1_d, h1_sg, z)
+        uu1_d = height_average(tau_uu_sg, h1_sg, z)
+        uv1_d = height_average(tau_uv_sg, h1_sg, z)
+        vv1_d = height_average(tau_vv_sg, h1_sg, z)
         # Place back on grid
         uu1_d = self.add_sg_to_grid(grid32, subgrid, uu1_d)
-        vv1_d = self.add_sg_to_grid(grid32, subgrid, vv1_d)
         uv1_d = self.add_sg_to_grid(grid32, subgrid, uv1_d)
+        vv1_d = self.add_sg_to_grid(grid32, subgrid, vv1_d)
         # Grids for gradient computations
         ks, ls = np.meshgrid(grid.ks2, grid.ls, indexing='ij')
         # Get APM forcing #
