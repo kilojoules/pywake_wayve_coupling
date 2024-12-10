@@ -4,7 +4,8 @@ Python framework for the atmospheric perturbation model (APM).
 The APM is an atmospheric perturbation model developed to simulate the interaction between wind farms and the atmosphere. It focuses on the generation and feedback effects of gravity waves. This code implements the model described in the following papers:
 
 - Allaerts D., Meyers J. **Sensitivity and feedback of wind-farm-induced gravity waves**. Journal of Fluid Mechanics, 2019. [DOI](https://doi.org/10.1017/jfm.2018.969)
-- Devesse, K., Lanzilao, L., & Meyers, J. **A meso-micro atmospheric perturbation model for wind farm blockage**. Preprint, 2023. [DOI](https://doi.org/10.48550/arXiv.2310.18748)
+- Devesse, K., Lanzilao, L., & Meyers, J. **A meso-micro atmospheric perturbation model for wind farm blockage**. Journal of Fluid Mechanics, 2024. [DOI](https://doi.org/10.1017/jfm.2024.868)
+- Devesse, K., Stipa, S., Brinkerhoff, J. , Allaerts, D., & Meyers, J. **Comparing methods for coupling wake models to an atmospheric perturbation model in WAYVE**. Journal of Physics: Conference Series, 2024. [DOI](https://doi.org/10.1088/1742-6596/2767/9/092079)
 - Allaerts D., Vanden Broucke S., Van Lipzig N., Meyers J. **Annual impact of wind-farm gravity waves on the Belgian–Dutch offshore wind-farm cluster**. Journal of Physics: Conference Series (2018). [PDF](https://iopscience.iop.org/article/10.1088/1742-6596/1037/7/072006/pdf)
 - Devesse K., Lanzilao L., Jamaer S., Van Lipzig N., Meyers, J. **Including realistic upper atmospheres in a wind-farm gravity-wave model**. Wind Energy Science, 2022. [DOI](https://doi.org/10.5194/wes-7-1367-2022)
 

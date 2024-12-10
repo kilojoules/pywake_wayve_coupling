@@ -24,8 +24,8 @@ References
  in conventionally neutral boundary layers. Journal of Fluid Mechanics, 979, A54. https://doi.org/10.1017/jfm.2023.1088
 ..  Lanzilao, L., & Meyers, J. (2022). A new wake‐merging method for wind‐farm power prediction in the presence of
  heterogeneous background velocity fields. Wind Energy, 25(2), 237–259. https://doi.org/10.1002/we.2669
-..  Devesse, K., Lanzilao, L., & Meyers, J. (2023). A meso-micro atmospheric perturbation model for wind farm blockage.
- Preprint. http://arxiv.org/abs/2310.18748
+..  Devesse, K., Lanzilao, L., & Meyers, J. (2024). A meso-micro atmospheric perturbation model for wind farm blockage.
+ Journal of Fluid Mechanics, 998, A63. https://doi.org/10.1017/jfm.2024.868
 """
 
 __author__ = "Koen Devesse"
@@ -81,7 +81,7 @@ for t in range(Nt):
 # ------------------------------------------------------ #
 
 # Here, we use the uni-directional wake merging method of Lanzilao and Meyers (2022). The default wake model settings
-# are explained in Devesse et al. (2023).
+# are explained in Devesse et al. (2024).
 wake_model = Lanzilao()
 
 # Set up coupling object. We use a PureWM object, which inherits from VaryingBackground, and always assumes the

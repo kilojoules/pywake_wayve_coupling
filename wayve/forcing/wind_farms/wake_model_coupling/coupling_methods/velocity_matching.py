@@ -17,8 +17,8 @@ class VelocityMatching(VaryingBackground):
 
     References
     ----------
-    .. [1]  Devesse, K., Lanzilao, L., & Meyers, J. (2023). A meso-micro atmospheric perturbation model for wind farm
-    blockage. Preprint. http://arxiv.org/abs/2310.18748
+    .. [1]  Devesse, K., Lanzilao, L., & Meyers, J. (2024). A meso-micro atmospheric perturbation model for wind farm
+    blockage. Journal of Fluid Mechanics, 998, A63. https://doi.org/10.1017/jfm.2024.868
     .. [2]  Lanzilao, L., & Meyers, J. (2022). A new wake‐merging method for wind‐farm power prediction in the presence
     of heterogeneous background velocity fields. Wind Energy, 25(2), 237–259. https://doi.org/10.1002/we.2669
     """

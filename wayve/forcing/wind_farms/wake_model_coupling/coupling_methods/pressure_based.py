@@ -17,13 +17,13 @@ from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_backg
 
 class PressureBased(VaryingBackground):
     """
-    A coupling based on the pressure-driven velocities. See Stipa et al., 2023 [1].
+    A coupling based on the pressure-driven velocities. See Stipa et al., 2024 [1].
 
     References
     ----------
     .. [1]  Stipa, S., Ajay, A., Allaerts, D., and Brinkerhoff, J.: "The Multi-Scale Coupled Model: a New Framework
-        Capturing Wind Farm-Atmosphere Interaction and Global Blockage Effects", Wind Energ. Sci. Discuss. [preprint],
-        https://doi.org/10.5194/wes-2023-75, in review, 2023
+        Capturing Wind Farm-Atmosphere Interaction and Global Blockage Effects", Wind Energy Science, 9, 1123–1152.
+        https://doi.org/10.5194/wes-9-1123-2024
     """
 
     def update_ub_vb(self, model, wind_farm, result):
