@@ -5,7 +5,7 @@ from scipy.interpolate import RegularGridInterpolator
 from scipy.ndimage import gaussian_filter
 
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import VaryingBackground,\
-    filtered_in_contribution
+    filtered_in_contribution, height_average_shape_function
 
 
 class VelocityMatching(VaryingBackground):
@@ -112,9 +112,12 @@ class VelocityMatching(VaryingBackground):
         # Solve streamwise component
         str_b = self.solve_streamwise(wind_farm, abl, grid, str_abl, str_apm, w)
 
+        # Solve spanwise component
+        span_b = self.solve_spanwise(wind_farm, abl, subgrid, e_span)
+
         # # Convert back to u and v components # #
-        u_b = np.multiply(str_b, np.cos(theta_str_inf))     # Resulting x-component of the velocity
-        v_b = np.multiply(str_b, np.sin(theta_str_inf))     # Resulting y-component of the velocity
+        u_b = str_b * e_str[0] + span_b * e_span[0]  # Resulting x-component of the velocity
+        v_b = str_b * e_str[1] + span_b * e_span[1]  # Resulting y-component of the velocity
 
         # Get shape functions
         x_shape, y_shape, dx, dy = self.shape_function_setup(subgrid, wind_farm.Lfilter)
@@ -126,6 +129,38 @@ class VelocityMatching(VaryingBackground):
         # Set up evaluator functions
         self.ub_evaluator = lambda x, y: f_ub((x, y))
         self.vb_evaluator = lambda x, y: f_vb((x, y))
+
+    def solve_spanwise(self, wind_farm, abl, subgrid, e_span):
+        """
+        Solves the velocity matching equation for the spanwise direction.
+
+        The code assumes there are no wakes in the spanwise direction, simplifying the matching equation to scaling the
+        APM velocity with the background profile shape function.
+        """
+        # Get shape functions
+        x_shape, y_shape, dx, dy = self.shape_function_setup(subgrid, wind_farm.Lfilter)
+        x_m, y_m = np.meshgrid(x_shape, y_shape, indexing='ij')
+        shape_s = (len(x_shape), len(y_shape))
+        x_locs = np.ravel(x_m)
+        y_locs = np.ravel(y_m)
+        # Evaluate apm state at shape function centers
+        u_apm_r, v_apm_r, eta_r = self.apm_evaluator(x_locs, y_locs)
+        u_apm = np.reshape(u_apm_r, shape_s)
+        v_apm = np.reshape(v_apm_r, shape_s)
+        eta = np.reshape(eta_r, shape_s)
+        h1 = abl.H1 + eta
+        # Get spanwise perturbations
+        span_0 = abl.U1 * e_span[0] + abl.V1 * e_span[1]
+        span_t = u_apm * e_span[0] + v_apm * e_span[1]
+        span_p = span_t - span_0
+        # Vertical grid and shape function
+        z = subgrid.zs
+        f = self.vertical_profile(abl, z)
+        # Height-averaged shape function
+        f_ha = height_average_shape_function(f, z, h1)
+        # Get background velocity scales u_b and v_b
+        span_b = np.divide(span_p, f_ha)
+        return span_b
 
     def solve_streamwise(self, wind_farm, abl, grid, str_abl, str_apm, w):
         """
