@@ -2,11 +2,11 @@ import numpy as np
 
 from wayve.forcing.wind_farms.wake_model_coupling.wake_model_interface import UniDirectionalSelfSimilar
 
-from foxes import Engine, get_engine, reset_engine
 from foxes import WindFarm, Turbine, ModelBook
+from foxes.config import config
 from foxes.core import States, TurbineType
 from foxes.utils import uv2wd, wd2uv
-from foxes.algorithms import Downwind
+from foxes.algorithms import Downwind, Iterative
 import foxes.variables as FV
 import foxes.constants as FC
 
@@ -51,7 +51,7 @@ class WayveStates(States):
         return 1
     
     def weights(self, algo):
-        return np.ones((1, algo.n_turbines), dtype=FC.DTYPE)
+        return np.ones((1, algo.n_turbines), dtype=config.dtype_double)
     
     def calculate(self, algo, mdata, fdata, tdata):
         # prepare:
@@ -143,11 +143,12 @@ class FoxesWakeModel(UniDirectionalSelfSimilar):
                 
             self._states = WayveStates()
 
-            self._algo = Downwind(
+            self._algo = Iterative(
                 farm=self._farm,
                 states=self._states,
                 mbook=self._mbook,
                 verbosity=self._verbosity,
+                mod_cutin=dict(modify_ct=False, modify_P=False),
                 **self._algo_pars,
             )
 

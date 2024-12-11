@@ -118,7 +118,7 @@ for t in range(Nt):
 foxes_engine = Engine.new("multiprocess", n_procs=None, chunk_size_states=1, verbosity=1)
 foxes_engine.initialize()
 wake_model = FoxesWakeModel(
-    wake_models=["Bastankhah2014_product_k004"],
+    wake_models=["Bastankhah2014_product_k004", "SelfSimilar2020_product"],
     verbosity=0
 )
 
