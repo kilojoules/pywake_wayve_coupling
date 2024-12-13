@@ -2,11 +2,10 @@ import numpy as np
 
 from wayve.forcing.wind_farms.wake_model_coupling.wake_model_interface import UniDirectionalSelfSimilar
 
-from foxes import WindFarm, Turbine, ModelBook
+from foxes import WindFarm, Turbine, ModelBook, get_engine
 from foxes.config import config
-from foxes.core import States, TurbineType
+from foxes.core import States, TurbineType, Algorithm
 from foxes.utils import uv2wd, wd2uv
-from foxes.algorithms import Downwind, Iterative
 import foxes.variables as FV
 import foxes.constants as FC
 
@@ -124,7 +123,7 @@ class FoxesWakeModel(UniDirectionalSelfSimilar):
     
     def _setup_foxes(self, wind_farm, u_bg_evaluator, abl):
         
-        if self._farm is None:
+        if self._algo is None:
             self._farm = WindFarm()
             for ti, turbine in enumerate(wind_farm.turbines):
                 if isinstance(self._tmodels, dict):
@@ -143,14 +142,21 @@ class FoxesWakeModel(UniDirectionalSelfSimilar):
                 
             self._states = WayveStates()
 
-            self._algo = Iterative(
+            algo_type = self._algo_pars.pop("algo_type", "Iterative")
+            if algo_type == "Iterative":
+                self._algo_pars["mod_cutin"] = dict(modify_ct=False, modify_P=False)
+
+            self._algo = Algorithm.new(
+                algo_type=algo_type,
                 farm=self._farm,
                 states=self._states,
                 mbook=self._mbook,
                 verbosity=self._verbosity,
-                mod_cutin=dict(modify_ct=False, modify_P=False),
                 **self._algo_pars,
             )
+
+            self._algo.initialize()
+            get_engine().verbosity = self._verbosity
 
         self._states.u_bg_evaluator = u_bg_evaluator
         self._states.abl = abl
