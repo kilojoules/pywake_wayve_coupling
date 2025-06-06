@@ -112,7 +112,7 @@ for t in range(Nt):
 
 # Here, we use the uni-directional wake merging method of Lanzilao and Meyers (2022). The default wake model settings
 # are explained in Devesse et al. (2024).
-wake_model = Lanzilao()
+wake_model = Lanzilao(wake_deflection=False)
 
 # Since we use the velocity matching method and a parametrization for the dispersive stresses, we require a
 # WakeModelVelocityHandler object.

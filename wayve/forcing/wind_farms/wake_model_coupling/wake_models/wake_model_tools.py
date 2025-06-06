@@ -13,7 +13,7 @@ from numba import njit
 
 
 @njit(parallel=False)
-def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, ka=0.3837, kb=0.003678):
+def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, theta_turb, ka=0.3837, kb=0.003678):
     '''
     Turbulence intensity model of Niayifar and Porte-Agel (2016) in Numba syntax
 
@@ -26,9 +26,9 @@ def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, ka=0.3837, kb=0.00
     Nt: float
         Number of wind turbines
     e_str: 1d numpy array
-        Unit vector along the wind direction
+        Turbine streamwise vectors (unit vectors along the wind direction)
     e_span: 1d numpy array
-        Unit vector in cross wind direction
+        Turbine spanwise vectors (unit vectors in cross wind direction)
     order: 1d numpy array
         Wind Turbine index ordered according to wind direction
     x: 1d numpy array
@@ -41,6 +41,8 @@ def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, ka=0.3837, kb=0.00
         Wind Turbine thrust coefficients
     TIinf: float
         Free stream turbulence intensity
+    theta_turb: numpy array
+        Turbine angles
     ka: float (optional)
         Wake model parameter (default 0.3837, from Niayifar and Porte-Agel (2016))
     kb: float (optional)
@@ -65,17 +67,17 @@ def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, ka=0.3837, kb=0.00
             # Streamwise distance between Turbine K and Turbine I along e_str
             # Positive if I is downstream of K
             # Negative if I is upstream of K
-            delta_str = np.dot(KI, e_str)
+            delta_str = np.dot(KI, e_str[k])
             # Spanwise distance between Turbine K and Turbine I along e_span
             # Has a sign but wake model is axisymmetric
-            delta_span = np.dot(KI, e_span)
+            delta_span = np.dot(KI, e_span[k])
             # Turbine k lies upstream of Turbine i
             if delta_str > 0:  # and delta_str<15*turbk.D:
                 beta = 0.5 * (1 + np.sqrt(1 - Ct[k])) / np.sqrt(1 - Ct[k])
                 eps = 0.2 * np.sqrt(beta)
                 sigma = kwake * delta_str + D[k] * eps
                 rwake = 2 * sigma
-                rdisk = D[i] / 2.0
+                rdisk = D[i] / 2.0 * np.cos(theta_turb[i] - theta_turb[k])
                 # TI wake of k intersects with rotor i
                 # the wake start at the edge of the Turbine rotor, so the width of the wake
                 # is given by rdisk + the width of the wake, so rwake
@@ -104,7 +106,7 @@ def evaluate_TI(Nt, e_str, e_span, order, x, y, D, Ct, TIinf, ka=0.3837, kb=0.00
 
                 induction = (1 - np.sqrt(1 - Ct[k])) / 2.
                 Iadded = (0.73 * induction ** (0.8325)
-                          * TIinf ** (0.0325)
+                          * TIinf ** (-0.0325)  # Sign corrected to correspond with Crespo-Hernandez (https://doi.org/10.1016/j.jweia.2023.105504)
                           * (delta_str / D[k]) ** (-0.32))
                 TIadded[k] = Aw / (np.pi * rdisk ** 2) * Iadded
                 if TIadded[k] > maxTIadded:
