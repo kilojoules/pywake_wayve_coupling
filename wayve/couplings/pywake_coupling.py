@@ -17,17 +17,19 @@ import xarray as xr
 class PyWakeInterface(UniDirectionalSelfSimilar):
 
     def __init__(self, k=0.04, deficit_model=BastankhahGaussianDeficit, rotor_avg_model=RotorCenter, 
-                 superposition_model=, turbulence_mode=CrespoHernandez, blockage_model=None,
-                 wind_farm_model=PropagateDownwind, deficit_kwargs=None):
+                 superposition_model=LinearSum, turbulence_model=CrespoHernandez, blockage_model=None,
+                 wind_farm_model=PropagateDownwind, deflection_model=JimenezWakeDeflection, deficit_kwargs=None):
 
         # TODO: Needs more setup options (eg. wake model settings, turbulence model used, ...)
-        self.deficit_model = deficit_model
+        self.wake_deficit_model = deficit_model
         self.rotor_avg_model = rotor_avg_model
         self.superposition_model = superposition_model
-        self.turbulence_mode = turbulence_mode
+        self.turbulence_model = turbulence_model
         self.blockage_model = blockage_model
         self.wind_farm_model = wind_farm_model
         self.deficit_kwargs = deficit_kwargs
+        self.deflection_model = deflection_model
+        self.blockage_model = blockage_model
         self.__k = k
 
     @property
@@ -82,44 +84,55 @@ class PyWakeInterface(UniDirectionalSelfSimilar):
                               hub_height=hh,
                               powerCtFunction=PowerCtTabular(u, power, 'kW', ct))
 
-        if self.deficit_kwargs is not None:
+        if self.deficit_kwargs is None:
            d_kwargs = {'k': self.k}
         else:
            d_kwargs = self.deficit_kwargs
 
-        if self.turbulenceModel is None:
+        if self.turbulence_model is None:
            turb_model = None
         else:
-           turb_model = self.turbulenceModel()
+           turb_model = self.turbulence_model()
 
         # note that blockage only makes sense with All2All wind farm model
-        if self.blockage_model is None
+        if self.blockage_model is None:
            blockage = None
         else:
            blockage = self.blockage_model()
 
-        self.windFarmModel = self.wind_farm_model(
-                           site,
-                           turbine,
-                           wake_deficitModel=self.wake_deficitModel(**d_kwargs),
-                           superpositionModel=self.superpositionModel()
-                           deflectionModel=self.deflectionModel()
-                           turbulenceModel=turb_model,
-                           blockageModel=blockage)
+        if self.blockage_model:
+
+            self.windFarmModel = self.wind_farm_model(
+                               site,
+                               turbine,
+                               wake_deficitModel=self.wake_deficit_model(**d_kwargs),
+                               superpositionModel=self.superposition_model(),
+                               deflectionModel=self.deflection_model(),
+                               turbulenceModel=turb_model,
+                               blockageModel=blockage)
+        else:
+            self.windFarmModel = self.wind_farm_model(
+                               site,
+                               turbine,
+                               wake_deficitModel=self.wake_deficit_model(**d_kwargs),
+                               superpositionModel=self.superposition_model(),
+                               deflectionModel=self.deflection_model(),
+                               turbulenceModel=turb_model)
 
         sim_res = self.windFarmModel(xs, ys, ws=inflow_speed, wd=270. - np.rad2deg(wd), TI=abl.TI, yaw=0, tilt=0)
         return (sim_res)
     def get_St_Ct_et(self, wind_farm, abl, u_bg_evaluator, apm_evaluator):
 
         # set up wind farm
-        sim_res = self.set_up_pywake_wind_farm(self, wind_farm, abl, u_bg_evaluator, apm_evaluator)
+        sim_res = self.set_up_pywake_wind_farm(wind_farm, abl, u_bg_evaluator, apm_evaluator)
 
         effective_speeds = sim_res.WS_eff.to_numpy()[:, 0, 0]
+        Nt = sim_res.x.size
         thrust_coefficients = np.zeros(Nt)
         ets = np.zeros((Nt, 2))
         for i in range(Nt):
             thrust_coefficients[i] = wind_farm.turbines[i].Ct(effective_speeds[i])
-            ets[i] = np.array([np.cos(wd), np.sin(wd)])
+            ets[i] = np.array([np.cos(sim_res.wd), np.sin(sim_res.wd)]).flatten()
         return effective_speeds, thrust_coefficients, ets
 
     def get_u_subgrid(self, wind_farm, abl, u_bg_evaluator, apm_evaluator, subgrid):
