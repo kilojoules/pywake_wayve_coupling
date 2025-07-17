@@ -583,7 +583,7 @@ class NonUniform(GravityWaves):
         PHI: 2d numpy array
             complex stratification coefficient
         '''
-        PHI = gprime*np.ones(shape, dtype=np.complex_)
+        PHI = gprime*np.ones(shape, dtype=np.complex128)
         for indexk in numba.prange(ks.size):
             for indexl in numba.prange(ls.size):
                 sigma3 = u_int[0]*ks[indexk] + v_int[0]*ls[indexl]

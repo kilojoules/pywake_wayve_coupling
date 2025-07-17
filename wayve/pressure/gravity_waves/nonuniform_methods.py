@@ -299,8 +299,8 @@ def basic_solver(parameters, k, l):
     data.extend([1.])
 
     # Initialize matrix
-    A = scipy.sparse.csr_matrix((data, (row_inds, col_inds)), shape=(h.size+2, h.size+2), dtype=np.complex_)
-    b = np.zeros(h.size+2, dtype=np.complex_)
+    A = scipy.sparse.csr_matrix((data, (row_inds, col_inds)), shape=(h.size+2, h.size+2), dtype=np.complex128)
+    b = np.zeros(h.size+2, dtype=np.complex128)
     b[0] = 1.
 
     # Solve #

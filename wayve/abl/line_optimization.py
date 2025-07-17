@@ -130,7 +130,7 @@ def __theta_approximation_5L(z, par):
 # ========================================= #
 def compute_gradient(nLines, geoheight, par):
     """
-    Returns the gradient of the function theta - \hat{theta} given the parameters of the model.
+    Returns the gradient of the function theta - \\hat{theta} given the parameters of the model.
     The resulting gradient helps the optimization problem and has dimensions nx6 where n is the number of
     pressure levels in geoheight.
     :param nLines: the number of lines in the theta-approximation
@@ -151,7 +151,7 @@ def compute_gradient(nLines, geoheight, par):
         assert False, "the gradient for the specified number of lines is not implemented"
 def compute_gradient_2line(geoheight, par):
     """
-    Returns the gradient of the function theta - \hat{theta} given the parameters of the model.
+    Returns the gradient of the function theta - \\hat{theta} given the parameters of the model.
     The resulting gradient helps the optimization problem and has dimensions nx6 where n is the number of
     pressure levels in geoheight.
     :param geoheight:
@@ -170,7 +170,7 @@ def compute_gradient_2line(geoheight, par):
 
     jacobian = np.zeros((np.size(geoheight), np.size(par)))
 
-    # Next pd are from the last equation of \hat{theta} (so with all parameters)
+    # Next pd are from the last equation of \\hat{theta} (so with all parameters)
     jacobian[:, 0]  = 1                      # partial derivatives to theta 0
     jacobian[:, 1]  = geoheight              # pd to alpha 1
     jacobian[:, 2]  = -alpha_2               # pd to zeta 1
@@ -179,11 +179,11 @@ def compute_gradient_2line(geoheight, par):
     # Now set pd to zero of equations below certain zeta_i
     jacobian[slab0, 2:np.size(par)] = 0      # pd to zeta 1 ... alpha 4 are zero for points z<=zeta 1
 
-    jacobian = -jacobian                     # compute jacobian of theta-\hat{theta}
+    jacobian = -jacobian                     # compute jacobian of theta-\\hat{theta}
     return jacobian
 def compute_gradient_3line(geoheight, par):
     """
-    Returns the gradient of the function theta - \hat{theta} given the parameters of the model.
+    Returns the gradient of the function theta - \\hat{theta} given the parameters of the model.
     The resulting gradient helps the optimization problem and has dimensions nx6 where n is the number of
     pressure levels in geoheight.
     :param geoheight:
@@ -206,7 +206,7 @@ def compute_gradient_3line(geoheight, par):
 
     jacobian = np.zeros((np.size(geoheight), np.size(par)))
 
-    # Next pd are from the last equation of \hat{theta} (so with all parameters)
+    # Next pd are from the last equation of \\hat{theta} (so with all parameters)
     jacobian[:, 0]  = 1                      # partial derivatives to theta 0
     jacobian[:, 1]  = geoheight              # pd to alpha 1
     jacobian[:, 2]  = -alpha_2               # pd to zeta 1
@@ -218,11 +218,11 @@ def compute_gradient_3line(geoheight, par):
     jacobian[slab0, 2:np.size(par)] = 0      # pd to zeta 1 ... alpha 4 are zero for points z<=zeta 1
     jacobian[slab1, 4:np.size(par)] = 0      # pd to zeta 2 ... alpha 4 are zero for points z<=zeta 2
 
-    jacobian = -jacobian                     # compute jacobian of theta-\hat{theta}
+    jacobian = -jacobian                     # compute jacobian of theta-\\hat{theta}
     return jacobian
 def compute_gradient_4line(geoheight, par):
     """
-    Returns the gradient of the function theta - \hat{theta} given the parameters of the model.
+    Returns the gradient of the function theta - \\hat{theta} given the parameters of the model.
     The resulting gradient helps the optimization problem and has dimensions nx6 where n is the number of
     pressure levels in geoheight.
     :param geoheight:
@@ -247,7 +247,7 @@ def compute_gradient_4line(geoheight, par):
 
     jacobian = np.zeros((np.size(geoheight), np.size(par)))
 
-    # Next pd are from the last equation of \hat{theta} (so with all parameters)
+    # Next pd are from the last equation of \\hat{theta} (so with all parameters)
     jacobian[:, 0]  = 1                      # partial derivatives to theta 0
     jacobian[:, 1]  = geoheight              # pd to alpha 1
     jacobian[:, 2]  = -alpha_2               # pd to zeta 1
@@ -262,11 +262,11 @@ def compute_gradient_4line(geoheight, par):
     jacobian[slab1, 4:np.size(par)] = 0      # pd to zeta 2 ... alpha 4 are zero for points z<=zeta 2
     jacobian[slab2, 6:np.size(par)] = 0      # pd to zeta 3 ... alpha 4 are zero for points z<=zeta 3
 
-    jacobian = -jacobian                     # compute jacobian of theta-\hat{theta}
+    jacobian = -jacobian                     # compute jacobian of theta-\\hat{theta}
     return jacobian
 def compute_gradient_5line(geoheight, par):
     """
-    Returns the gradient of the function theta - \hat{theta} given the parameters of the model.
+    Returns the gradient of the function theta - \\hat{theta} given the parameters of the model.
     The resulting gradient helps the optimization problem and has dimensions nx6 where n is the number of
     pressure levels in geoheight.
     :param geoheight:
@@ -294,7 +294,7 @@ def compute_gradient_5line(geoheight, par):
 
     jacobian = np.zeros((np.size(geoheight), 10))
 
-    # Next pd are from the last equation of \hat{theta} (so with all parameters)
+    # Next pd are from the last equation of \\hat{theta} (so with all parameters)
     jacobian[:, 0]  = 1                      # partial derivatives to theta 0
     jacobian[:, 1]  = geoheight              # pd to alpha 1
     jacobian[:, 2]  = -alpha_2               # pd to zeta 1
@@ -312,7 +312,7 @@ def compute_gradient_5line(geoheight, par):
     jacobian[slab2, 6:np.size(par)] = 0      # pd to zeta 3 ... alpha 5 are zero for points z<=zeta 3
     jacobian[slab3, 8:np.size(par)] = 0      # pd to zeta 4 ... alpha 5 are zero for points z<=zeta 4
 
-    jacobian = -jacobian                     # compute jacobian of theta-\hat{theta}
+    jacobian = -jacobian                     # compute jacobian of theta-\\hat{theta}
     return jacobian
 
 

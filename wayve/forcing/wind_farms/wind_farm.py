@@ -183,8 +183,8 @@ class WindFarm(ForcingTerm):
         eta1c = x[4*N:5*N]
         # Convert to real space
         eta1r = model.grid.c2r_deal(eta1c.reshape(model.grid.shape2))
-        F0u += - np.divide(F0u, model.abl.H1 ** 2) * eta1r
-        F0v += - np.divide(F0v, model.abl.H1 ** 2) * eta1r
+        F0u += - np.divide(F0u, model.abl.H1) * eta1r
+        F0v += - np.divide(F0v, model.abl.H1) * eta1r
         # Convert to fourier space, cast into 1D array and
         # divide by H1 (APM solves height-averaged equations)
         Bu = np.ravel(model.grid.r2c_deal(F0u))

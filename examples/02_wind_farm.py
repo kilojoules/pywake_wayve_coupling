@@ -11,16 +11,16 @@ References
  in conventionally neutral boundary layers. Journal of Fluid Mechanics, 979, A54. https://doi.org/10.1017/jfm.2023.1088
 ..  Allaerts, D., & Meyers, J. (2019). Sensitivity and feedback of wind-farm-induced gravity waves. Journal of Fluid
  Mechanics, 862, 990–1028. https://doi.org/10.1017/jfm.2018.969
-..  Devesse, K., Lanzilao, L., & Meyers, J. (2023). A meso-micro atmospheric perturbation model for wind farm blockage.
- Preprint. http://arxiv.org/abs/2310.18748
+..  Devesse, K., Lanzilao, L., & Meyers, J. (2024). A meso-micro atmospheric perturbation model for wind farm blockage.
+ Journal of Fluid Mechanics, 998, A63. https://doi.org/10.1017/jfm.2024.868
 ..  Lanzilao, L., & Meyers, J. (2022). A new wake‐merging method for wind‐farm power prediction in the presence of
  heterogeneous background velocity fields. Wind Energy, 25(2), 237–259. https://doi.org/10.1002/we.2669
-..  Stipa, S., Ajay, A., Allaerts, D., & Brinkerhoff, J. (2023). The Multi-Scale Coupled Model : a New Framework
- Capturing Wind Farm-Atmosphere Interaction and Global Blockage Effects. Wind Energy Science Discussions, August, 1–44.
- https://doi.org/https://doi.org/10.5194/wes-2023-75
-..  Devesse, K., Stipa, S., Brinkerhoff, J. ,Allaerts, D., & Meyers, J. (2024). Comparing methods for coupling wake
+..  Stipa, S., Ajay, A., Allaerts, D., & Brinkerhoff, J. (2024). The Multi-Scale Coupled Model: a New Framework
+ Capturing Wind Farm-Atmosphere Interaction and Global Blockage Effects. Wind Energy Science, 9, 1123–1152.
+ https://doi.org/10.5194/wes-9-1123-2024
+..  Devesse, K., Stipa, S., Brinkerhoff, J. , Allaerts, D., & Meyers, J. (2024). Comparing methods for coupling wake
  models to an atmospheric perturbation model in WAYVE. Journal of Physics: Conference Series, 2767, 092079.
- https://doi.org/https://doi.org/10.1088/1742-6596/2767/9/092079
+ https://doi.org/10.1088/1742-6596/2767/9/092079
 """
 
 __author__ = "Koen Devesse"
@@ -94,11 +94,11 @@ for t in range(Nt):
 #   - Upstream: takes the velocity upstream of the farm as the background velocity
 #               see Allaerts and Meyers (2019)
 #   - VelocityMatching: calculates the background velocity by matching the velocity fields of the APM and the wake model
-#               see Devesse et al. (2023)
+#               see Devesse et al. (2024)
 #   - PressureBased: uses the pressure component of the APM velocity perturbation as the background velocity
-#               see Stipa et al. (2023)
+#               see Stipa et al. (2024)
 #
-# For a comparison of these coupling methods, see Devesse et al. (2024).
+# For a comparison of these coupling methods, see Devesse et al. (2024b).
 #
 # The wake model interface expected by these coupling methods is defined in
 # wayve.forcing.wind_farms.wake_model_coupling.wake_model_interface. When including a new wake model in WAYVE, it
@@ -111,8 +111,8 @@ for t in range(Nt):
 # In this example, we will use the VelocityMatching method with the wake merging method of Lanzilao and Meyers (2022).
 
 # Here, we use the uni-directional wake merging method of Lanzilao and Meyers (2022). The default wake model settings
-# are explained in Devesse et al. (2023).
-wake_model = Lanzilao()
+# are explained in Devesse et al. (2024).
+wake_model = Lanzilao(wake_deflection=False)
 
 # Since we use the velocity matching method and a parametrization for the dispersive stresses, we require a
 # WakeModelVelocityHandler object.

@@ -15,18 +15,17 @@ import numpy as np
 from numba import njit
 
 from wayve.forcing.wind_farms.wake_model_coupling.wake_model_interface import UniDirectionalSelfSimilar
-from wayve.forcing.wind_farms.wake_model_coupling.wake_models.wake_model_tools import e_spanwise, \
-    evaluate_TI, area_circle_segment, area_circle_reflex
-from wayve.forcing.forcing_tools import e_streamwise
+from wayve.forcing.wind_farms.wake_model_coupling.wake_models.wake_model_tools import evaluate_TI
+from wayve.forcing.forcing_tools import e_streamwise, e_spanwise
 
 
 class Lanzilao(UniDirectionalSelfSimilar):
     """
-    An implementation that is based on the unidirectional wake merging method by Lanzilao and Meyers [1]].
+    An implementation that is based on the wake merging method by Lanzilao and Meyers [1].
 
-    The merging method described there is unidirectional, but the methods still need to output a two-directional flow
-    field. To get around this, the flow is decomposed into components in the wind direction, and the components
-    perpendicular to it. The wake model is then only applied to the components in the wind direction.
+    This is a simplified implementation, that only outputs the wake model velocity in the unperturbed streamwise
+    direction, so it conforms to the unidirectional base class. However, it can incorporate basic wake deflection by
+    simply rotating the location of the wake deficits.
 
     References
     ----------
@@ -35,6 +34,7 @@ class Lanzilao(UniDirectionalSelfSimilar):
     """
 
     def __init__(self, ka=0.3837, kb=0.003678, eps_beta=0.2,
+                 wake_deflection=True,
                  induction=True, mirrored=True, disk_avg_dir=False, disk_avg_speed=True):
         """
         Initialize a wake merging method object with the given parameters.
@@ -47,6 +47,8 @@ class Lanzilao(UniDirectionalSelfSimilar):
                 Wake model parameter (default 0.003678, from Niayifar and Porte-Agel (2016))
         eps_beta    float (optional)
                 Wake model parameter (default 0.2, from Bastankhah and Porte-Agel (2014))
+        wake_deflection     Boolean (optional)
+                Whether wake deflection is accounted for (default True)
         induction   Boolean (optional)
                 Whether or not an induction model is used (default False, never used in inflow velocity calculations)
         mirrored    Boolean (optional)
@@ -59,6 +61,7 @@ class Lanzilao(UniDirectionalSelfSimilar):
         self.__ka = ka
         self.__kb = kb
         self.__eps_beta = eps_beta
+        self.__wake_deflection = wake_deflection
         self.__induction = induction
         self.__mirrored = mirrored
         self.__disk_avg_dir = disk_avg_dir
@@ -90,6 +93,15 @@ class Lanzilao(UniDirectionalSelfSimilar):
     @eps_beta.setter
     def eps_beta(self, value):
         self.__eps_beta = value
+
+    @property
+    def wake_deflection(self):
+        """Whether or not wake deflection is accounted for"""
+        return self.__wake_deflection
+
+    @wake_deflection.setter
+    def wake_deflection(self, value):
+        self.__wake_deflection = value
 
     @property
     def induction(self):
@@ -131,9 +143,13 @@ class Lanzilao(UniDirectionalSelfSimilar):
         """
         Calculate the turbine inflow velocities (St), the thrust coefficients (Ct), and the turbine directions (et).
 
-        The basic turbine information can be found in the WindFarm object. The unperturbed atmospheric state can be found in
-        the ABL object. Additionally, the u_bg_evaluator is a callable that can evaluate the background velocities at
-        requested locations.
+        This method will always be called before the method get_u_subgrid has been called, and will use the same inputs.
+        Therefore, feel free to store any intermediate results that can be re-used.
+
+        The basic turbine information can be found in the WindFarm object. The unperturbed atmospheric state can be
+        found in the ABL object. Additionally, the u_bg_evaluator is a callable that can evaluate the background
+        velocities at requested locations. Finally, the apm_evaluator is a callable that can evaluate the lower-layer
+        APM wind speeds and height at requested locations.
 
         Parameters
         ----------
@@ -147,6 +163,15 @@ class Lanzilao(UniDirectionalSelfSimilar):
         apm_evaluator   callable
             Callable which can evaluate the layer wind speeds and height at requested locations.
             See VaryingBackground.set_up_apm_evaluators in varying_background.py for detailed documentation.
+
+        Returns
+        -------
+        St  np.array
+            Array of turbine inflow velocities (shape (Nt,), with Nt being the number of turbines)
+        Ct  np.array
+            Array of turbine thrust coefficients (shape (Nt,), with Nt being the number of turbines)
+        et  np.array
+            Array of unit vectors defining the turbine orientations (shape (Nt,2), with Nt being the number of turbines)
         """
         # Get evenly spaced points along the rotor disks
         disk_points = self.disk_points(wind_farm, abl)
@@ -158,13 +183,33 @@ class Lanzilao(UniDirectionalSelfSimilar):
         # Convert back to original shape
         disk_velocities = np.reshape(velocities, (disk_points.shape[0], disk_points.shape[1], 2))
         # Calculate disk averages for all turbines
-        Ct, St, et = self.inflow_velocities(wind_farm, abl, disk_points, disk_velocities)
+        Ct, St, et = self.inflow_velocities(wind_farm, abl, apm_evaluator, disk_points, disk_velocities)
         return St, Ct, et
 
     def background_flow_direction(self, wind_farm, abl):
         """
         Return the direction of the flow according to the wake model, which is assumed to only depend on the unperturbed
         background flow defined in the given ABL object.
+
+        The current implementation is based on the uni-directional wake merging method by Lanzilao and Meyers (Wind
+        Energy, 2022), where the wake deficits are only considered in a single direction, referred to here as the
+        streamwise background flow direction. This method should return the vectors defining this streamwise direction,
+        and the corresponding spanwise direction. This direction is assumed to only depend on the unperturbed background
+        flow defined in the given ABL object.
+
+        Parameters
+        ----------
+        wind_farm    WindFarm object
+            Wind farm for which the calculation is performed
+        abl     ABL object
+            Information on the unperturbed background state, including vertical velocity profiles
+
+        Returns
+        -------
+        e_str   np.array
+            Streamwise direction unit vector (length 2, corresponding to the x- and y-components)
+        e_span  np.array
+            Spanwise direction unit vector (length 2, corresponding to the x- and y-components)
         """
 
         # Get average turbine
@@ -234,7 +279,7 @@ class Lanzilao(UniDirectionalSelfSimilar):
 
         return disk_points
 
-    def inflow_velocities(self, windfarm, abl, disk_points, disk_velocities):
+    def inflow_velocities(self, windfarm, abl, apm_evaluator, disk_points, disk_velocities):
         """Calculate the inflow velocities for all the turbines in the wind farm.
 
         Parameters
@@ -251,37 +296,50 @@ class Lanzilao(UniDirectionalSelfSimilar):
         yloc = np.array([turbines[k].y for k in range(Nt)])
 
         # Get number of points on a rotor disk (assumed to be the same for all turbines)
-        N_disk = disk_points.shape[1]   # See self.disk_points documentation for more information
+        N_disk = disk_points.shape[1]  # See self.disk_points documentation for more information
 
         # Get Turbine direction (streamwise)
         e_str, e_span = self.background_flow_direction(windfarm, abl)
-        theta_str = np.arctan2(e_str[1], e_str[0])  # Angle in the wind direction
+        theta_str = np.arctan2(e_str[1], e_str[0])  # Angle in the unperturbed wind direction
 
-        # Get streamwise velocity at disk points
-        disk_s = np.sqrt(np.power(disk_velocities[:, :, 0], 2) + np.power(disk_velocities[:, :, 1], 2))
-        disk_theta = np.arctan2(disk_velocities[:, :, 1], disk_velocities[:, :, 0])
-        disk_str = disk_s * np.cos(theta_str - disk_theta)
+        # Turbine direction evaluation
+        if self.wake_deflection:  # Base turbine direction on APM velocity direction
+            u_1, v_1, h_1 = apm_evaluator(xloc, yloc)
+            theta_turb = np.array([np.arctan2(v_1[i], u_1[i]) for i in range(Nt)])
+        else:
+            theta_turb = np.array([theta_str for _ in range(Nt)])
+
+        # Inflow velocity setup
+        u_vec = np.mean(disk_velocities, axis=1)
+        inflow_unperturbed = np.sqrt(np.power(u_vec[:, 0], 2) + np.power(u_vec[:, 1], 2))
 
         # Sort turbines along wind direction
         order = self.sort_turbines(windfarm, e_str)
+
+        # Vector normal (t) and parallel (p) to rotor
+        et_sort = np.array([np.array([np.cos(theta_turb[i]),
+                                      np.sin(theta_turb[i])])
+                            for i in order])
+        ep_sort = np.array([np.array([-np.sin(theta_turb[i]),
+                                      np.cos(theta_turb[i])])
+                            for i in order])
 
         # Sorted lists
         xloc_sort = np.array([xloc[i] for i in order])
         yloc_sort = np.array([yloc[i] for i in order])
         D_sort = np.array([turbines[i].D for i in order])
         zhs_sort = np.array([turbines[i].zh for i in order])
-        disk_str_bg_sort = np.array([disk_str[i, :] for i in order])
+        disk_vel_bg_sort = np.array([disk_velocities[i] for i in order])
         disk_points_sort = np.array([disk_points[i, :, :] for i in order])
+        theta_turb_sort = np.array([theta_turb[i] for i in order])
         turbines_sort = [turbines[i] for i in order]
 
         # Background TI
         TI_inf = abl.TI
 
-        # Initial St, Ct, and et estimates
-        St_sort = np.array([np.mean(disk_str[i, :]) for i in order])
-        Ct_sort = np.array([turbines[i].Ct(np.mean(disk_str[i, :])) for i in order])
-        et_sort = np.array([np.array([np.cos(theta_str),
-                                      np.sin(theta_str)]) for _ in order])
+        # Initial St and Ct estimates
+        St_sort = np.array([inflow_unperturbed[i] for i in order])
+        Ct_sort = np.array([turbines[i].Ct(inflow_unperturbed[i]) for i in order])
 
         # Repeat calculation until Ct converges
         Ct0 = 0.
@@ -293,28 +351,40 @@ class Lanzilao(UniDirectionalSelfSimilar):
             step += 1
             Ct0 = np.copy(Ct_sort)
             # Evaluate TI at Turbine locations
-            TI = evaluate_TI(Nt, e_str, e_span, order, xloc_sort, yloc_sort, D_sort, Ct_sort, TI_inf,
-                             self.ka, self.kb)
+            TI = evaluate_TI(Nt, et_sort, ep_sort, order, xloc_sort, yloc_sort, D_sort, Ct_sort, TI_inf,
+                             theta_turb_sort, self.ka, self.kb)
             TI_sort = np.array([TI[i] for i in order])
             # Apply wakes for all turbines #
             # Initialize velocities as background velocities
-            disk_str_sort = disk_str_bg_sort
+            disk_vel_sort = disk_vel_bg_sort
             # Flatten arrays of locations and velocities
-            disk_str_flat = np.reshape(disk_str_sort, (Nt*N_disk))
-            locations = np.reshape(disk_points_sort, (Nt*N_disk, 3))
+            disk_vel_flat = np.reshape(disk_vel_sort, (Nt * N_disk, 2))
+            locations = np.reshape(disk_points_sort, (Nt * N_disk, 3))
             for i in range(Nt):
                 # Get inflow conditions for current Turbine
-                St_sort[i] = np.mean(disk_str_sort[i, :])
-                et_sort[i] = np.array([np.cos(theta_str), np.sin(theta_str)])
+                St_sort[i] = np.mean(disk_vel_sort[i, :] @ et_sort[i])
                 Ct_sort[i] = turbines_sort[i].Ct(St_sort[i])
                 if Ct_sort[i] != 0.:
                     # Get wake of current Turbine
-                    W = gaussian_wake_function(locations, TI_sort[i], Ct_sort[i], xloc_sort[i], yloc_sort[i], D_sort[i],
-                                               zhs_sort[i], theta_str, ka=self.ka, kb=self.kb, eps_beta=self.eps_beta,
+                    W = gaussian_wake_function(locations,
+                                               TI_sort[i],
+                                               Ct_sort[i],
+                                               xloc_sort[i], yloc_sort[i],
+                                               D_sort[i],
+                                               zhs_sort[i],
+                                               theta_turb_sort[i],
+                                               ka=self.ka,
+                                               kb=self.kb,
+                                               eps_beta=self.eps_beta,
                                                mirr=self.mirrored)
                     # Apply wake of current Turbine
-                    disk_str_flat = np.multiply(disk_str_flat, 1. - W)
-                    disk_str_sort = np.reshape(disk_str_flat, (Nt, N_disk))
+                    et = np.array([et_sort[i]]).T
+                    ep = np.array([ep_sort[i]]).T
+                    # Vectorized
+                    disk_vel_flat = (np.multiply(np.array([1 - W]).T, disk_vel_flat @ (et @ et.T))
+                                     + disk_vel_flat @ (ep @ ep.T))
+                    # Reshape
+                    disk_vel_sort = np.reshape(disk_vel_flat, (Nt, N_disk, 2))
 
         # Unsort turbines
         inv_order = np.argsort(order)
@@ -326,11 +396,19 @@ class Lanzilao(UniDirectionalSelfSimilar):
 
     def wake_deficit(self, wind_farm, abl, u_bg_evaluator, apm_evaluator, subgrid):
         """
-        Product over all wake functions (1-W_k), calculated on the given subgrid.
+        Calculate the wake deficit, calculated on the given subgrid.
 
-        The basic turbine information can be found in the WindFarm object. The unperturbed atmospheric state can be found in
-        the ABL object. Additionally, the u_bg_evaluator is a callable that can evaluate the background velocities at
-        requested locations.
+        The wake deficit is the factor that, when multiplied with the background velocity, gives the wake model
+        velocity. For the uni-directional wake merging method of Lanzilao and Meyers (Wind Energy, 2022), this
+        corresponds to the product over all wake functions (1-W_k).
+
+        This method will only be called after the method get_St_Ct_et has been called, and will use the same inputs.
+        Therefore, feel free to store any intermediate results that can be re-used in this calculation.
+
+        The basic turbine information can be found in the WindFarm object. The unperturbed atmospheric state can be
+        found in the ABL object. Additionally, the u_bg_evaluator is a callable that can evaluate the background
+        velocities at requested locations. Finally, the apm_evaluator is a callable that can evaluate the lower-layer
+        APM wind speeds and height at requested locations.
 
         Parameters
         ----------
@@ -346,10 +424,21 @@ class Lanzilao(UniDirectionalSelfSimilar):
             See VaryingBackground.set_up_apm_evaluators in varying_background.py for detailed documentation.
         subgrid     SubGrid object
             Grid on which the velocity should be evaluated
+
+        Returns
+        -------
+        w   np.array
+            Wake deficit, defined on the subgrid (shape same as subgrid.shape)
         """
 
         # Get the turbine thrust coefficients
         _, Ct, _ = self.get_St_Ct_et(wind_farm, abl, u_bg_evaluator, apm_evaluator)
+
+        # Get wind farm information
+        turbines = wind_farm.turbines
+        Nt = wind_farm.Nturb
+        xloc = np.array([turbines[k].x for k in range(Nt)])
+        yloc = np.array([turbines[k].y for k in range(Nt)])
 
         # Get grid information
         Nx = subgrid.Nx
@@ -359,19 +448,27 @@ class Lanzilao(UniDirectionalSelfSimilar):
         # Ambient TI
         TI_inf = abl.TI
 
-        # Background flow direction
+        # Get Turbine direction (streamwise)
         e_str, e_span = self.background_flow_direction(wind_farm, abl)
+        theta_str = np.arctan2(e_str[1], e_str[0])  # Angle in the unperturbed wind direction
 
-        # Get wind farm information
-        turbines = wind_farm.turbines
-        Nt = wind_farm.Nturb
+        # Sort turbines along wind direction
+        order = self.sort_turbines(wind_farm, e_str)
 
-        # Set up output array
-        wake_deficit = np.ones((Nx, Ny, Nz))
+        # Turbine direction evaluation
+        if self.wake_deflection:  # Base turbine direction on APM velocity direction
+            u_1, v_1, h_1 = apm_evaluator(xloc, yloc)
+            theta_turb = np.array([np.arctan2(v_1[i], u_1[i]) for i in range(Nt)])
+        else:
+            theta_turb = np.array([theta_str for _ in range(Nt)])
 
-        # Turbine locations w.r.t. subgrid
-        xloc = np.array([turbines[k].x - subgrid.x_min for k in range(Nt)])
-        yloc = np.array([turbines[k].y - subgrid.y_min for k in range(Nt)])
+        # Vector normal (t) and parallel (p) to rotor
+        ets = np.array([np.array([np.cos(theta_turb[i]),
+                                  np.sin(theta_turb[i])])
+                        for i in order])
+        eps = np.array([np.array([-np.sin(theta_turb[i]),
+                                  np.cos(theta_turb[i])])
+                        for i in order])
 
         # Sort turbines along wind direction - for TI
         order = self.sort_turbines(wind_farm, e_str)
@@ -379,27 +476,52 @@ class Lanzilao(UniDirectionalSelfSimilar):
         yloc_sort = np.array([yloc[i] for i in order])
         D_sort = np.array([turbines[i].D for i in order])
         Ct_sort = Ct[order]
-        theta = np.arctan2(e_str[1], e_str[0])      # Angle in the wind direction
+        theta_turb_sort = np.array([theta_turb[i] for i in order])
+        et_sort = np.array([ets[i, :] for i in order])
+        ep_sort = np.array([eps[i, :] for i in order])
 
         # Evaluate TI at Turbine locations
-        TI = evaluate_TI(Nt, e_str, e_span, order, xloc_sort, yloc_sort, D_sort, Ct_sort, TI_inf,
-                         self.ka, self.kb)
+        TI = evaluate_TI(Nt, et_sort, ep_sort, order, xloc_sort, yloc_sort, D_sort, Ct_sort, TI_inf,
+                         theta_turb_sort, self.ka, self.kb)
 
         # Set up meshgrid
         Xs, Ys = subgrid.xy
-        Xs -= subgrid.x_min
-        Ys -= subgrid.y_min
-        z = subgrid.zs
+        zs = subgrid.zs
+
+        # Set up output
+        if self.wake_deflection:
+            W_comb = np.zeros((Nx, Ny, Nz, 2)) + e_str[None, None, None, :]
+        else:
+            W_comb = np.ones((Nx, Ny, Nz))
 
         for turb in range(Nt):
             if Ct[turb] != 0.:
-                wake_deficit = wake_deficit * (1 -
-                                               type(self).wake_function(Nx, Ny, Nz, Xs, Ys, z, TI[turb], Ct[turb],
-                                                                        xloc[turb], yloc[turb], turbines[turb].D,
-                                                                        turbines[turb].zh, theta, ka=self.ka,
-                                                                        kb=self.kb, ind=self.induction,
-                                                                        mirr=self.mirrored)
-                                               )
+                # Evaluate W_t
+                W_t = type(self).wake_function(Nx, Ny, Nz, Xs, Ys, zs,
+                                               TI[turb], Ct[turb],
+                                               xloc[turb], yloc[turb],
+                                               turbines[turb].D, turbines[turb].zh,
+                                               theta_turb[turb],
+                                               ka=self.ka,
+                                               kb=self.kb,
+                                               ind=self.induction,
+                                               mirr=self.mirrored)
+                if self.wake_deflection:
+                    # Matrix of current turbine
+                    et = ets[turb]
+                    ep = eps[turb]
+                    A_t = array_of_matrices(1 - W_t, np.outer(et, et)) + np.outer(ep, ep)
+                    # Update wake deficit field
+                    W_comb = dot_matrix_vec_arrays(A_t, W_comb)
+                else:
+                    W_comb *= 1 - W_t
+
+        # Wake deficit in main flow direction
+        if self.wake_deflection:
+            wake_deficit = np.inner(e_str, W_comb)
+        else:
+            wake_deficit = W_comb
+
         return wake_deficit
 
     def sort_turbines(self, windfarm, e_str):
@@ -439,22 +561,41 @@ class Lanzilao(UniDirectionalSelfSimilar):
         Ny = len(ys)
         Nz = 1
 
-        # Ambient TI
-        TI_inf = abl.TI
-
-        # Background flow direction
-        e_str, e_span = self.background_flow_direction(wind_farm, abl)
+        # Set up meshgrid
+        Xs, Ys = np.meshgrid(xs, ys, indexing='ij')
+        zs = np.array([z])
+        x_m, y_m, z_m = np.meshgrid(xs, ys, zs, indexing="ij")
 
         # Get wind farm information
         turbines = wind_farm.turbines
         Nt = wind_farm.Nturb
+        xloc = np.array([turbines[k].x for k in range(Nt)])
+        yloc = np.array([turbines[k].y for k in range(Nt)])
 
-        # Set up output array
-        wake_deficit = np.ones((Nx, Ny, Nz))
+        # Ambient TI
+        TI_inf = abl.TI
 
-        # Turbine locations
-        xloc = wind_farm.xs
-        yloc = wind_farm.ys
+        # Get Turbine direction (streamwise)
+        e_str, e_span = self.background_flow_direction(wind_farm, abl)
+        theta_str = np.arctan2(e_str[1], e_str[0])  # Angle in the unperturbed wind direction
+
+        # Sort turbines along wind direction
+        order = self.sort_turbines(wind_farm, e_str)
+
+        # Turbine direction evaluation
+        if self.wake_deflection:  # Base turbine direction on APM velocity direction
+            u_1, v_1, h_1 = apm_evaluator(xloc, yloc)
+            theta_turb = np.array([np.arctan2(v_1[i], u_1[i]) for i in range(Nt)])
+        else:
+            theta_turb = np.array([theta_str for _ in range(Nt)])
+
+        # Vector normal (t) and parallel (p) to rotor
+        ets = np.array([np.array([np.cos(theta_turb[i]),
+                                  np.sin(theta_turb[i])])
+                        for i in order])
+        eps = np.array([np.array([-np.sin(theta_turb[i]),
+                                  np.cos(theta_turb[i])])
+                        for i in order])
 
         # Sort turbines along wind direction - for TI
         order = self.sort_turbines(wind_farm, e_str)
@@ -462,26 +603,48 @@ class Lanzilao(UniDirectionalSelfSimilar):
         yloc_sort = np.array([yloc[i] for i in order])
         D_sort = np.array([turbines[i].D for i in order])
         Ct_sort = Ct[order]
-        theta = np.arctan2(e_str[1], e_str[0])      # Angle in the wind direction
+        theta_turb_sort = np.array([theta_turb[i] for i in order])
+        et_sort = np.array([ets[i, :] for i in order])
+        ep_sort = np.array([eps[i, :] for i in order])
 
         # Evaluate TI at Turbine locations
-        TI = evaluate_TI(Nt, e_str, e_span, order, xloc_sort, yloc_sort, D_sort, Ct_sort, TI_inf,
-                         self.ka, self.kb)
+        TI = evaluate_TI(Nt, et_sort, ep_sort, order, xloc_sort, yloc_sort, D_sort, Ct_sort, TI_inf,
+                         theta_turb_sort, self.ka, self.kb)
 
-        # Set up meshgrid
-        Xs, Ys = np.meshgrid(xs, ys, indexing='ij')
-        zs = np.array([z])
-        x_m, y_m, z_m = np.meshgrid(xs, ys, zs, indexing="ij")
+        # Set up output
+        if self.wake_deflection:
+            W_comb = np.zeros((Nx, Ny, Nz, 2)) + e_str[None, None, None, :]
+        else:
+            W_comb = np.ones((Nx, Ny, Nz))
 
         for turb in range(Nt):
             if Ct[turb] != 0.:
-                wake_deficit = wake_deficit * (1 -
-                                               type(self).wake_function(Nx, Ny, Nz, Xs, Ys, zs, TI[turb], Ct[turb],
-                                                                        xloc[turb], yloc[turb], turbines[turb].D,
-                                                                        turbines[turb].zh, theta, ka=self.ka,
-                                                                        kb=self.kb, ind=self.induction,
-                                                                        mirr=self.mirrored)
-                                               )
+                # Evaluate W_t
+                W_t = type(self).wake_function(Nx, Ny, Nz, Xs, Ys, zs,
+                                               TI[turb], Ct[turb],
+                                               xloc[turb], yloc[turb],
+                                               turbines[turb].D, turbines[turb].zh,
+                                               theta_turb[turb],
+                                               ka=self.ka,
+                                               kb=self.kb,
+                                               ind=self.induction,
+                                               mirr=self.mirrored)
+                if self.wake_deflection:
+                    # Matrix of current turbine
+                    et = ets[turb]
+                    ep = eps[turb]
+                    A_t = array_of_matrices(1 - W_t, np.outer(et, et)) + np.outer(ep, ep)
+                    # Update wake deficit field
+                    W_comb = dot_matrix_vec_arrays(A_t, W_comb)
+                else:
+                    W_comb *= 1 - W_t
+
+        # Wake deficit in main flow direction
+        if self.wake_deflection:
+            wake_deficit = np.inner(e_str, W_comb)
+        else:
+            wake_deficit = W_comb
+
         # Get background velocities #
         # SubGrid coordinates
         x_locs = np.ravel(x_m)
@@ -520,12 +683,12 @@ def gaussian_wake_function_grid(Nx, Ny, Nz, Xs, Ys, z, TI, Ct, xloc, yloc, D, zh
     self-similar induction model are applied.
     '''
     # Output array
-    W = np.zeros((Nx,Ny,Nz), dtype=np.float64)
+    W = np.zeros((Nx, Ny, Nz), dtype=np.float64)
     # Get x and y coordinates in Turbine reference frame
-    Xwake = Xs - xloc   # x=0 at xloc
-    Ywake = Ys - yloc   # y=0 at yloc
-    Xwake_rot = Xwake*np.cos(theta) + Ywake*np.sin(theta)   # axis rotation
-    Ywake_rot = -Xwake*np.sin(theta) + Ywake*np.cos(theta)  # axis rotation
+    Xwake = Xs - xloc  # x=0 at xloc
+    Ywake = Ys - yloc  # y=0 at yloc
+    Xwake_rot = Xwake * np.cos(theta) + Ywake * np.sin(theta)  # axis rotation
+    Ywake_rot = -Xwake * np.sin(theta) + Ywake * np.cos(theta)  # axis rotation
     # Wake parameters
     kwake = ka*TI+kb
     # Get sigma at locations
@@ -694,3 +857,24 @@ def holoborodko_points_evenly_spaced(y_c, z_c, D, Nr=6):
         zn = np.concatenate((zn, z_c + r * np.sin(phi)), axis=None)
         k += 1
     return yn, zn
+
+
+@njit(parallel=True)
+def array_of_matrices(weights, A):
+    B = np.zeros((weights.shape[0], weights.shape[1], weights.shape[2], 2, 2))
+    for i in numba.prange(weights.shape[0]):
+        for j in numba.prange(weights.shape[1]):
+            for k in numba.prange(weights.shape[2]):
+                B[i, j, k, :, :] = weights[i, j, k] * A
+    return B
+
+
+@njit(parallel=True)
+def dot_matrix_vec_arrays(A, x):
+    y = np.zeros(x.shape)
+    for i in numba.prange(x.shape[0]):
+        for j in numba.prange(x.shape[1]):
+            for k in numba.prange(x.shape[2]):
+                y[i, j, k, :] = np.dot(A[i, j, k, :, :], x[i, j, k, :])
+    return y
+

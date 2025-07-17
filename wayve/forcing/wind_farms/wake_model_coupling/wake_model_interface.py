@@ -7,12 +7,14 @@ __date__ = "February 12, 2024"
 
 import numpy as np
 
+from wayve.forcing.forcing_tools import e_streamwise, e_spanwise
+
 
 class WakeModelInterface:
     """
     A common interface for wake models, used by the VaryingBackground coupling methods.
 
-    When coupling a wake model to the APM, these are the classes that should be implemented.
+    When coupling a wake model to the APM, this is the class that should be implemented.
     """
 
     def get_St_Ct_et(self, wind_farm, abl, u_bg_evaluator, apm_evaluator):
@@ -39,6 +41,15 @@ class WakeModelInterface:
         apm_evaluator   callable
             Callable which can evaluate the layer wind speeds and height at requested locations.
             See VaryingBackground.set_up_apm_evaluators in varying_background.py for detailed documentation.
+
+        Returns
+        -------
+        St  np.array
+            Array of turbine inflow velocities (shape (Nt,), with Nt being the number of turbines)
+        Ct  np.array
+            Array of turbine thrust coefficients (shape (Nt,), with Nt being the number of turbines)
+        et  np.array
+            Array of unit vectors defining the turbine orientations (shape (Nt,2), with Nt being the number of turbines)
         """
         raise NotImplementedError("Wake model calculation not implemented yet!")
 
@@ -68,6 +79,13 @@ class WakeModelInterface:
             See VaryingBackground.set_up_apm_evaluators in varying_background.py for detailed documentation.
         subgrid     SubGrid object
             Grid on which the velocity should be evaluated
+
+        Returns
+        -------
+        u_wm  np.array
+            X-components of the wake model velocity field, defined on the subgrid (shape same as subgrid.shape)
+        v_wm  np.array
+            Y-components of the wake model velocity field, defined on the subgrid (shape same as subgrid.shape)
         """
         raise NotImplementedError("Velocity calculation not implemented yet!")
 
@@ -90,12 +108,45 @@ class UniDirectionalSelfSimilar(WakeModelInterface):
         """
         Return the direction of the flow according to the wake model, which is assumed to only depend on the unperturbed
         background flow defined in the given ABL object.
+
+        The current implementation is based on the uni-directional wake merging method by Lanzilao and Meyers (Wind
+        Energy, 2022), where the wake deficits are only considered in a single direction, referred to here as the
+        streamwise background flow direction. This method should return the vectors defining this streamwise direction,
+        and the corresponding spanwise direction. This direction is assumed to only depend on the unperturbed background
+        flow defined in the given ABL object.
+
+        Parameters
+        ----------
+        wind_farm    WindFarm object
+            Wind farm for which the calculation is performed
+        abl     ABL object
+            Information on the unperturbed background state, including vertical velocity profiles
+
+        Returns
+        -------
+        e_str   np.array
+            Streamwise direction unit vector (length 2, corresponding to the x- and y-components)
+        e_span  np.array
+            Spanwise direction unit vector (length 2, corresponding to the x- and y-components)
         """
-        raise NotImplementedError("Flow direction calculation not implemented yet!")
+        # Get average turbine
+        turbines = wind_farm.turbines
+        z_h = np.mean([turbine.zh for turbine in turbines])     # Turbine hub height
+        # Wind speed at hub height
+        u = abl.u(z_h)
+        v = abl.v(z_h)
+        # Get wind direction at hub height
+        e_str = e_streamwise(u, v)      # Unit vector along the wind direction
+        e_span = e_spanwise(u, v)       # Unit vector in cross wind direction
+        return e_str, e_span
 
     def wake_deficit(self, wind_farm, abl, u_bg_evaluator, apm_evaluator, subgrid):
         """
-        Product over all wake functions (1-W_k), calculated on the given subgrid.
+        Calculate the wake deficit, calculated on the given subgrid.
+
+        The wake deficit is the factor that, when multiplied with the background velocity, gives the wake model
+        velocity. For the uni-directional wake merging method of Lanzilao and Meyers (Wind Energy, 2022), this
+        corresponds to the product over all wake functions (1-W_k).
 
         This method will only be called after the method get_St_Ct_et has been called, and will use the same inputs.
         Therefore, feel free to store any intermediate results that can be re-used in this calculation.
@@ -119,6 +170,11 @@ class UniDirectionalSelfSimilar(WakeModelInterface):
             See VaryingBackground.set_up_apm_evaluators in varying_background.py for detailed documentation.
         subgrid     SubGrid object
             Grid on which the velocity should be evaluated
+
+        Returns
+        -------
+        w   np.array
+            Wake deficit, defined on the subgrid (shape same as subgrid.shape)
         """
         raise NotImplementedError("Wake deficit shape multiplier not implemented yet!")
 
@@ -128,6 +184,28 @@ class UniDirectionalSelfSimilar(WakeModelInterface):
 
         For uni-directional self-similar wake model, a base implementation is provided that uses the wake deficit shape
         functions.
+
+        Parameters
+        ----------
+        wind_farm    WindFarm object
+            Wind farm for which the calculation is performed
+        abl     ABL object
+            Information on the unperturbed background state, and atmospheric variables such as TI and z0.
+        u_bg_evaluator  callable
+            Callable which can evaluate the background velocities at requested locations.
+            See VaryingBackground.set_up_u_bg_evaluator in varying_background.py for detailed documentation.
+        apm_evaluator   callable
+            Callable which can evaluate the layer wind speeds and height at requested locations.
+            See VaryingBackground.set_up_apm_evaluators in varying_background.py for detailed documentation.
+        subgrid     SubGrid object
+            Grid on which the velocity should be evaluated
+
+        Returns
+        -------
+        u_wm  np.array
+            X-components of the wake model velocity field, defined on the subgrid (shape same as subgrid.shape)
+        v_wm  np.array
+            Y-components of the wake model velocity field, defined on the subgrid (shape same as subgrid.shape)
         """
         # Get wake multiplier
         w_multiplier = self.wake_deficit(wind_farm, abl, u_bg_evaluator, apm_evaluator, subgrid)
