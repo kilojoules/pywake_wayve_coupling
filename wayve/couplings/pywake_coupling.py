@@ -38,7 +38,7 @@ class PyWakeInterface(UniDirectionalSelfSimilar):
         """Helper function to run the simulation if it hasn't been run yet."""
         if self.sim_res is not None:
             return
-    
+
         pywake_turbines = WindTurbines(
             names=[f"Turbine_{i}" for i in range(wind_farm.Nturb)],
             diameters=[t.D for t in wind_farm.turbines],
@@ -52,55 +52,65 @@ class PyWakeInterface(UniDirectionalSelfSimilar):
                 for t in wind_farm.turbines
             ]
         )
-    
-        # Evaluate background flow at each turbine
+
         turbine_coords = np.array([[t.x, t.y, t.zh] for t in wind_farm.turbines])
-        bg_vels = u_bg_evaluator(turbine_coords)
-        inflow_speeds_i = np.linalg.norm(bg_vels, axis=1)
-        inflow_wds_i = uv2wd(bg_vels)
-    
-        # For this uni-directional model, we perform a single simulation case.
-        # The representative wind direction and speed are the mean of the turbine inflows.
-        mean_wd = np.mean(inflow_wds_i)
-        mean_ws = np.mean(inflow_speeds_i)
-    
-        # Create a custom XRSite that holds the heterogeneous inflow data.
-        # This ensures PyWake uses the turbine-specific (i) values.
+        bg_vels_at_turbines = u_bg_evaluator(turbine_coords)
+        mean_wd = np.mean(uv2wd(bg_vels_at_turbines))
+        
+        # Use the mean wind speed as the reference for the simulation case
+        ref_ws = np.mean(np.linalg.norm(bg_vels_at_turbines, axis=1))
+
+        # 1. Define a spatial grid that is slightly larger than the required flow map region
+        x_min, x_max, y_min, y_max = wind_farm.coupling.region_around_farm(wind_farm)
+        buffer = 1.0 # meters
+        x_coords = np.linspace(x_min - buffer, x_max + buffer, 50)
+        y_coords = np.linspace(y_min - buffer, y_max + buffer, 50)
+        xx, yy = np.meshgrid(x_coords, y_coords, indexing='ij')
+        grid_points = np.stack([xx.ravel(), yy.ravel(), np.full(xx.size, wind_farm.turbines[0].zh)], axis=-1)
+
+        # 2. Evaluate background velocities and calculate speed-up factors relative to the reference WS
+        bg_vels_grid = u_bg_evaluator(grid_points)
+        inflow_speeds_xy = np.linalg.norm(bg_vels_grid, axis=1).reshape(xx.shape)
+        speedup_xy = inflow_speeds_xy / ref_ws
+        
+        # 3. Create the XRSite using the 'Speedup' data variable
         ds = xr.Dataset(
             data_vars={
-                'WS': (('i',), inflow_speeds_i),
-                'WD': (('i',), inflow_wds_i),
-                'P': (('wd',), [1.0]),  # Probability
-                'TI': abl.TI            # Constant TI
+                'Speedup': (('x', 'y'), speedup_xy),
+                'P': (('wd',), [1.0]),
+                'TI': abl.TI
             },
             coords={
-                'i': np.arange(wind_farm.Nturb),
+                'x': x_coords,
+                'y': y_coords,
                 'wd': [mean_wd]
             }
         )
-        site = XRSite(ds, default_ws=[mean_ws])
-    
+        site = XRSite(ds, interp_method='nearest') # bounds='limit' is no longer needed due to buffer
+        
         wfm_kwargs = {
             'site': site, 'windTurbines': pywake_turbines,
             'wake_deficitModel': self.deficit_model(**self.deficit_kwargs),
-            'superpositionModel': self.superposition_model, 'deflectionModel': self.deflection_model,
+            'superpositionModel': self.superposition_model,
+            'deflectionModel': self.deflection_model,
             'turbulenceModel': self.turbulence_model
         }
-    
+        
         if self.blockage_model and self.wind_farm_model is not py_wake.wind_farm_models.PropagateDownwind:
             wfm_kwargs['blockage_model'] = self.blockage_model
-    
+        
         wfm_instance = self.wind_farm_model(**wfm_kwargs)
-    
-        # The wd and ws arguments now select the single case defined in our custom site
+        
+        # Run the simulation for the single case defined by the reference wind speed and direction.
+        # PyWake will internally multiply the reference WS by the spatial Speedup field from the site.
         self.sim_res = wfm_instance(
             x=wind_farm.xs, y=wind_farm.ys, h=[t.zh for t in wind_farm.turbines],
             type=np.arange(wind_farm.Nturb),
             wd=[mean_wd],
-            ws=[mean_ws],
+            ws=[ref_ws],
             yaw=0, tilt=0
         )
-
+        print("SIM RES ", self.sim_res)
 
     def get_St_Ct_et(self, wind_farm, abl, u_bg_evaluator, apm_evaluator):
         self._run_simulation(wind_farm, abl, u_bg_evaluator)
@@ -180,4 +190,4 @@ class PyWakeInterface(UniDirectionalSelfSimilar):
         u_wm = (ws * np.cos(wd_rad))
         v_wm = (ws * np.sin(wd_rad))
 
-        return amb_u, amb_v, u_wm, v_wm
+        return amb_u.T, amb_v.T, u_wm.T, v_wm.T
