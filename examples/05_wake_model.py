@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 """
-A basic example script that demonstrates how to run the underlying wake model, without the APM.
+A basic example script that demonstrates how to run the underlying wake model, without the APM. The script also
+demonstrates the couplings to PyWake and foxes.
 
 The WAYVE code was not designed to run wake models on their own. However, due to the modularity of the design, it is
 possible to do so. In essence, we simply have the wind farm perform a pre-processing calculation, which includes a wake
@@ -31,17 +32,45 @@ References
 __author__ = "Koen Devesse"
 __date__ = "October 4, 2023"
 
+# Numpy and matplotlib imports
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Wayve imports
 from wayve.apm import APM
 from wayve.abl.abl_setup import AM2019
 from wayve.grid.grid import Stat2Dgrid
+from wayve.couplings.pywake_coupling import PyWakeInterface
+from wayve.couplings.foxes_coupling import FoxesWakeModel
 from wayve.forcing.wind_farms.wake_model_coupling.wake_models.lanzilao_merging import Lanzilao
 from wayve.forcing.wind_farms.wake_model_coupling.coupling_methods.varying_background import PureWM
 from wayve.forcing.wind_farms.wind_farm import WindFarm, Turbine
 from wayve.momentum_flux_parametrizations import FrictionCoefficients
 from wayve.pressure.pressure_parametrizations import NoPressureFeedback
+
+# Pywake imports
+from py_wake.deficit_models.gaussian import BastankhahGaussianDeficit
+from py_wake.superposition_models import SquaredSum
+
+# foxes imports
+from foxes import Engine
+
+
+# ----------------------------------------------------- #
+# ----------- Step 0: set up APM components ----------- #
+# ----------------------------------------------------- #
+# Use the atmospheric conditions from the example of Allaerts and Meyers (2019).
+sub = True      # Sub- or supercritical case
+abl = AM2019(sub)
+# Generate 2D grid object (just has to be big enough to cover the farm)
+Nx = 80     # grid points in x-direction
+Lx = 1.e5   # grid size in x-direction [m]
+Ny = 80     # grid points in y-direction
+Ly = 1.e5   # grid size in y-direction [m]
+grid = Stat2Dgrid(Lx, Nx, Ly, Ny)
+# APM components, meaningless in this context
+mfp = FrictionCoefficients()
+pressure = NoPressureFeedback()
 
 
 # ----------------------------------------------------- #
@@ -77,120 +106,112 @@ for t in range(Nt):
 
 
 # ------------------------------------------------------ #
-# ------- Step 2: set up wake model and coupling ------- #
+# ------------- Step 2: set up wake models ------------- #
 # ------------------------------------------------------ #
 
+# WAYVE wake model implementation
 # Here, we use the uni-directional wake merging method of Lanzilao and Meyers (2022). The default wake model settings
 # are explained in Devesse et al. (2024).
-wake_model = Lanzilao()
+wayve_wm = Lanzilao()
 
-# Set up coupling object. We use a PureWM object, which inherits from VaryingBackground, and always assumes the
-# background velocity is unchanged.
-coupling = PureWM(wake_model)
+# TODO: debugging
+# PyWake wake model implementation
+pywake_wm = PyWakeInterface(
+    deficit_model=BastankhahGaussianDeficit,
+    superposition_model=SquaredSum()
+)
 
-# Note that we avoid initializing a WakeModelVelocityHandler object, as this would unnecessarily increase the
-# computational cost.
+# # TODO: debugging
+# # foxes wake model implementation
+# foxes_engine = Engine.new("multiprocess", n_procs=None, chunk_size_states=1, verbosity=1)
+# foxes_engine.initialize()
+# foxes_wm = FoxesWakeModel(
+#     wake_models=["Bastankhah2014_product_k004", "SelfSimilar2020_product"],
+#     verbosity=0
+# )
 
-
-# ---------------------------------------------------- #
-# ------------ Step 3: define wind farm -------------- #
-# ---------------------------------------------------- #
-
-# Gaussian filter length (meaningless for uncoupled wake model run)
-Lfilter = 1000.
-
-# Generate wind farm object
-wind_farm = WindFarm(turbines, Lfilter, coupling)
-
-
-# ---------------------------------------------------- #
-# ---------------- Step 4: set up APM ---------------- #
-# ---------------------------------------------------- #
-
-# Use the atmospheric conditions from the example of Allaerts and Meyers (2019).
-sub = True      # Sub- or supercritical case
-abl = AM2019(sub)
-
-# Generate 2D grid object (just has to be big enough to cover the farm)
-Nx = 80     # grid points in x-direction
-Lx = 1.e5   # grid size in x-direction [m]
-Ny = 80     # grid points in y-direction
-Ly = 1.e5   # grid size in y-direction [m]
-grid = Stat2Dgrid(Lx, Nx, Ly, Ny)
-
-# APM components, meaningless in this context
-mfp = FrictionCoefficients()
-pressure = NoPressureFeedback()
-model = APM(grid, wind_farm, abl, mfp, pressure)
+# List of wake models
+wake_models = [wayve_wm, pywake_wm]
 
 
-# ------------------------------------------------------ #
-# --------------- Step 5: Run wake model --------------- #
-# ------------------------------------------------------ #
+# ------------------------------------------------------- #
+# ------------ Step 3: loop over wake models ------------ #
+# ------------------------------------------------------- #
 
-# Pre-processing the wind farm object includes an initial run of the wake model, assuming unperturbed background
-# velocity. There will be some additional calculations, but these are relatively fast.
-# Note that in a script like this, there are also relatively high costs associated with the initial Numba compilations.
-print("Start wake model run")
-wind_farm.preprocess(model)
-print("Wake model run done")
+for wake_model in wake_models:
+    # # Set up coupling object # #
+    # We use a PureWM object, which inherits from VaryingBackground, and always assumes the
+    # background velocity is unchanged. This avoids unnecessary calculations.
+    coupling = PureWM(wake_model)
+    # Note that we avoid initializing a WakeModelVelocityHandler object, as this would increase the computational cost
+    # by computing the velocity on a 3D grid.
 
-# Evaluate turbine power outputs
-powers = wind_farm.power_turbines(abl.rho)
+    # # Set up WindFarm and APM objects # #
+    wind_farm = WindFarm(turbines, 1.e3, coupling)
+    model = APM(grid, wind_farm, abl, mfp, pressure)
 
+    # # Run wake model # #
 
-# ------------------------------------------------------ #
-# ------------ Some example post processing ------------ #
-# ------------------------------------------------------ #
+    # Pre-processing the wind farm object includes an initial run of the wake model, assuming unperturbed background
+    # velocity. There will be some additional calculations, but those are relatively fast.
+    # Note that in a script like this, there are also relatively high costs associated with the initial Numba compilations.
+    print("Start wake model run")
+    wind_farm.preprocess(model)
+    print("Wake model run done")
 
-# Layout plot #
-fig, ax = plt.subplots()
-im = ax.scatter(wind_farm.xs/1.e3, wind_farm.ys/1.e3,
-                c=powers/1.e6,
-                marker='o', edgecolors='k',
-                rasterized=True)
-cbar = fig.colorbar(im, ax=ax, shrink=0.7, label=r'Turbine power output [MW]')
-ax.set_aspect('equal', 'box')
-ax.set_xlabel(r'$x\;[\mathrm{km}]$')
-ax.set_ylabel(r'$y\;[\mathrm{km}]$')
-plt.show()
+    # Evaluate turbine power outputs
+    powers = wind_farm.power_turbines(abl.rho)
 
-# Hub height velocity plot #
-print("Start hub height velocity calculation")
-# Region around wind farm
-x_min, x_max, y_min, y_max = coupling.region_around_farm(wind_farm)
-# Unperturbed velocity
-s_0 = np.sqrt(abl.u(zh)**2 + abl.v(zh)**2)
-# Set up xy grid at hub height
-N_sg = 150
-x = np.linspace(x_min, x_max, N_sg)
-y = np.linspace(y_min, y_max, N_sg)
-z = zh
-# Callables to evaluate the background velocity and the APM lower layer state
-u_bg_evaluator = coupling.set_up_u_bg_evaluator(abl)
-apm_evaluator = coupling.apm_evaluator
-# Get hub height velocities
-_, _, u_wm, v_wm = wake_model.xy_plane(wind_farm, abl, u_bg_evaluator, apm_evaluator, x, y, z)
-s_wm = np.sqrt(np.square(u_wm) + np.square(v_wm))
-print("Hub height velocity calculation done")
-# Set up plot
-f, ax = plt.subplots()
-x_lims = [x_min/1.e3, x_max/1.e3]
-y_lims = [y_min/1.e3, y_max/1.e3]
-# Wake model velocity at hub height
-im = ax.pcolormesh(x / 1.e3, y / 1.e3, s_wm.T / s_0,
-                   shading='gouraud',
-                   rasterized=True)
-f.colorbar(im, ax=ax, shrink=0.7, label=r"$u_{wm}/U_0$ [-]")
-# Plot turbines
-for i in range(Nt):
-    ax.plot([wind_farm.turbines[i].x/1.e3, wind_farm.turbines[i].x/1.e3],
-            [wind_farm.turbines[i].y/1.e3-D/2.e3, wind_farm.turbines[i].y/1.e3+D/2.e3], '-k')
-# Add axes labels and limits
-ax.set_aspect('equal', 'box')
-ax.set_xlim(x_lims)
-ax.set_ylim(y_lims)
-ax.set_xlabel(r'$x\;[\mathrm{km}]$')
-ax.set_ylabel(r'$y\;[\mathrm{km}]$')
-# Show plot
-plt.show()
+    # # Some example post processing # #
+
+    # Layout plot #
+    fig, ax = plt.subplots()
+    im = ax.scatter(wind_farm.xs/1.e3, wind_farm.ys/1.e3,
+                    c=powers/1.e6,
+                    marker='o', edgecolors='k',
+                    rasterized=True)
+    cbar = fig.colorbar(im, ax=ax, shrink=0.7, label=r'Turbine power output [MW]')
+    ax.set_aspect('equal', 'box')
+    ax.set_xlabel(r'$x\;[\mathrm{km}]$')
+    ax.set_ylabel(r'$y\;[\mathrm{km}]$')
+    plt.show()
+
+    # Hub height velocity plot #
+    print("Start hub height velocity calculation")
+    # Region around wind farm
+    x_min, x_max, y_min, y_max = coupling.region_around_farm(wind_farm)
+    # Unperturbed velocity
+    s_0 = np.sqrt(abl.u(zh)**2 + abl.v(zh)**2)
+    # Set up xy grid at hub height
+    N_sg = 150
+    x = np.linspace(x_min, x_max, N_sg)
+    y = np.linspace(y_min, y_max, N_sg)
+    z = zh
+    # Callables to evaluate the background velocity and the APM lower layer state
+    u_bg_evaluator = coupling.set_up_u_bg_evaluator(abl)
+    apm_evaluator = coupling.apm_evaluator
+    # Get hub height velocities
+    _, _, u_wm, v_wm = wake_model.xy_plane(wind_farm, abl, u_bg_evaluator, apm_evaluator, x, y, z)
+    s_wm = np.sqrt(np.square(u_wm) + np.square(v_wm))
+    print("Hub height velocity calculation done")
+    # Set up plot
+    f, ax = plt.subplots()
+    x_lims = [x_min/1.e3, x_max/1.e3]
+    y_lims = [y_min/1.e3, y_max/1.e3]
+    # Wake model velocity at hub height
+    im = ax.pcolormesh(x / 1.e3, y / 1.e3, s_wm.T / s_0,
+                       shading='gouraud',
+                       rasterized=True)
+    f.colorbar(im, ax=ax, shrink=0.7, label=r"$u_{wm}/U_0$ [-]")
+    # Plot turbines
+    for i in range(Nt):
+        ax.plot([wind_farm.turbines[i].x/1.e3, wind_farm.turbines[i].x/1.e3],
+                [wind_farm.turbines[i].y/1.e3-D/2.e3, wind_farm.turbines[i].y/1.e3+D/2.e3], '-k')
+    # Add axes labels and limits
+    ax.set_aspect('equal', 'box')
+    ax.set_xlim(x_lims)
+    ax.set_ylim(y_lims)
+    ax.set_xlabel(r'$x\;[\mathrm{km}]$')
+    ax.set_ylabel(r'$y\;[\mathrm{km}]$')
+    # Show plot
+    plt.show()
