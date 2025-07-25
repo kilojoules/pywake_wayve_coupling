@@ -35,9 +35,6 @@ class PyWakeInterface(UniDirectionalSelfSimilar):
 
 
     def _run_simulation(self, wind_farm, abl, u_bg_evaluator):
-        """Helper function to run the simulation if it hasn't been run yet."""
-        if self.sim_res is not None:
-            return
 
         pywake_turbines = WindTurbines(
             names=[f"Turbine_{i}" for i in range(wind_farm.Nturb)],
