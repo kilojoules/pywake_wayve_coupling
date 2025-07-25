@@ -19,6 +19,7 @@ setup(
         "netCDF4",
         "foxes>=1.1",
         "multiprocess",
+        "py_wake",
     ],
     zip_safe=False
 )
