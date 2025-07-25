@@ -107,7 +107,6 @@ class PyWakeInterface(UniDirectionalSelfSimilar):
             ws=[ref_ws],
             yaw=0, tilt=0
         )
-        print("SIM RES ", self.sim_res)
 
     def get_St_Ct_et(self, wind_farm, abl, u_bg_evaluator, apm_evaluator):
         self._run_simulation(wind_farm, abl, u_bg_evaluator)
